@@ -10,6 +10,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { RISK_PROFILES, NOMINEE_RELATIONS } from '../../constants';
 import { useToast } from '../../components/ui/Toast';
 import { apiRequest } from '../../config/apiHelper';
+import { getApiUrl } from '../../config/apiUrl';
 
 const formatClientID = (rawId) => {
   if (!rawId || rawId === '—') return '—';
@@ -59,6 +60,38 @@ export default function Profile() {
   const [clientEmail, setClientEmail] = useState('');
   const [loading, setLoading] = useState(true);
 
+  const [supportSettings, setSupportSettings] = useState({
+    clientSupportEmail: 'support@kfpl.com',
+    clientSupportPhone: '+91 98765 43210',
+    clientSupportWhatsapp: '919876543210',
+    supportHours: 'Mon - Sat, 10 AM to 6 PM IST',
+  });
+
+  useEffect(() => {
+    const fetchSupportSettings = async () => {
+      try {
+        const url = getApiUrl('/api/system-settings/support');
+        const res = await fetch(url);
+        if (res.ok) {
+          const json = await res.json();
+          if (json && json.data) {
+            let email = json.data.clientSupportEmail;
+            if (!email || !email.includes('@')) email = 'support@kfpl.com';
+            setSupportSettings({
+              clientSupportEmail: email,
+              clientSupportPhone: json.data.clientSupportPhone || '+91 98765 43210',
+              clientSupportWhatsapp: json.data.clientSupportWhatsapp || '919876543210',
+              supportHours: json.data.supportHours || 'Mon - Sat, 10 AM to 6 PM IST',
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch client support settings:', err);
+      }
+    };
+    fetchSupportSettings();
+  }, []);
+
   useEffect(() => {
     // --- SWR Cache Initialization for Instant Load (0ms) ---
     try {
@@ -75,9 +108,10 @@ export default function Profile() {
 
     const loadProfile = async () => {
       try {
-        const [profileRes, advisorRes] = await Promise.all([
+        const [profileRes, advisorRes, sysConfigRes] = await Promise.all([
           apiRequest('/api/client/profile').catch(() => null),
-          apiRequest('/api/client/wealth-advisor').catch(() => null)
+          apiRequest('/api/client/wealth-advisor').catch(() => null),
+          apiRequest('/api/system-settings/support').catch(() => null),
         ]);
 
         const getLoggedInClient = () => {
@@ -128,13 +162,28 @@ export default function Profile() {
             };
 
             if (advisorRes) {
-              const rawAdv = advisorRes.advisor || advisorRes.agent || advisorRes.data?.advisor || advisorRes.data || advisorRes;
-              if (rawAdv) {
-                normalized.agentName = rawAdv.fullName || rawAdv.name || normalized.agentName || 'Wealth Advisor';
-                normalized.agentId = formatAgentID(rawAdv.agentCode || rawAdv.agentId || rawAdv._id || normalized.agentId || '');
+              const rawAdv = advisorRes.data?.advisor || advisorRes.data || advisorRes.advisor || advisorRes.agent;
+              if (rawAdv && (rawAdv.name || rawAdv.fullName)) {
+                normalized.agentName = rawAdv.name || rawAdv.fullName;
+                normalized.agentId = formatAgentID(rawAdv.code || rawAdv.agentCode || rawAdv.agentId || rawAdv._id || '');
                 normalized.advisorPhone = rawAdv.phone || rawAdv.mobile || rawAdv.phoneNumber || '';
                 normalized.advisorEmail = rawAdv.email || '';
+                const cleanPhone = (rawAdv.phone || '').replace(/[^0-9]/g, '');
+                normalized.advisorWhatsApp = rawAdv.whatsAppLink || (cleanPhone ? `https://wa.me/91${cleanPhone}` : '');
+              } else {
+                normalized.agentName = '';
+                normalized.agentId = '';
+                normalized.advisorPhone = '';
+                normalized.advisorEmail = '';
+                normalized.advisorWhatsApp = '';
               }
+            }
+
+            if (sysConfigRes && sysConfigRes.data) {
+              normalized.supportEmail = sysConfigRes.data.clientSupportEmail || 'support@kfpl.com';
+              normalized.supportPhone = sysConfigRes.data.clientSupportPhone || '+91 98765 43210';
+              normalized.supportWhatsapp = sysConfigRes.data.clientSupportWhatsapp || '919876543210';
+              normalized.supportHours = sysConfigRes.data.supportHours || 'Mon - Sat, 10 AM to 6 PM IST';
             }
 
             setClient(normalized);
@@ -591,74 +640,147 @@ export default function Profile() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
             {/* Advisor & Contact Info Cards Row */}
-            <div className="kfpl-support-grid">
-              <a href="mailto:support@kfpl.com" className="kfpl-support-card">
-                <div className="kfpl-support-card-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg>
+            <div className="kfpl-support-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+              {/* Email Support Card */}
+              <div className="kfpl-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', background: 'var(--color-surface, #ffffff)', borderRadius: '16px', border: '1px solid var(--color-border)', boxShadow: '0 4px 16px rgba(0,0,0,0.04)' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.1)', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
+                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                 </div>
-                <h3>Email Support</h3>
-                <p>support@kfpl.com</p>
-              </a>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: '700', color: 'var(--color-text-primary)', margin: '0 0 6px 0' }}>Email Support</h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', margin: '0 0 16px 0', wordBreak: 'break-all' }}>
+                  {supportSettings.clientSupportEmail}
+                </p>
+                <a href={`mailto:${supportSettings.clientSupportEmail}`} className="kfpl-btn kfpl-btn--ghost kfpl-btn--sm" style={{ width: '100%', justifyContent: 'center', fontWeight: '600' }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 6 }}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Send Email
+                </a>
+              </div>
 
-              <a href="tel:+919876543210" className="kfpl-support-card">
-                <div className="kfpl-support-card-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+              {/* Phone Support Card */}
+              <div className="kfpl-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', background: 'var(--color-surface, #ffffff)', borderRadius: '16px', border: '1px solid var(--color-border)', boxShadow: '0 4px 16px rgba(0,0,0,0.04)' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
+                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                 </div>
-                <h3>Phone Support</h3>
-                <p>+91 98765 43210</p>
-              </a>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: '700', color: 'var(--color-text-primary)', margin: '0 0 6px 0' }}>Phone Support</h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', margin: '0 0 16px 0' }}>
+                  {supportSettings.clientSupportPhone}
+                </p>
+                <a href={`tel:${supportSettings.clientSupportPhone.replace(/\s/g, '')}`} className="kfpl-btn kfpl-btn--primary kfpl-btn--sm" style={{ width: '100%', justifyContent: 'center', background: '#10b981', borderColor: '#10b981', fontWeight: '600' }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 6 }}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Call Support
+                </a>
+              </div>
 
-              <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer" className="kfpl-support-card">
-                <div className="kfpl-support-card-icon" style={{ background: '#25D366', color: 'white' }}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" /></svg>
+              {/* WhatsApp Support Card */}
+              <div className="kfpl-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', background: 'var(--color-surface, #ffffff)', borderRadius: '16px', border: '1px solid var(--color-border)', boxShadow: '0 4px 16px rgba(0,0,0,0.04)' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(37, 211, 102, 0.1)', color: '#25D366', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
+                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
                 </div>
-                <h3>WhatsApp Support</h3>
-                <p>Chat with us instantly</p>
-              </a>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: '700', color: 'var(--color-text-primary)', margin: '0 0 6px 0' }}>WhatsApp Support</h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', margin: '0 0 16px 0' }}>
+                  +{(supportSettings.clientSupportWhatsapp || '919876543210').replace(/[^0-9]/g, '')}
+                </p>
+                <a href={`https://wa.me/${(supportSettings.clientSupportWhatsapp || '919876543210').replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="kfpl-btn kfpl-btn--primary kfpl-btn--sm" style={{ width: '100%', justifyContent: 'center', background: '#25D366', borderColor: '#25D366', fontWeight: '600' }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 6 }}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> Open WhatsApp
+                </a>
+              </div>
             </div>
 
             {/* Manager Info panel */}
             <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+              {client.agentName && client.agentId ? (
+                /* Wealth Advisor Card for assigned Agent */
+                <div className="kfpl-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '32px 24px', justifyContent: 'center', maxWidth: '480px', width: '100%' }}>
+                  <div style={{
+                    width: '72px',
+                    height: '72px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, var(--color-gold) 0%, var(--color-gold-dark) 100%)',
+                    color: 'var(--color-white)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '2rem',
+                    fontWeight: '800',
+                    boxShadow: '0 4px 16px rgba(16, 185, 129, 0.25)',
+                    marginBottom: '16px'
+                  }}>
+                    {client.agentName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                  </div>
 
-              {/* Wealth Advisor Advisor Widget */}
-              <div className="kfpl-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '32px 24px', justifyContent: 'center', maxWidth: '480px', width: '100%' }}>
-                <div style={{
-                  width: '72px',
-                  height: '72px',
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, var(--color-gold) 0%, var(--color-gold-dark) 100%)',
-                  color: 'var(--color-white)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '2rem',
-                  fontWeight: '800',
-                  boxShadow: '0 4px 16px rgba(16, 185, 129, 0.25)',
-                  marginBottom: '16px'
-                }}>
-                  {client.agentName ? client.agentName.split(' ').map(n => n[0]).join('') : 'WA'}
+                  <div>
+                    <span className="kfpl-badge kfpl-badge--gold-tier" style={{ fontSize: '0.625rem', marginBottom: '8px' }}>Wealth Advisor</span>
+                    <h4 style={{ fontSize: '1.125rem', fontWeight: '800', color: 'var(--color-text-primary)' }}>
+                      {client.agentName}
+                    </h4>
+                    <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', marginTop: '4px' }}>
+                      Senior Relationship Manager (ID: {client.agentId})
+                    </p>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '8px', width: '100%', marginTop: '24px' }}>
+                    {client.advisorPhone ? (
+                      <a href={`tel:${client.advisorPhone}`} className="kfpl-btn kfpl-btn--ghost kfpl-btn--sm" style={{ flex: 1, padding: '10px 0' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 6 }}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Call Advisor
+                      </a>
+                    ) : (
+                      <button className="kfpl-btn kfpl-btn--ghost kfpl-btn--sm" disabled style={{ flex: 1, padding: '10px 0', opacity: 0.6, cursor: 'not-allowed' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 6 }}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Call Advisor
+                      </button>
+                    )}
+                    <a
+                      href={client.advisorWhatsApp || (client.advisorPhone ? `https://wa.me/91${client.advisorPhone.replace(/[^0-9]/g, '')}` : 'https://wa.me/919876543210')}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="kfpl-btn kfpl-btn--primary kfpl-btn--sm"
+                      style={{ flex: 1, padding: '10px 0', background: '#25D366', borderColor: '#25D366' }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 6 }}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> WhatsApp
+                    </a>
+                  </div>
+
+                  <p style={{ fontSize: '0.6875rem', color: 'var(--color-text-muted)', marginTop: '16px', lineHeight: 1.4 }}>
+                    Our advisory desk is available Mon - Sat, 10 AM to 6 PM IST. For urgent claims, raise a Service Request.
+                  </p>
                 </div>
+              ) : (
+                /* Direct Admin Client Card (No Agent Assigned) */
+                <div className="kfpl-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '32px 24px', justifyContent: 'center', maxWidth: '480px', width: '100%' }}>
+                  <div style={{
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: '50%',
+                    background: 'rgba(59, 130, 246, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '16px'
+                  }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.8" strokeLinecap="round" style={{ width: 32, height: 32 }}>
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                    </svg>
+                  </div>
 
-                <div>
-                  <span className="kfpl-badge kfpl-badge--gold-tier" style={{ fontSize: '0.625rem', marginBottom: '8px' }}>Wealth Advisor</span>
-                  <h4 style={{ fontSize: '1.125rem', fontWeight: '800', color: 'var(--color-text-primary)' }}>{client.agentName || 'Wealth Advisor'}</h4>
-                  <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', marginTop: '4px' }}>Senior Relationship Manager (ID: {client.agentId || '—'})</p>
+                  <div>
+                    <span className="kfpl-badge kfpl-badge--ghost" style={{ fontSize: '0.625rem', marginBottom: '8px' }}>Direct Support</span>
+                    <h4 style={{ fontSize: '1.125rem', fontWeight: '800', color: 'var(--color-text-primary)' }}>Direct Admin Client</h4>
+                    <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', marginTop: '4px' }}>
+                      No agent assigned. Contact Kinetoscope Super Admin support team directly.
+                    </p>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '8px', width: '100%', marginTop: '24px' }}>
+                    <a href={`tel:${(supportSettings.clientSupportPhone || '+919876543210').replace(/\s/g, '')}`} className="kfpl-btn kfpl-btn--ghost kfpl-btn--sm" style={{ flex: 1, padding: '10px 0' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 6 }}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Call Support
+                    </a>
+                    <a href={`https://wa.me/${(supportSettings.clientSupportWhatsapp || '919876543210').replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="kfpl-btn kfpl-btn--primary kfpl-btn--sm" style={{ flex: 1, padding: '10px 0', background: '#25D366', borderColor: '#25D366' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 6 }}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> WhatsApp Support
+                    </a>
+                  </div>
+
+                  <p style={{ fontSize: '0.6875rem', color: 'var(--color-text-muted)', marginTop: '16px', lineHeight: 1.4 }}>
+                    Support Desk: {supportSettings.supportHours || 'Mon - Sat, 10 AM to 6 PM IST'}. Email: {supportSettings.clientSupportEmail}.
+                  </p>
                 </div>
-
-                <div style={{ display: 'flex', gap: '8px', width: '100%', marginTop: '24px' }}>
-                  <a href={`tel:${client.advisorPhone || ''}`} className="kfpl-btn kfpl-btn--ghost kfpl-btn--sm" style={{ flex: 1, padding: '10px 0' }}>
-                    📞 Call Advisor
-                  </a>
-                  <a href={`https://wa.me/${client.advisorPhone || '919876543210'}`} target="_blank" rel="noopener noreferrer" className="kfpl-btn kfpl-btn--primary kfpl-btn--sm" style={{ flex: 1, padding: '10px 0', background: '#25D366', borderColor: '#25D366' }}>
-                    💬 WhatsApp
-                  </a>
-                </div>
-
-                <p style={{ fontSize: '0.6875rem', color: 'var(--color-text-muted)', marginTop: '16px', lineHeight: 1.4 }}>
-                  Our advisory desk is available Mon - Sat, 10 AM to 6 PM IST. For urgent claims, raise a Service Request.
-                </p>
-              </div>
-
+              )}
             </div>
 
           </div>

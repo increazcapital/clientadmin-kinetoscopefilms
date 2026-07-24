@@ -13,6 +13,7 @@ import LineChart from '../../components/charts/LineChart';
 import Modal from '../../components/ui/Modal';
 import KpiCard from '../../components/ui/KpiCard';
 import { apiRequest } from '../../config/apiHelper';
+import { getApiUrl } from '../../config/apiUrl';
 
 
 const formatAgentID = (rawId) => {
@@ -30,6 +31,38 @@ const formatAgentID = (rawId) => {
 
 export default function DashboardHome() {
   const navigate = useNavigate();
+  const [activeSegment, setActiveSegment] = useState('overview');
+
+  const [supportConfig, setSupportConfig] = useState({
+    clientSupportEmail: 'support@kfpl.com',
+    clientSupportPhone: '+91 98765 43210',
+    clientSupportWhatsapp: '919876543210',
+    supportHours: 'Mon - Sat, 10 AM to 6 PM IST',
+  });
+
+  useEffect(() => {
+    const fetchSupportSettings = async () => {
+      try {
+        const res = await fetch(getApiUrl('/api/system-settings/support'));
+        if (res.ok) {
+          const json = await res.json();
+          if (json && json.data) {
+            let email = json.data.clientSupportEmail;
+            if (!email || !email.includes('@')) email = 'support@kfpl.com';
+            setSupportConfig({
+              clientSupportEmail: email,
+              clientSupportPhone: json.data.clientSupportPhone || '+91 98765 43210',
+              clientSupportWhatsapp: json.data.clientSupportWhatsapp || '919876543210',
+              supportHours: json.data.supportHours || 'Mon - Sat, 10 AM to 6 PM IST',
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch support settings on dashboard:', err);
+      }
+    };
+    fetchSupportSettings();
+  }, []);
 
   const [client, setClient] = useState(() => {
     const authData = localStorage.getItem('kfpl_client_auth');
@@ -151,51 +184,53 @@ export default function DashboardHome() {
         if (dashRes) {
           root = dashRes.data || dashRes;
         } else if (loggedClient) {
-          const investmentVal = loggedClient.totalInvestment || 500000;
-          const roiRateVal = loggedClient.roiPercent || loggedClient.roiPercentage || 3.1;
-          const fallbackInvests = [{
+          const investmentVal = loggedClient.totalInvestment || 0;
+          const roiRateVal = loggedClient.roiPercent || loggedClient.roiPercentage || 0;
+          const fallbackInvests = investmentVal > 0 ? [{
             _id: `inv_${loggedClient._id || 'mock'}`,
             segment: 'Trading & Syndication',
             investmentAmount: investmentVal,
             roiPercentage: roiRateVal,
             riskPercentage: 15,
-            allocationDate: loggedClient.contractStartDate || loggedClient.dateOfJoining || '2026-07-14',
+            allocationDate: loggedClient.contractStartDate || loggedClient.dateOfJoining || new Date().toISOString().split('T')[0],
             status: 'Active'
-          }];
+          }] : [];
           
           const generatedHistory = [];
-          try {
-            const allocDateStr = loggedClient.contractStartDate || loggedClient.dateOfJoining || '2026-07-14';
-            const startDate = new Date(allocDateStr);
-            const endDate = new Date();
-            if (!isNaN(startDate.getTime())) {
-              let current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
-              const targetMonth = endDate.getMonth();
-              const targetYear = endDate.getFullYear();
-              let index = 1;
-              while (current <= endDate) {
-                const monthStr = current.toLocaleString('en-US', { month: 'short', year: 'numeric' });
-                const amt = Math.round((investmentVal * roiRateVal) / 100);
-                const isCurrentMonth = current.getMonth() === targetMonth && current.getFullYear() === targetYear;
-                generatedHistory.push({
-                  _id: `roi_${loggedClient._id || 'mock'}_${index}`,
-                  payoutMonth: monthStr,
-                  month: monthStr,
-                  roiRate: roiRateVal,
-                  amount: amt,
-                  status: isCurrentMonth ? 'Pending' : 'Paid',
-                  processedDate: isCurrentMonth ? '—' : new Date(current.getFullYear(), current.getMonth() + 1, 0).toLocaleDateString('en-IN')
-                });
-                index++;
-                current.setMonth(current.getMonth() + 1);
+          if (investmentVal > 0) {
+            try {
+              const allocDateStr = loggedClient.contractStartDate || loggedClient.dateOfJoining || new Date().toISOString().split('T')[0];
+              const startDate = new Date(allocDateStr);
+              const endDate = new Date();
+              if (!isNaN(startDate.getTime())) {
+                let current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+                const targetMonth = endDate.getMonth();
+                const targetYear = endDate.getFullYear();
+                let index = 1;
+                while (current <= endDate) {
+                  const monthStr = current.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+                  const amt = Math.round((investmentVal * roiRateVal) / 100);
+                  const isCurrentMonth = current.getMonth() === targetMonth && current.getFullYear() === targetYear;
+                  generatedHistory.push({
+                    _id: `roi_${loggedClient._id || 'mock'}_${index}`,
+                    payoutMonth: monthStr,
+                    month: monthStr,
+                    roiRate: roiRateVal,
+                    amount: amt,
+                    status: isCurrentMonth ? 'Pending' : 'Paid',
+                    processedDate: isCurrentMonth ? '—' : new Date(current.getFullYear(), current.getMonth() + 1, 0).toLocaleDateString('en-IN')
+                  });
+                  index++;
+                  current.setMonth(current.getMonth() + 1);
+                }
               }
-            }
-          } catch (e) {}
+            } catch (e) {}
+          }
 
           root = {
             profile: loggedClient,
             client: loggedClient,
-            totalInvestment: loggedClient.totalInvestment || 0,
+            totalInvestment: investmentVal,
             investments: fallbackInvests,
             roiHistory: generatedHistory.reverse()
           };
@@ -215,12 +250,17 @@ export default function DashboardHome() {
           };
 
           if (advisorRes) {
-            const rawAdv = advisorRes.advisor || advisorRes.agent || advisorRes.data?.advisor || advisorRes.data || advisorRes;
-            if (rawAdv) {
+            const rawAdv = advisorRes.data?.advisor || advisorRes.data || advisorRes.advisor || advisorRes.agent;
+            if (rawAdv && (rawAdv.name || rawAdv.fullName)) {
               updatedClient.agentName = rawAdv.fullName || rawAdv.name || rawClient.agentName || 'Wealth Advisor';
-              updatedClient.agentId = rawAdv.agentCode || rawAdv.agentId || rawAdv._id || rawClient.agentId || '';
+              updatedClient.agentId = rawAdv.agentCode || rawAdv.code || rawAdv.agentId || rawAdv._id || rawClient.agentId || '';
               updatedClient.advisorPhone = rawAdv.phone || rawAdv.mobile || rawAdv.phoneNumber || '';
               updatedClient.advisorEmail = rawAdv.email || '';
+            } else {
+              updatedClient.agentName = '';
+              updatedClient.agentId = '';
+              updatedClient.advisorPhone = '';
+              updatedClient.advisorEmail = '';
             }
           }
 
@@ -316,7 +356,7 @@ export default function DashboardHome() {
           updatedJourney = {
             accountCreated: true,
             onboardingComplete: onboardingCompleteVal,
-            kycSubmitted: isKycSubmitted || isKycVerified,
+            kycSubmitted: isKycVerified,
             agreementSigned: isKycVerified,
             firstInvestment: hasInvestments,
             roiConfigured: hasInvestments,
@@ -554,6 +594,47 @@ export default function DashboardHome() {
           <div className="kfpl-welcome-circle kfpl-welcome-circle--3" />
         </div>
       </div>
+
+      {/* KYC PENDING WARNING BANNER */}
+      {String(client.kycStatus || client.kyc || '').toUpperCase() === 'PENDING' && (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.08) 100%)',
+          border: '1px solid rgba(245, 158, 11, 0.4)',
+          borderRadius: '12px',
+          padding: '16px 20px',
+          marginTop: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '16px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              width: '38px', height: '38px', borderRadius: '50%',
+              background: '#FEF3C7', color: '#D97706',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+            }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" width="20" height="20">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </div>
+            <div>
+              <h4 style={{ margin: '0 0 2px', fontSize: '0.95rem', fontWeight: 700, color: '#B45309' }}>
+                KYC Verification Pending
+              </h4>
+              <p style={{ margin: 0, fontSize: '0.8125rem', color: '#92400E' }}>
+                Your KYC documents have been submitted and are currently awaiting review & approval by Super Admin.
+              </p>
+            </div>
+          </div>
+          <span style={{
+            background: '#FEF3C7', color: '#B45309', border: '1px solid #F59E0B',
+            padding: '4px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700, whiteSpace: 'nowrap'
+          }}>
+            Pending Approval
+          </span>
+        </div>
+      )}
 
       {/* ═══════════════ LIVE INVESTMENT STATUS UPDATES SLIDER ═══════════════ */}
       <div className="kfpl-section-header" style={{ marginTop: '28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1321,10 +1402,10 @@ export default function DashboardHome() {
                 </div>
                 <div style={{ display: 'flex', gap: '8px', width: '100%', marginTop: '8px' }}>
                   <a href={`tel:${client.advisorPhone || ''}`} className="kfpl-btn kfpl-btn--ghost kfpl-btn--sm" style={{ flex: 1 }}>
-                    📞 Call
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 6 }}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Call
                   </a>
                   <a href={`https://wa.me/${client.advisorPhone || ''}`} target="_blank" rel="noopener noreferrer" className="kfpl-btn kfpl-btn--primary kfpl-btn--sm" style={{ flex: 1, background: '#25D366', borderColor: '#25D366' }}>
-                    💬 WhatsApp
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 6 }}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> WhatsApp
                   </a>
                 </div>
                 <p className="text-xs text-muted" style={{ marginTop: '4px' }}>
@@ -1332,20 +1413,31 @@ export default function DashboardHome() {
                 </p>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '24px 0', textAlign: 'center' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '16px 0', textAlign: 'center' }}>
                 <div style={{
                   width: '56px', height: '56px', borderRadius: '50%',
-                  background: 'var(--color-surface-elevated)',
+                  background: 'rgba(59, 130, 246, 0.1)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="1.5" strokeLinecap="round" style={{ width: 28, height: 28 }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.8" strokeLinecap="round" style={{ width: 28, height: 28 }}>
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                   </svg>
                 </div>
                 <div>
-                  <p style={{ fontWeight: 600, color: 'var(--color-text)', marginBottom: '4px' }}>Direct Admin Client</p>
-                  <p className="text-muted text-sm">No wealth advisor assigned yet. Contact Kinetoscope admin for support.</p>
+                  <p style={{ fontWeight: 700, color: 'var(--color-text)', marginBottom: '2px' }}>Direct Admin Client</p>
+                  <p className="text-muted text-xs">Direct Super Admin support team</p>
                 </div>
+                <div style={{ display: 'flex', gap: '8px', width: '100%', marginTop: '4px' }}>
+                  <a href={`tel:${(supportConfig.clientSupportPhone || '+919876543210').replace(/\s/g, '')}`} className="kfpl-btn kfpl-btn--ghost kfpl-btn--sm" style={{ flex: 1 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 6 }}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Call Support
+                  </a>
+                  <a href={`https://wa.me/${(supportConfig.clientSupportWhatsapp || '919876543210').replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="kfpl-btn kfpl-btn--primary kfpl-btn--sm" style={{ flex: 1, background: '#25D366', borderColor: '#25D366' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 6 }}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> WhatsApp
+                  </a>
+                </div>
+                <p className="text-xs text-muted" style={{ marginTop: '4px' }}>
+                  {supportConfig.supportHours || 'Mon - Sat, 10 AM to 6 PM IST'}
+                </p>
               </div>
             )}
           </div>

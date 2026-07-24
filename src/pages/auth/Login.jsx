@@ -42,6 +42,9 @@ export default function Login() {
   const [checkedPrivacy, setCheckedPrivacy] = useState(false);
   const [checkedTnc, setCheckedTnc] = useState(false);
 
+  const [showRegPassword, setShowRegPassword] = useState(false);
+  const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false);
+
   // Register form state
   const [regForm, setRegForm] = useState({
     fullName: '', email: '', phone: '', dob: '', address: '',
@@ -51,7 +54,7 @@ export default function Login() {
     riskProfile: 'Conservative',
     citizenship: 'National',
     nomineeCitizenship: 'National',
-    roiPercentage: '1.2',
+    roiPercentage: '0',
     contractStartDate: new Date().toISOString().split('T')[0],
     contractEndDate: '',
     password: '',
@@ -83,8 +86,6 @@ export default function Login() {
     if (!email || !password) { setError('Please enter both email and password.'); return; }
     setLoading(true);
 
-    const isTfaEnabled = localStorage.getItem('kfpl_tfa_enabled') === 'true';
-
     try {
       const response = await fetch(getApiUrl('/api/auth/login'), {
         method: 'POST',
@@ -93,15 +94,15 @@ export default function Login() {
       });
       const data = await response.json();
       if (response.ok) {
-        if (data.requires2FA || isTfaEnabled) {
-          const generatedCode = String(Math.floor(100000 + Math.random() * 900000));
+        if (data.requires2FA) {
+          const generatedCode = data.otp || data.code || String(Math.floor(100000 + Math.random() * 900000));
           setMockOtp(generatedCode);
           setTempToken(data.token || '');
           setTempUser(data.client || (data.data && data.data.user ? data.data.user : data.data) || data.user || {});
           setBackendRequiresTfa(!!data.requires2FA);
           setStep('otp');
           setError('');
-          addToast(`Verification code sent! Code: ${data.otp || data.code || generatedCode}`, 'info', '2FA Authentication');
+          addToast('Verification code sent to your registered email address.', 'info', '2FA Authentication');
         } else {
           const clientObject = data.client || (data.data && data.data.user ? data.data.user : data.data) || data.user || {};
           localStorage.setItem('kfpl_client_auth', JSON.stringify({ 
@@ -111,35 +112,9 @@ export default function Login() {
           window.location.href = '/dashboard';
         }
       } else {
-        // Safe fallback: Check local storage for registered users
-        const storedInvestors = localStorage.getItem('kfpl_investors');
-        let localUser = null;
-        if (storedInvestors) {
-          try {
-            const list = JSON.parse(storedInvestors);
-            localUser = list.find(inv => inv.email.toLowerCase() === email.toLowerCase());
-          } catch (err) {
-            console.error(err);
-          }
-        }
-
-        if (localUser) {
-          // Verify simple mock password (or just accept it for mock testing)
-          // For security testing or user convenience, let's authenticate successfully
-          localStorage.setItem('kfpl_client_auth', JSON.stringify({
-            token: 'mock-jwt-token-12345',
-            client: {
-              ...localUser,
-              name: localUser.name || localUser.fullName || 'Investor'
-            }
-          }));
-          addToast('Logged in successfully (Local Mock)', 'success');
-          setTimeout(() => {
-            window.location.href = '/dashboard';
-          }, 600);
-        } else {
-          setError(data.message || data.error || 'Invalid credentials.');
-        }
+        const errorMsg = data.message || data.error || 'Invalid credentials.';
+        setError(errorMsg);
+        addToast(errorMsg, 'error', 'Login Failed');
       }
     } catch (err) {
       console.error('Login error:', err);
@@ -313,11 +288,22 @@ export default function Login() {
       const resData = await response.json();
 
       if (response.ok) {
-        syncLocalClient(resData.data?.header?.clientCode || resData.clientCode);
-        addToast('Registration successful! You can now log in.', 'success', 'Account Created');
-        setActiveTab('login');
-        setEmail(regForm.email);
-        setStep('credentials');
+        const localClientObj = syncLocalClient(resData.data?.clientCode || resData.clientCode);
+        const token = resData.token || 'mock-jwt-token-12345';
+        const clientPayload = resData.data?.client || resData.data?.profile || localClientObj || {
+          email: regForm.email,
+          name: regForm.fullName
+        };
+        localStorage.setItem('kfpl_client_auth', JSON.stringify({
+          token,
+          client: {
+            ...clientPayload,
+            name: clientPayload.fullName || clientPayload.name || regForm.fullName || 'Investor',
+            email: regForm.email
+          }
+        }));
+        addToast('Account created successfully! Welcome to Kinetoscope.', 'success', 'Account Created');
+        window.location.href = '/dashboard';
       } else {
         const errorMsg = resData.message || resData.error || 'Registration failed. Please check your inputs.';
         setError(errorMsg);
@@ -366,7 +352,7 @@ export default function Login() {
       category: 'silver',
       status: 'active',
       totalInvestment: 0,
-      roiPercentage: parseFloat(regForm.roiPercentage) || 1.2,
+      roiPercentage: parseFloat(regForm.roiPercentage) || 0,
       joinDate: regForm.contractStartDate,
       contractEndDate: regForm.contractEndDate,
       kyc: 'Verified',
@@ -651,11 +637,63 @@ export default function Login() {
                   <div className="kfpl-login-form-row">
                     <div className="kfpl-login-input-group">
                       <label className="kfpl-login-label">Password *</label>
-                      <input type="password" name="password" className="kfpl-login-input" placeholder="Enter your password" value={regForm.password} onChange={handleRegisterChange} required />
+                      <div className="kfpl-login-password-wrap">
+                        <input
+                          type={showRegPassword ? 'text' : 'password'}
+                          name="password"
+                          className="kfpl-login-input"
+                          placeholder="Enter your password"
+                          value={regForm.password}
+                          onChange={handleRegisterChange}
+                          required
+                        />
+                        <button
+                          type="button"
+                          className="kfpl-login-password-toggle"
+                          onClick={() => setShowRegPassword(!showRegPassword)}
+                        >
+                          {showRegPassword ? (
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                              <line x1="1" y1="1" x2="23" y2="23"/>
+                            </svg>
+                          ) : (
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                            </svg>
+                          )}
+                        </button>
+                      </div>
                     </div>
                     <div className="kfpl-login-input-group">
                       <label className="kfpl-login-label">Confirm Password *</label>
-                      <input type="password" name="confirmPassword" className="kfpl-login-input" placeholder="Confirm your password" value={regForm.confirmPassword} onChange={handleRegisterChange} required />
+                      <div className="kfpl-login-password-wrap">
+                        <input
+                          type={showRegConfirmPassword ? 'text' : 'password'}
+                          name="confirmPassword"
+                          className="kfpl-login-input"
+                          placeholder="Confirm your password"
+                          value={regForm.confirmPassword}
+                          onChange={handleRegisterChange}
+                          required
+                        />
+                        <button
+                          type="button"
+                          className="kfpl-login-password-toggle"
+                          onClick={() => setShowRegConfirmPassword(!showRegConfirmPassword)}
+                        >
+                          {showRegConfirmPassword ? (
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                              <line x1="1" y1="1" x2="23" y2="23"/>
+                            </svg>
+                          ) : (
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                            </svg>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
 
@@ -727,14 +765,22 @@ export default function Login() {
                   </svg>
                 </div>
                 <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', marginBottom: '6px' }}>Two-Factor Authentication</h2>
-                <p style={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.4 }}>
-                  We sent a verification code to your email.<br />Please enter the 6-digit code below.
+                <p style={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.4, marginBottom: '12px' }}>
+                  We sent a 6-digit verification code to your registered email.<br />Please enter the code below.
                 </p>
-                {mockOtp && (
-                  <div className="kfpl-login-mock-otp">
-                    <span>Mock OTP sent: {mockOtp}</span>
-                  </div>
-                )}
+                <div style={{
+                  background: 'rgba(16, 185, 129, 0.12)',
+                  border: '1px solid rgba(16, 185, 129, 0.35)',
+                  color: '#10b981',
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  textAlign: 'center',
+                  wordBreak: 'break-all'
+                }}>
+                  <span>OTP sent to your email: <strong>{email}</strong></span>
+                </div>
               </div>
 
               {otpError && (
