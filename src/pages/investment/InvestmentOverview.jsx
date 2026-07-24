@@ -381,10 +381,10 @@ export default function InvestmentOverview() {
         const targetInvRes = invRes || (loggedClient && loggedClient.totalInvestment > 0 ? {
           investments: [{
             _id: `inv_${loggedClient._id || 'synth'}`,
-            segment: 'Trading & Syndication',
+            segment: loggedClient.segment || 'Unallocated',
             investmentAmount: loggedClient.totalInvestment || 0,
             roiPercentage: loggedClient.roiPercent ?? loggedClient.roiPercentage ?? loggedClient.monthlyRoi ?? loggedClient.roi ?? 0,
-            riskPercentage: 15,
+            riskPercentage: 0,
             allocationDate: loggedClient.contractStartDate || loggedClient.dateOfJoining || loggedClient.createdAt || new Date().toISOString().split('T')[0],
             status: 'Active'
           }],
@@ -404,7 +404,7 @@ export default function InvestmentOverview() {
               if (rawProj && typeof rawProj === 'object') {
                 projIdStr = String(rawProj._id || rawProj.id || '');
                 matchedProjName = rawProj.name || '';
-              } else {
+              } else if (rawProj) {
                 projIdStr = String(rawProj);
               }
 
@@ -416,28 +416,20 @@ export default function InvestmentOverview() {
                 }
               }
 
-              // Fallback to match by segment if ID match not found
-              if (!matchedProjName && inv.segment) {
-                const foundBySeg = allProjects.find(p => (p.segment || '').trim().toLowerCase() === inv.segment.trim().toLowerCase());
-                if (foundBySeg) {
-                  matchedProjName = foundBySeg.name || '';
-                }
-              }
-
               const rootDash = dashRes ? (dashRes.data || dashRes) : {};
               const activeClientObj = rootDash.profile || rootDash.client || rootDash.user || targetInvRes.client || targetInvRes.user || loggedClient || {};
-              // Use real ROI from backend only — no hardcoded fallback
               const clientRoiRate = activeClientObj.roiPercent ?? activeClientObj.roiPercentage ?? activeClientObj.monthlyRoi ?? activeClientObj.roi ?? null;
               const finalRoi = clientRoiRate ?? inv.roiPercentage ?? inv.roiAllocated ?? inv.roi ?? 0;
 
               return {
                 ...inv,
+                segment: inv.segment || 'Unallocated',
                 amount: inv.investmentAmount || inv.amount || 0,
                 roiAllocated: finalRoi,
                 roi: finalRoi,
                 date: inv.investmentDate || inv.date || inv.createdAt,
                 contractPeriod: inv.durationMonths || inv.contractPeriod || 24,
-                projectName: matchedProjName
+                projectName: matchedProjName || 'Unallocated'
               };
             });
             setInvestments(normalizedList);
@@ -880,16 +872,13 @@ export default function InvestmentOverview() {
               >
                 <div style={{ fontWeight: 700, color: 'var(--color-gold)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: hoveredSegment.color }}></span>
-                  {hoveredSegment.projectName || (
-                    hoveredSegment.segment === 'Film Making' ? 'Project Vanguard' :
-                    hoveredSegment.segment === 'Distribution' ? 'CineDistro Global' :
-                    hoveredSegment.segment === 'Music' ? 'Rhythm Nation' :
-                    hoveredSegment.segment === 'Content IP Bank' ? 'IP Vault Alpha' :
-                    hoveredSegment.segment === 'Trading & Syndication' ? 'TradeSync' : 'ScreenX Cinemas'
-                  )}
+                  {hoveredSegment.projectName || 
+                   (typeof hoveredSegment.projectId === 'object' && hoveredSegment.projectId?.name) ||
+                   (typeof hoveredSegment.project === 'object' && hoveredSegment.project?.name) ||
+                   'Unallocated'}
                 </div>
                 <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem', marginBottom: '2px' }}>
-                  Segment: <strong>{hoveredSegment.segment}</strong>
+                  Segment: <strong>{hoveredSegment.segment || 'Unallocated'}</strong>
                 </div>
                 <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem', marginBottom: '4px' }}>
                   Share: <strong>{hoveredSegment.percent.toFixed(1)}%</strong>
@@ -952,18 +941,10 @@ export default function InvestmentOverview() {
         <div className="kfpl-segment-allocation-grid">
           {segments.map((segment, index) => {
             const projName = segment.projectName || 
-                             segment.projectId?.name || 
-                             segment.project?.name || 
                              (typeof segment.projectId === 'object' && segment.projectId?.name) ||
                              (typeof segment.project === 'object' && segment.project?.name) ||
-                             segment.project ||
-                             (
-                               segment.segment === 'Film Making' ? 'Project Vanguard' :
-                               segment.segment === 'Distribution' ? 'CineDistro Global' :
-                               segment.segment === 'Music' ? 'Rhythm Nation' :
-                               segment.segment === 'Content IP Bank' ? 'IP Vault Alpha' :
-                               segment.segment === 'Trading & Syndication' ? 'TradeSync' : 'ScreenX Cinemas'
-                             );
+                             (typeof segment.project === 'string' && segment.project ? segment.project : '') ||
+                             'Unallocated';
 
             return (
               <div
