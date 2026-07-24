@@ -380,12 +380,12 @@ export default function InvestmentOverview() {
         // 1. Process client investments
         const targetInvRes = invRes || (loggedClient && loggedClient.totalInvestment > 0 ? {
           investments: [{
-            _id: `inv_${loggedClient._id || 'mock'}`,
+            _id: `inv_${loggedClient._id || 'synth'}`,
             segment: 'Trading & Syndication',
             investmentAmount: loggedClient.totalInvestment || 0,
-            roiPercentage: loggedClient.roiPercent || loggedClient.roiPercentage || 1.2,
+            roiPercentage: loggedClient.roiPercent ?? loggedClient.roiPercentage ?? loggedClient.monthlyRoi ?? loggedClient.roi ?? 0,
             riskPercentage: 15,
-            allocationDate: loggedClient.contractStartDate || loggedClient.dateOfJoining || '2026-07-14',
+            allocationDate: loggedClient.contractStartDate || loggedClient.dateOfJoining || loggedClient.createdAt || new Date().toISOString().split('T')[0],
             status: 'Active'
           }],
           client: loggedClient
@@ -575,9 +575,14 @@ export default function InvestmentOverview() {
   const total = Math.max(approvedDepositsTotal, segmentsSum);
   const monthlyReturn = Math.round((calcPrincipal * calcRate) / 100);
   const annualReturn = Math.round(monthlyReturn * 12);
-  const weightedROI = total
-    ? investments.reduce((sum, investment) => sum + investment.amount * investment.roiAllocated, 0) / total
+  const clientRoiRate = Number(client.roiPercent ?? client.roiPercentage ?? client.monthlyRoi ?? client.roi ?? 0);
+  const hasAllocatedRoi = investments.length > 0 && investments.some(inv => (inv.roiAllocated || inv.roiPercentage || inv.roi) > 0);
+
+  const calculatedWeightedROI = total > 0
+    ? investments.reduce((sum, inv) => sum + (inv.amount || 0) * (inv.roiAllocated || inv.roiPercentage || inv.roi || clientRoiRate), 0) / total
     : 0;
+
+  const weightedROI = hasAllocatedRoi ? calculatedWeightedROI : clientRoiRate;
   const receivedROI = roiHistory.reduce((sum, roi) => sum + (roi.amount || roi.received || 0), 0);
   const paidMonths = roiHistory.filter(roi => ['paid', 'approved'].includes((roi.status || '').toLowerCase())).length;
 
@@ -628,10 +633,12 @@ export default function InvestmentOverview() {
     roiTillDateVal = `${calculated.toFixed(2)}%`;
   }
 
-  const actualMonthlyReturn = investments.reduce((sum, investment) => {
-    const roiVal = investment.roiAllocated || investment.roi || 0;
-    return sum + Math.round((investment.amount * roiVal) / 100);
-  }, 0);
+  const actualMonthlyReturn = investments.length > 0
+    ? investments.reduce((sum, inv) => {
+        const roiVal = inv.roiAllocated || inv.roiPercentage || inv.roi || clientRoiRate;
+        return sum + Math.round(((inv.amount || 0) * roiVal) / 100);
+      }, 0)
+    : Math.round((total * clientRoiRate) / 100);
 
   const summaryCards = [
     {
