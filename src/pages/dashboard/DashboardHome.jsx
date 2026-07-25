@@ -186,15 +186,7 @@ export default function DashboardHome() {
         } else if (loggedClient) {
           const investmentVal = loggedClient.totalInvestment || 0;
           const roiRateVal = loggedClient.roiPercent || loggedClient.roiPercentage || 0;
-          const fallbackInvests = investmentVal > 0 ? [{
-            _id: `inv_${loggedClient._id || 'mock'}`,
-            segment: 'Trading & Syndication',
-            investmentAmount: investmentVal,
-            roiPercentage: roiRateVal,
-            riskPercentage: 15,
-            allocationDate: loggedClient.contractStartDate || loggedClient.dateOfJoining || new Date().toISOString().split('T')[0],
-            status: 'Active'
-          }] : [];
+          const fallbackInvests = [];
           
           const generatedHistory = [];
           if (investmentVal > 0) {
@@ -330,10 +322,25 @@ export default function DashboardHome() {
             updatedRoiHistory = rawHistory.map((r, idx) => {
               const amt = Number(r.amount || r.received || r.expected || 0);
               const isPaidOrApproved = ['paid', 'approved'].includes(String(r.status || '').toLowerCase());
+              const rawDate = r.date || r.paidAt || r.processedDate || r.payoutDate || r.createdAt;
+              let derivedMonth = r.month || r.payoutMonth || r.period;
+              if (!derivedMonth || derivedMonth === '—') {
+                if (rawDate) {
+                  const d = new Date(rawDate);
+                  if (!isNaN(d.getTime())) {
+                    derivedMonth = d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+                  }
+                }
+              }
+              if (!derivedMonth || derivedMonth === '—') {
+                derivedMonth = new Date().toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+              }
+
               return {
                 _id: r._id || r.id || `roi_${idx}`,
-                month: r.month || r.payoutMonth || r.period || '—',
-                date: r.date || r.paidAt || r.processedDate || new Date().toISOString(),
+                month: derivedMonth,
+                payoutMonth: derivedMonth,
+                date: rawDate || new Date().toISOString(),
                 expected: r.expected || amt,
                 received: isPaidOrApproved ? (r.received || amt) : 0,
                 amount: amt,
@@ -1242,7 +1249,7 @@ export default function DashboardHome() {
           <div className="kfpl-chart-header">
             <div>
               <div className="kfpl-chart-title">Monthly ROI Earnings</div>
-              <div className="kfpl-chart-subtitle">Historical ROI payout tracking — FY 2025</div>
+              <div className="kfpl-chart-subtitle">Historical ROI payout tracking</div>
             </div>
             <span className="kfpl-badge kfpl-badge--gold-tier">Paid</span>
           </div>

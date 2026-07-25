@@ -217,9 +217,7 @@ export default function PerksAndRecognition() {
   const nextTier = currentIdx < tierKeys.length - 1 ? PERK_TIERS[tierKeys[currentIdx + 1]] : null;
   const nextVisual = nextTier ? tierVisuals[tierKeys[currentIdx + 1]] : null;
 
-  const benefitsList = (activePerksData.benefits && activePerksData.benefits.length > 0)
-    ? activePerksData.benefits
-    : tier.benefits;
+  const benefitsList = activePerksData.benefits || [];
 
   const upgradeAmountNeeded = activePerksData.nextTierAmount !== undefined
     ? activePerksData.nextTierAmount
@@ -337,7 +335,12 @@ export default function PerksAndRecognition() {
             <span className="kfpl-prk-benefits-count">{benefitsList.length}</span>
           </div>
           <div className="kfpl-prk-benefits-list">
-            {benefitsList.map((b, i) => {
+            {benefitsList.length === 0 ? (
+              <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
+                No active perks assigned to your tier yet.
+              </div>
+            ) : (
+              benefitsList.map((b, i) => {
               const title = typeof b === 'string' ? b : (b.title || b.name || '');
               const desc = typeof b === 'object' ? (b.description || '') : '';
               return (
@@ -381,7 +384,8 @@ export default function PerksAndRecognition() {
                   </div>
                 </div>
               );
-            })}
+            })
+          )}
           </div>
         </div>
         {/* Recognition History */}

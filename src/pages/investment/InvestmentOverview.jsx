@@ -453,10 +453,25 @@ export default function InvestmentOverview() {
             freshRoiHistory = rawHistory.map((r, idx) => {
               const amt = Number(r.amount || r.received || r.expected || 0);
               const isPaidOrApproved = ['paid', 'approved'].includes(String(r.status || '').toLowerCase());
+              const rawDate = r.date || r.paidAt || r.processedDate || r.payoutDate || r.createdAt;
+              let derivedMonth = r.month || r.payoutMonth || r.period;
+              if (!derivedMonth || derivedMonth === '—') {
+                if (rawDate) {
+                  const d = new Date(rawDate);
+                  if (!isNaN(d.getTime())) {
+                    derivedMonth = d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+                  }
+                }
+              }
+              if (!derivedMonth || derivedMonth === '—') {
+                derivedMonth = new Date().toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+              }
+
               return {
                 _id: r._id || r.id || `roi_${idx}`,
-                month: r.month || r.payoutMonth || r.period || '—',
-                date: r.date || r.paidAt || r.processedDate || new Date().toISOString(),
+                month: derivedMonth,
+                payoutMonth: derivedMonth,
+                date: rawDate || new Date().toISOString(),
                 expected: r.expected || amt,
                 received: isPaidOrApproved ? (r.received || amt) : 0,
                 amount: amt,
