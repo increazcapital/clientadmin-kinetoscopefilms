@@ -386,8 +386,11 @@ export default function Login() {
       {/* Left Column: Cinema Wallpaper */}
       <div className="kfpl-login-wallpaper">
         <div className="kfpl-login-brand">
-          <div className="kfpl-login-brand-logo">K</div>
-          <h1>Kinetoscope</h1>
+          <div style={{ background: '#ffffff', padding: '6px', width: '68px', height: '68px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(0,0,0,0.2)', marginBottom: '16px' }}>
+            <img src="/logokfpl.jpeg" alt="KFPL Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '10px', display: 'block' }} />
+          </div>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#ffffff', margin: 0, lineHeight: 1.15 }}>Kinetoscope Film Pvt Ltd</h1>
+          <p style={{ fontSize: '12px', color: 'rgba(240, 253, 244, 0.9)', letterSpacing: '1.5px', textTransform: 'uppercase', marginTop: '6px', marginBottom: '12px', fontWeight: '700' }}>A Global Media Fund</p>
           <p>Portfolio investing at your fingertips. Track assets, manage transactions, and claim exclusive tier rewards.</p>
         </div>
       </div>
@@ -396,8 +399,10 @@ export default function Login() {
       <div className="kfpl-login-panel">
         <div className="kfpl-login-card animate-scale-in">
           {/* Logo */}
-          <div className="kfpl-login-logo">
-            <div className="kfpl-login-logo-icon">K</div>
+          <div className="kfpl-login-logo" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '24px' }}>
+            <div style={{ background: '#ffffff', padding: '6px', width: '56px', height: '56px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 20px rgba(16, 185, 129, 0.18)', border: '1px solid #e2e8f0', marginBottom: '12px' }}>
+              <img src="/logokfpl.jpeg" alt="KFPL Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '8px', display: 'block' }} />
+            </div>
             <h1 className="kfpl-login-title">Client Portal</h1>
             <p className="kfpl-login-subtitle">Access your media production portfolio</p>
           </div>
@@ -830,7 +835,7 @@ export default function Login() {
           )}
 
           <div className="kfpl-login-footer">
-            © 2026 Kinetoscope Film Production. All rights reserved.
+            © 2026 Kinetoscope Film Pvt Ltd. All rights reserved.
           </div>
         </div>
       </div>

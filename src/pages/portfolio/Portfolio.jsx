@@ -101,6 +101,8 @@ export default function Portfolio() {
   const [loading, setLoading] = useState(true);
   const [activeMediaIndex, setActiveMediaIndex] = useState(null);
 
+  const [dbSegments, setDbSegments] = useState([]);
+
   useEffect(() => {
     if (!drawerProject) {
       setActiveMediaIndex(null);
@@ -138,10 +140,18 @@ export default function Portfolio() {
 
     const fetchProjects = async () => {
       try {
-        const [projectsRes, investmentsRes] = await Promise.all([
+        const [projectsRes, investmentsRes, segmentsRes] = await Promise.all([
           apiRequest('/api/client/projects').catch(() => null),
-          apiRequest('/api/client/investments').catch(() => null)
+          apiRequest('/api/client/investments').catch(() => null),
+          apiRequest('/api/client/segments').catch(() => null),
         ]);
+
+        if (segmentsRes) {
+          const segList = Array.isArray(segmentsRes)
+            ? segmentsRes
+            : (segmentsRes.segments || segmentsRes.data?.segments || (Array.isArray(segmentsRes.data) ? segmentsRes.data : []));
+          setDbSegments(segList);
+        }
 
         const raw = extractProjects(projectsRes);
         const filteredRaw = raw.filter(p => p.name !== '__KFPL_DUMMY__');
@@ -167,18 +177,20 @@ export default function Portfolio() {
           });
         }
 
-        // Filter projects: only show projects the client has invested in (by ID or segment name fallback)
-        const investedProjects = filteredRaw.filter(p => {
+        // Filter projects: show client's invested projects if available, otherwise show complete portfolio catalog
+        let investedProjects = filteredRaw.filter(p => {
           const pId = String(p._id || p.id);
           const hasIdMatch = myProjectIds.includes(pId);
           if (hasIdMatch) return true;
 
-          // Fallback: match by segment name if ID doesn't match directly
           const pSeg = (p.segment || '').trim().toLowerCase();
           return mySegments.includes(pSeg);
         });
 
-        const mapped = investedProjects.map(p => ({
+        // Fallback to all company portfolio projects if client has no specific investment projects matched
+        let finalProjectsList = investedProjects.length > 0 ? investedProjects : filteredRaw;
+
+        const mapped = finalProjectsList.map(p => ({
           id: p._id || p.id,
           name: p.name || '',
           segment: p.segment || '',
@@ -192,13 +204,10 @@ export default function Portfolio() {
           health: p.health || 'On Track',
           media: (p.mediaFiles || []).map(url => {
             const cleanUrl = url.split('?')[0];
-            // Extract extension only from the LAST URL segment (not across slashes)
             const lastSegment = cleanUrl.split('/').pop() || '';
             const rawExt = lastSegment.includes('.') ? lastSegment.split('.').pop()?.toLowerCase() : '';
-            // Valid extensions are max 5 chars (pdf, doc, jpg...) — reject garbage strings
             const ext = (rawExt && rawExt.length <= 5) ? rawExt : '';
             const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'avif', 'tiff'];
-            // Cloudinary raw uploads (/raw/upload/) store docs without extension in URL
             const isRawUpload = cleanUrl.includes('/raw/upload/');
             return {
               id: url,
@@ -243,7 +252,6 @@ export default function Portfolio() {
 
   const enrichedProjects = useMemo(() => {
     return projects.map(project => {
-      // Find matching meta by matching summary or id keys
       const matchedMeta = Object.entries(PROJECT_META).find(([k, v]) => {
         return String(k) === String(project.id) || v.summary === project.summary;
       })?.[1] || {};
@@ -267,11 +275,11 @@ export default function Portfolio() {
 
   const filteredProjects = activeTab === 'All'
     ? enrichedProjects
-    : enrichedProjects.filter(project => project.segment === activeTab);
+    : enrichedProjects.filter(project => (project.segment || '').trim().toLowerCase() === activeTab.trim().toLowerCase());
 
   const totalValue = enrichedProjects.reduce((sum, project) => sum + project.valueCr, 0);
   const averageProgress = Math.round(
-    enrichedProjects.reduce((sum, project) => sum + project.milestone, 0) / enrichedProjects.length
+    enrichedProjects.reduce((sum, project) => sum + (project.milestone || 0), 0) / (enrichedProjects.length || 1)
   );
   const activeProjects = enrichedProjects.filter(project => !['Released', 'Planned'].includes(project.status)).length;
   const completedProjects = enrichedProjects.filter(project => project.milestone >= 100).length;
@@ -463,12 +471,19 @@ export default function Portfolio() {
   );
 
   const segmentTabs = useMemo(() => {
-    return [...new Set([
-      'All',
-      ...SEGMENTS,
-      ...projects.map(p => p.segment)
-    ])].filter(Boolean);
-  }, [projects]);
+    const dbSegNames = dbSegments.map(s => s.name || s.title || s.segmentName).filter(Boolean);
+    const projSegNames = projects.map(p => p.segment).filter(Boolean);
+    const combined = ['All', ...dbSegNames, ...projSegNames];
+
+    const uniqueMap = new Map();
+    combined.forEach(name => {
+      const key = name.trim().toLowerCase();
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, name.trim());
+      }
+    });
+    return Array.from(uniqueMap.values());
+  }, [projects, dbSegments]);
 
   return (
     <div className="kfpl-page kfpl-portfolio-page">
@@ -502,13 +517,13 @@ export default function Portfolio() {
           {segmentTabs.map(tab => {
             const count = tab === 'All'
               ? enrichedProjects.length
-              : enrichedProjects.filter(project => project.segment === tab).length;
+              : enrichedProjects.filter(project => (project.segment || '').trim().toLowerCase() === tab.trim().toLowerCase()).length;
 
             return (
               <button
                 key={tab}
                 type="button"
-                className={`kfpl-portfolio-tab ${activeTab === tab ? 'active' : ''}`}
+                className={`kfpl-portfolio-tab ${activeTab.trim().toLowerCase() === tab.trim().toLowerCase() ? 'active' : ''}`}
                 onClick={() => setActiveTab(tab)}
               >
                 <span>{tab}</span>

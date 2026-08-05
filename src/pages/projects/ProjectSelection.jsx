@@ -56,8 +56,87 @@ export default function ProjectSelection() {
   const [amount, setAmount] = useState('');
   const [ackRisk, setAckRisk] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleApply = () => { setApplyModal(null); setAmount(''); setAckRisk(false); setAgreeTerms(false); };
+  const fetchProjects = async () => {
+    try {
+      const data = await apiRequest('/api/client/projects');
+      const raw = extractProjects(data);
+      const filteredRaw = raw.filter(p => p.name !== '__KFPL_DUMMY__');
+      const mapped = filteredRaw.map(p => {
+        const segStyle = getSegmentStyle(p.segment);
+        const minInvestment = p.minInvestment || segStyle.minInvestment || 200000;
+        const targetFunding = p.targetFunding || 25000000;
+        const fundedAmount = p.fundedAmount || 0;
+        const totalSlots = p.totalSlots !== undefined ? p.totalSlots : 20;
+        const slotsAvailable = p.slotsAvailable !== undefined ? p.slotsAvailable : 20;
+
+        let isFull = p.status === 'Slot Full' || slotsAvailable <= 0;
+        if (targetFunding > 0 && fundedAmount >= targetFunding) {
+          isFull = true;
+        }
+
+        const fillPercent = targetFunding > 0
+          ? Math.min(100, Math.round((fundedAmount / targetFunding) * 100))
+          : Math.min(100, Math.round(((totalSlots - slotsAvailable) / (totalSlots || 1)) * 100));
+
+        return {
+          id: p._id || p.id,
+          name: p.name || '',
+          segment: p.segment || 'Film Making',
+          status: isFull ? 'Slot Full' : 'Open',
+          minInvestment,
+          targetFunding,
+          fundedAmount,
+          fillPercent,
+          slotsAvailable,
+          totalSlots,
+          riskReward: `${p.riskLevel || p.risk || 'Medium'} / ${p.monthlyRoi || p.roi || '1.0%'} ROI`,
+          bannerImg: p.bannerImage || p.bannerImg || '',
+          summary: p.summary || 'Entertainment production opportunity.',
+          initials: SEGMENT_ABBR[p.segment] || p.name.slice(0, 2).toUpperCase()
+        };
+      });
+      setOpportunities(mapped);
+      localStorage.setItem('kfpl_client_opportunities_cache', JSON.stringify(mapped));
+    } catch (err) {
+      console.error('Failed to load selector projects:', err);
+      setOpportunities([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApply = async () => {
+    if (!applyModal) return;
+    const numAmount = Number(amount);
+    if (!numAmount || numAmount < applyModal.minInvestment) {
+      alert(`Investment amount must be at least ₹${applyModal.minInvestment.toLocaleString('en-IN')}`);
+      return;
+    }
+    if (!ackRisk || !agreeTerms) {
+      alert('Please acknowledge the risk profile and agree to terms of service.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const res = await apiRequest(`/api/client/projects/${applyModal.id}/apply`, {
+        method: 'POST',
+        body: JSON.stringify({ amount: numAmount })
+      });
+      alert(res.message || 'Application submitted successfully! Super Admin has been notified.');
+      setApplyModal(null);
+      setAmount('');
+      setAckRisk(false);
+      setAgreeTerms(false);
+      fetchProjects();
+    } catch (err) {
+      alert(err.message || 'Failed to submit investment application');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const modalSeg = applyModal ? getSegmentStyle(applyModal.segment) : null;
   const modalRoiPercent = applyModal ? getRoiRate(applyModal.riskReward) : 1.0;
@@ -80,47 +159,6 @@ export default function ProjectSelection() {
       console.warn('Failed to parse opportunities cache:', e);
     }
 
-    const fetchProjects = async () => {
-      try {
-        const data = await apiRequest('/api/client/projects');
-        const raw = extractProjects(data);
-        const filteredRaw = raw.filter(p => p.name !== '__KFPL_DUMMY__');
-        const mapped = filteredRaw.map(p => {
-          const status = p.status || 'Planning';
-          const isOpen = !['Completed', 'Released'].includes(status);
-          
-          // Dynamic stable slot computation
-          const idHash = p._id || p.id || 'abc';
-          const charSum = idHash.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
-          const totalSlots = (charSum % 15) + 10;
-          const slotsAvailable = isOpen ? Math.max(1, charSum % totalSlots) : 0;
-          
-          const segStyle = getSegmentStyle(p.segment);
-          const minInvestment = p.minInvestment || segStyle.minInvestment || 200000;
-          
-          return {
-            id: p._id || p.id,
-            name: p.name || '',
-            segment: p.segment || 'Film Making',
-            status: isOpen ? 'Open' : 'Slot Full',
-            minInvestment,
-            slotsAvailable,
-            totalSlots,
-            riskReward: `${p.riskLevel || p.risk || 'Medium'} / ${p.monthlyRoi || p.roi || '1.0%'} ROI`,
-            bannerImg: p.bannerImage || p.bannerImg || '',
-            summary: p.summary || 'Entertainment production opportunity.',
-            initials: SEGMENT_ABBR[p.segment] || p.name.slice(0, 2).toUpperCase()
-          };
-        });
-        setOpportunities(mapped);
-        localStorage.setItem('kfpl_client_opportunities_cache', JSON.stringify(mapped));
-      } catch (err) {
-        console.error('Failed to load selector projects:', err);
-        setOpportunities([]);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchProjects();
   }, []);
 

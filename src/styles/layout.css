@@ -111,12 +111,44 @@
 }
 
 .kfpl-sidebar-logo-subtitle {
-  font-size: 0.625rem;
-  color: var(--color-gold-dark);
-  font-weight: 600;
-  letter-spacing: 0.8px;
+  font-size: 0.5625rem;
+  color: #d97706;
+  font-weight: 800;
+  letter-spacing: 1px;
   text-transform: uppercase;
   margin-top: 2px;
+  display: block;
+}
+
+/* ── Sidebar Marquee (Company Name) ───────────── */
+.kfpl-sidebar-marquee-wrapper {
+  overflow: hidden;
+  width: 100%;
+  position: relative;
+  margin: 1px 0;
+}
+
+.kfpl-sidebar-marquee-track {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: kfpl-sidebar-scroll 10s linear infinite;
+}
+
+.kfpl-sidebar-marquee-track span {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+@keyframes kfpl-sidebar-scroll {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.kfpl-sidebar.collapsed .kfpl-sidebar-marquee-wrapper {
+  display: none;
 }
 
 /* ── Sidebar Navigation ─────────────────────── */

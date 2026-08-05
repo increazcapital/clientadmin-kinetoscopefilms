@@ -143,13 +143,18 @@ export default function Sidebar({ isCollapsed, onToggle, isMobileOpen, onMobileC
       <aside className={`kfpl-sidebar ${isCollapsed ? 'collapsed' : ''} ${isMobileOpen ? 'mobile-open' : ''}`}>
         {/* Logo */}
         <div className="kfpl-sidebar-logo">
-          <div className="kfpl-sidebar-logo-icon">
-            <span>K</span>
+          <div className="kfpl-sidebar-logo-icon" style={{ background: '#f8fafc', padding: '3px', width: '40px', height: '40px', minWidth: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: '1px solid #e2e8f0', flexShrink: 0 }}>
+            <img src="/logokfpl.jpeg" alt="KFPL Logo" style={{ width: '100%', height: '100%', borderRadius: '7px', objectFit: 'contain', display: 'block' }} />
           </div>
-          <div className="kfpl-sidebar-logo-text">
-            <span className="kfpl-sidebar-logo-title">KINETOSCOPE</span>
-            <span className="kfpl-sidebar-logo-subtitle">Client Portal</span>
-            <span className="kfpl-sidebar-logo-tagline" style={{ fontSize: '9px', color: 'rgba(255, 255, 255, 0.45)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '2px', display: 'block' }}>Films. Finance. Future.</span>
+          <div className="kfpl-sidebar-logo-text" style={{ overflow: 'hidden', flex: 1, minWidth: 0 }}>
+            <div className="kfpl-sidebar-marquee-wrapper">
+              <div className="kfpl-sidebar-marquee-track">
+                <span>KINETOSCOPE FILM PVT LTD &nbsp;&nbsp;&bull;&nbsp;&nbsp;&nbsp;</span>
+                <span>KINETOSCOPE FILM PVT LTD &nbsp;&nbsp;&bull;&nbsp;&nbsp;&nbsp;</span>
+              </div>
+            </div>
+            <span className="kfpl-sidebar-logo-tagline" style={{ fontSize: '9px', color: '#059669', textTransform: 'uppercase', letterSpacing: '0.8px', marginTop: '1px', display: 'block', fontWeight: '700' }}>A Global Media Fund</span>
+            <span className="kfpl-sidebar-logo-subtitle">CLIENT PORTAL</span>
           </div>
         </div>
 
