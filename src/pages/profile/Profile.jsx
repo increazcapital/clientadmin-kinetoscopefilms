@@ -11,6 +11,7 @@ import { RISK_PROFILES, NOMINEE_RELATIONS } from '../../constants';
 import { useToast } from '../../components/ui/Toast';
 import { apiRequest } from '../../config/apiHelper';
 import { getApiUrl } from '../../config/apiUrl';
+import KycAgreementCard from '../../components/common/KycAgreementCard';
 
 const formatClientID = (rawId) => {
   if (!rawId || rawId === '—') return '—';
@@ -406,7 +407,16 @@ export default function Profile() {
       <div style={{ marginTop: '24px' }}>
         {/* ==================== TAB 1: Profile Details ==================== */}
         {activeTab === 'details' && (
-          <div className="kfpl-profile-grid">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <KycAgreementCard
+              agreementUrl={client.agreementDocument}
+              agreementVerified={client.agreementDocumentVerified}
+              clientName={client.name}
+              onUploadSuccess={(newUrl) => {
+                setClient(prev => ({ ...prev, agreementDocument: newUrl }));
+              }}
+            />
+            <div className="kfpl-profile-grid">
             {/* Personal Information */}
             <div className="kfpl-card">
               <h3 style={{ marginBottom: '16px', paddingBottom: '12px', borderBottom: '2px solid var(--color-gold)' }}>Personal Information</h3>
@@ -486,6 +496,7 @@ export default function Profile() {
               )}
             </div>
           </div>
+        </div>
         )}
 
         {/* ==================== TAB 2: Security & Password ==================== */}

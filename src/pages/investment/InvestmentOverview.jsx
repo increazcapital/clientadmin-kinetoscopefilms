@@ -534,9 +534,9 @@ export default function InvestmentOverview() {
             .reduce((sum, t) => sum + Number(t.amount || 0), 0);
         }
 
-        // Compute the final total: max of segment sum vs approved deposits
+        // Compute the final total: active investments sum
         const segmentTotal = activeInvestments.reduce((sum, inv) => sum + (inv.amount || 0), 0);
-        const finalTotalInvested = Math.max(approvedDepositsTotal, segmentTotal);
+        const finalTotalInvested = segmentTotal;
         setApprovedDepositsTotal(finalTotalInvested);
 
         // Cache results

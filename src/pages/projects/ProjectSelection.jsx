@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { apiRequest } from '../../config/apiHelper';
+import { formatCurrency } from '../../utils/formatters';
 
 /* ── Segment color map ─────────────────────── */
 const segmentColors = {
@@ -94,6 +95,7 @@ export default function ProjectSelection() {
           riskReward: `${p.riskLevel || p.risk || 'Medium'} / ${p.monthlyRoi || p.roi || '1.0%'} ROI`,
           bannerImg: p.bannerImage || p.bannerImg || '',
           summary: p.summary || 'Entertainment production opportunity.',
+          update: p.currentUpdate || p.update || '',
           initials: SEGMENT_ABBR[p.segment] || p.name.slice(0, 2).toUpperCase()
         };
       });
@@ -109,11 +111,6 @@ export default function ProjectSelection() {
 
   const handleApply = async () => {
     if (!applyModal) return;
-    const numAmount = Number(amount);
-    if (!numAmount || numAmount < applyModal.minInvestment) {
-      alert(`Investment amount must be at least ₹${applyModal.minInvestment.toLocaleString('en-IN')}`);
-      return;
-    }
     if (!ackRisk || !agreeTerms) {
       alert('Please acknowledge the risk profile and agree to terms of service.');
       return;
@@ -123,16 +120,16 @@ export default function ProjectSelection() {
       setSubmitting(true);
       const res = await apiRequest(`/api/client/projects/${applyModal.id}/apply`, {
         method: 'POST',
-        body: JSON.stringify({ amount: numAmount })
+        body: JSON.stringify({})
       });
-      alert(res.message || 'Application submitted successfully! Super Admin has been notified.');
+      alert(res.message || 'Application request submitted successfully! Super Admin has been notified.');
       setApplyModal(null);
       setAmount('');
       setAckRisk(false);
       setAgreeTerms(false);
       fetchProjects();
     } catch (err) {
-      alert(err.message || 'Failed to submit investment application');
+      alert(err.message || 'Failed to submit investment application request');
     } finally {
       setSubmitting(false);
     }
@@ -227,9 +224,16 @@ export default function ProjectSelection() {
 
               {/* Card Body */}
               <div className="kfpl-portfolio-card-body">
-                <div className="kfpl-portfolio-card-topline">
+                <div className="kfpl-portfolio-card-topline" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span className="kfpl-portfolio-segment">{opp.segment}</span>
-                  <strong>Min: ₹{(opp.minInvestment / 100000).toFixed(1)}L</strong>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ color: 'var(--color-text-muted, #64748B)', display: 'block', fontSize: '0.6875rem' }}>
+                      Min: <strong style={{ color: 'var(--color-text-primary, #1E293B)' }}>{formatCurrency(opp.minInvestment)}</strong>
+                    </span>
+                    <span style={{ color: 'var(--color-gold, #D97706)', fontWeight: 800, fontSize: '0.8125rem' }}>
+                      Max: {formatCurrency(opp.targetFunding)}
+                    </span>
+                  </div>
                 </div>
 
                 <h2>{opp.name}</h2>
@@ -259,6 +263,21 @@ export default function ProjectSelection() {
                 <div className="kfpl-progress">
                   <div className="kfpl-progress-fill" style={{ width: `${fillPercent}%`, background: accentColor === '#DC2626' ? 'var(--color-gold)' : 'var(--portfolio-accent)' }} />
                 </div>
+
+                {/* Latest Status Update Note */}
+                {opp.update && (
+                  <div style={{ marginTop: '12px', padding: '10px 12px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.25)', borderRadius: '8px', textAlign: 'left' }}>
+                    <div style={{ fontSize: '0.6875rem', fontWeight: 800, color: 'var(--color-success, #10B981)', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '3px' }}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}>
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                      </svg>
+                      LATEST UPDATE
+                    </div>
+                    <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-primary, #1E293B)', lineHeight: 1.4 }}>{opp.update}</div>
+                  </div>
+                )}
 
                 {/* Action button */}
                 <div style={{ marginTop: '16px' }}>
@@ -368,77 +387,10 @@ export default function ProjectSelection() {
 
             {/* Form Body */}
             <div className="kfpl-ps-modal-body" style={{ padding: '24px', background: '#fff', overflowY: 'auto', flex: 1 }}>
-              {/* Summary */}
-              <div style={{ marginBottom: '20px', background: '#F0F5F2', padding: '14px', borderRadius: '10px', fontSize: '0.875rem', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
-                <strong>Project Summary:</strong> {applyModal.summary}
+              {/* Info Note */}
+              <div style={{ marginBottom: '20px', background: 'var(--color-surface)', padding: '14px', borderRadius: '10px', fontSize: '0.875rem', color: 'var(--color-text-secondary)', lineHeight: 1.5, border: '1px solid var(--color-border-light)' }}>
+                <strong>Application Request Info:</strong> Submitting this request expresses your interest in <strong>{applyModal.name}</strong>. A notification will be sent directly to Super Admin. To fund your account, please submit a deposit via the <strong>Deposit & Withdrawal</strong> section.
               </div>
-
-              {/* Input Block */}
-              <div className="kfpl-input-group" style={{ marginBottom: '20px' }}>
-                <label className="kfpl-input-label" style={{ display: 'block', marginBottom: '8px', fontSize: '0.875rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>
-                  Enter Investment Amount (₹) <span style={{ color: 'red' }}>*</span>
-                </label>
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                  <span style={{ position: 'absolute', left: '16px', fontSize: '1.125rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>₹</span>
-                  <input
-                    className="kfpl-input"
-                    type="number"
-                    placeholder={`Minimum ${applyModal.minInvestment.toLocaleString('en-IN')}`}
-                    value={amount}
-                    onChange={e => setAmount(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '12px 12px 12px 32px',
-                      fontSize: '1.125rem',
-                      fontWeight: 600,
-                      borderRadius: '8px',
-                      border: modalIsBelowMin && amount ? '1px solid var(--color-error)' : '1px solid var(--color-border)',
-                      outline: 'none'
-                    }}
-                  />
-                </div>
-                {modalIsBelowMin && amount && (
-                  <span style={{ color: 'var(--color-error)', fontSize: '0.75rem', marginTop: '4px', display: 'block', fontWeight: 600 }}>
-                    ⚠️ Amount must be at least ₹{applyModal.minInvestment.toLocaleString('en-IN')}
-                  </span>
-                )}
-              </div>
-
-              {/* Interactive Forecast & Perks */}
-              {modalNumAmount > 0 && !modalIsBelowMin && (
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '12px',
-                  background: '#F9FAF9',
-                  padding: '16px',
-                  borderRadius: '12px',
-                  border: '1px dashed var(--color-gold)',
-                  marginBottom: '20px'
-                }}>
-                  <div>
-                    <span style={{ display: 'block', fontSize: '0.6875rem', color: 'var(--color-text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Est. Monthly Payout</span>
-                    <strong style={{ fontSize: '1.125rem', color: 'var(--color-success)', fontWeight: 800 }}>
-                      ₹{Math.round(modalEstMonthlyReturn).toLocaleString('en-IN')}
-                    </strong>
-                  </div>
-                  <div>
-                    <span style={{ display: 'block', fontSize: '0.6875rem', color: 'var(--color-text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Qualifying Tier</span>
-                    <span style={{
-                      display: 'inline-block',
-                      padding: '4px 10px',
-                      borderRadius: '20px',
-                      fontSize: '0.8125rem',
-                      fontWeight: 700,
-                      color: modalPerk.color,
-                      background: modalPerk.bg,
-                      marginTop: '4px'
-                    }}>
-                      {modalPerk.name}
-                    </span>
-                  </div>
-                </div>
-              )}
 
               {/* Acknowledge Checkbox */}
               <label className="kfpl-ps-modal-checkbox-label" style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', userSelect: 'none', margin: '0 0 12px 0', textAlign: 'left' }}>
@@ -452,7 +404,7 @@ export default function ProjectSelection() {
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ width: '12px', height: '12px' }}><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
                 <span className="kfpl-ps-modal-checkbox-text" style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', lineHeight: 1.4, margin: 0 }}>
-                  I acknowledge the risks associated with this investment and understand the project profile: <strong>{applyModal.riskReward}</strong>
+                  I acknowledge the risk profile for this project: <strong>{applyModal.riskReward}</strong> (Min. Investment ₹{applyModal.minInvestment.toLocaleString('en-IN')})
                 </span>
               </label>
 
@@ -478,19 +430,19 @@ export default function ProjectSelection() {
               <button className="kfpl-btn kfpl-btn--ghost" onClick={() => setApplyModal(null)} style={{ padding: '10px 20px' }}>Cancel</button>
               <button
                 className="kfpl-btn kfpl-btn--primary"
-                disabled={!amount || modalIsBelowMin || !ackRisk || !agreeTerms}
+                disabled={!ackRisk || !agreeTerms || submitting}
                 onClick={handleApply}
                 style={{
                   padding: '10px 24px',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  cursor: (!amount || modalIsBelowMin || !ackRisk || !agreeTerms) ? 'not-allowed' : 'pointer',
-                  opacity: (!amount || modalIsBelowMin || !ackRisk || !agreeTerms) ? 0.5 : 1
+                  cursor: (!ackRisk || !agreeTerms || submitting) ? 'not-allowed' : 'pointer',
+                  opacity: (!ackRisk || !agreeTerms || submitting) ? 0.5 : 1
                 }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-                Submit Application
+                {submitting ? 'Submitting...' : 'Submit Interest Request'}
               </button>
             </div>
           </div>

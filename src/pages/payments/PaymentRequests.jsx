@@ -24,13 +24,24 @@ const CreditCardIcon = () => (
 export default function PaymentRequests() {
   const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState('deposit');
-  const [form, setForm] = useState({ amount: '', mode: 'Bank Transfer', reference: '', note: '', reason: '', proofFile: '' });
+  const [form, setForm] = useState({ amount: '', mode: 'Bank Transfer', reference: '', note: '', reason: '', proofFile: '', selectedProjectId: '', selectedProjectName: '' });
   const [requestsList, setRequestsList] = useState([]);
+  const [dbProjects, setDbProjects] = useState([]);
   const [stats, setStats] = useState({ totalDeposits: 0, totalWithdrawals: 0, pendingRequests: 0 });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   const formatAmount = (num) => `₹${Number(num).toLocaleString('en-IN')}`;
+
+  const fetchProjects = async () => {
+    try {
+      const res = await apiRequest('/api/client/projects');
+      const list = Array.isArray(res) ? res : (res?.data?.projects || res?.projects || []);
+      setDbProjects(list.filter(p => p.name !== '__KFPL_DUMMY__'));
+    } catch (e) {
+      console.error('Failed to load projects for deposit dropdown:', e);
+    }
+  };
 
   const fetchTransactions = async () => {
     try {
@@ -56,7 +67,8 @@ export default function PaymentRequests() {
         note: req.remarks || req.note || '',
         reference: req.referenceNumber || req.reference || '',
         reason: req.remarks || req.reason || '',
-        proofFile: req.proofFile || req.fileUrl || ''
+        proofFile: req.proofFile || req.fileUrl || '',
+        projectName: req.projectName || ''
       }));
       setRequestsList(mapped);
 
@@ -82,7 +94,6 @@ export default function PaymentRequests() {
       }));
     } catch (err) {
       console.error('Failed to load transaction list:', err);
-      // Fallback from SWR cache or mock
       const cacheKey = `kfpl_client_payments_cache_${getClientId()}`;
       const stored = localStorage.getItem(cacheKey);
       if (stored) {
@@ -111,7 +122,6 @@ export default function PaymentRequests() {
   };
 
   useEffect(() => {
-    // --- SWR Cache Initialization for Instant Load (0ms) ---
     try {
       const cacheKey = `kfpl_client_payments_cache_${getClientId()}`;
       const cacheData = localStorage.getItem(cacheKey);
@@ -119,17 +129,23 @@ export default function PaymentRequests() {
         const parsed = JSON.parse(cacheData);
         if (parsed.requestsList) setRequestsList(parsed.requestsList);
         if (parsed.stats) setStats(parsed.stats);
-        setLoading(false); // bypass loading screen
+        setLoading(false);
       }
     } catch (e) {
       console.warn('Failed to parse payments cache:', e);
     }
+    fetchProjects();
     fetchTransactions();
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.amount || submitting) return;
+
+    if (activeTab === 'deposit' && !form.selectedProjectId) {
+      addToast('error', 'Project Required', 'Please select a target investment project for your deposit!');
+      return;
+    }
 
     if (activeTab === 'deposit' && !form.proofFile) {
       addToast('error', 'Proof Required', 'Please upload a proof of deposit receipt!');
@@ -145,6 +161,10 @@ export default function PaymentRequests() {
         formData.append('paymentMethod', form.mode);
         formData.append('referenceNumber', form.reference || `TXN${Date.now()}`);
         formData.append('remarks', form.note || '');
+        if (form.selectedProjectId) {
+          formData.append('projectId', form.selectedProjectId);
+          formData.append('projectName', form.selectedProjectName);
+        }
         if (form.proofFile && form.proofFile.raw) {
           formData.append('file', form.proofFile.raw);
         }
@@ -166,7 +186,7 @@ export default function PaymentRequests() {
       }
 
       addToast('success', 'Request Submitted', `${activeTab === 'deposit' ? 'Deposit' : 'Withdrawal'} request submitted successfully!`);
-      setForm({ amount: '', mode: 'Bank Transfer', reference: '', note: '', reason: '', proofFile: '' });
+      setForm({ amount: '', mode: 'Bank Transfer', reference: '', note: '', reason: '', proofFile: '', selectedProjectId: '', selectedProjectName: '' });
       fetchTransactions();
     } catch (err) {
       console.error('Error submitting payment request:', err);
@@ -254,6 +274,30 @@ export default function PaymentRequests() {
             </div>
             {activeTab === 'deposit' && (
               <>
+                <div className="kfpl-input-group">
+                  <label className="kfpl-input-label">Target Investment Project <span className="required">*</span></label>
+                  <select
+                    className="kfpl-select"
+                    value={form.selectedProjectId}
+                    required
+                    onChange={e => {
+                      const pid = e.target.value;
+                      const proj = dbProjects.find(p => String(p._id || p.id) === pid);
+                      setForm({
+                        ...form,
+                        selectedProjectId: pid,
+                        selectedProjectName: proj ? proj.name : ''
+                      });
+                    }}
+                  >
+                    <option value="">-- Select Target Investment Project --</option>
+                    {dbProjects.map(p => (
+                      <option key={p._id || p.id} value={p._id || p.id}>
+                        {p.name} [{p.segment || 'General'}]
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div className="kfpl-input-group">
                   <label className="kfpl-input-label">Reference Number</label>
                   <input className="kfpl-input" placeholder="Transaction reference (optional)" value={form.reference} onChange={e => setForm({ ...form, reference: e.target.value })} />

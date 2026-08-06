@@ -14,6 +14,7 @@ import Modal from '../../components/ui/Modal';
 import KpiCard from '../../components/ui/KpiCard';
 import { apiRequest } from '../../config/apiHelper';
 import { getApiUrl } from '../../config/apiUrl';
+import KycAgreementCard from '../../components/common/KycAgreementCard';
 
 
 const formatAgentID = (rawId) => {
@@ -294,8 +295,8 @@ export default function DashboardHome() {
             .filter(t => t.type === 'deposit' && String(t.status || '').toLowerCase() === 'approved')
             .reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
-          // Primary = Investment model value from backend; fallback to tx sum if backend is 0
-          const finalTotalInvested = Number(backendTotal) > 0 ? Number(backendTotal) : approvedDepositsSum;
+          // Primary = Investment model value from backend
+          const finalTotalInvested = Number(backendTotal) || 0;
 
           updatedStats = {
             totalInvested: finalTotalInvested,
@@ -642,6 +643,20 @@ export default function DashboardHome() {
           </span>
         </div>
       )}
+
+      {/* KYC AGREEMENT CARD */}
+      <div style={{ marginTop: '20px' }}>
+        <KycAgreementCard
+          agreementUrl={client.agreementDocument}
+          agreementVerified={client.agreementDocumentVerified}
+          agreementVerifiedAt={client.agreementDocumentVerifiedAt}
+          clientName={client.name}
+          isDashboardHome={true}
+          onUploadSuccess={(newUrl) => {
+            setClient(prev => ({ ...prev, agreementDocument: newUrl }));
+          }}
+        />
+      </div>
 
       {/* ═══════════════ LIVE INVESTMENT STATUS UPDATES SLIDER ═══════════════ */}
       <div className="kfpl-section-header" style={{ marginTop: '28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

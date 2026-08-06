@@ -7,68 +7,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { SEGMENTS } from '../../constants';
 import { apiRequest } from '../../config/apiHelper';
+import { formatCurrency } from '../../utils/formatters';
 
-const PROJECT_META = {
-  1: {
-    summary: 'Flagship feature slate moving through production with cast-led marketing upside.',
-    risk: 'Medium',
-    horizon: 'Q4 2025 release window',
-    roi: '15%',
-    update: 'Principal photography completed; post-production review in progress.',
-    allocation: 'Film production, talent, post-production, release planning',
-    health: 'On Track',
-    accent: '#10B981',
-  },
-  2: {
-    summary: 'Music catalogue and album pipeline with recurring streaming revenue potential.',
-    risk: 'Low',
-    horizon: 'Released catalogue',
-    roi: '10%',
-    update: 'Five albums live across streaming platforms with royalty tracking active.',
-    allocation: 'Recording, artist promotion, streaming distribution',
-    health: 'Completed',
-    accent: '#7C3AED',
-  },
-  3: {
-    summary: 'Distribution portfolio across domestic and digital channels with title-level monetisation.',
-    risk: 'Medium',
-    horizon: '18 month cycle',
-    roi: '12%',
-    update: 'Twelve titles under active distribution with partner reporting underway.',
-    allocation: 'Rights acquisition, channel placement, distribution operations',
-    health: 'Performing',
-    accent: '#2563EB',
-  },
-  4: {
-    summary: 'Curated content IP vault focused on long-term licensing and remake value.',
-    risk: 'Low',
-    horizon: '24 month cycle',
-    roi: '14%',
-    update: 'Acquisition review running across shortlisted content properties.',
-    allocation: 'IP acquisition, legal diligence, catalogue management',
-    health: 'Building',
-    accent: '#0F766E',
-  },
-  5: {
-    summary: 'Trade and syndication desk for packaging content opportunities into deal flow.',
-    risk: 'Medium',
-    horizon: '12 month cycle',
-    roi: '13%',
-    update: 'Eight active deals in negotiation and syndication review.',
-    allocation: 'Deal sourcing, syndication desk, commercial coordination',
-    health: 'Active',
-    accent: '#F59E0B',
-  },
-  6: {
-    summary: 'Cinema exhibition rollout planned across priority micro-markets.',
-    risk: 'Medium High',
-    horizon: 'Planning phase',
-    roi: '11%',
-    update: 'Three locations under feasibility, lease, and operations planning.',
-    allocation: 'Site diligence, setup planning, launch operations',
-    health: 'Planned',
-    accent: '#0891B2',
-  },
+const SEGMENT_COLORS = {
+  'Film Making': '#10B981',
+  Music: '#7C3AED',
+  Distribution: '#2563EB',
+  'Trading & Syndication': '#F59E0B',
+  'Content IP Bank': '#0F766E',
+  'Film Exhibition': '#0891B2',
 };
 
 const SEGMENT_ABBR = {
@@ -195,7 +142,10 @@ export default function Portfolio() {
           name: p.name || '',
           segment: p.segment || '',
           status: p.status || 'Planning',
-          value: p.portfolioValue || p.value || '₹0 Cr',
+          targetFunding: p.targetFunding || 0,
+          value: p.targetFunding
+            ? formatCurrency(p.targetFunding)
+            : (p.portfolioValue && p.portfolioValue !== '₹0.0 Cr' && p.portfolioValue !== '₹0 Cr' ? p.portfolioValue : formatCurrency(Number(p.value || 0))),
           milestone: p.milestoneProgress !== undefined ? p.milestoneProgress : (p.milestone !== undefined ? p.milestone : 0),
           summary: p.summary || '',
           risk: p.riskLevel || p.risk || 'Medium',
@@ -252,23 +202,21 @@ export default function Portfolio() {
 
   const enrichedProjects = useMemo(() => {
     return projects.map(project => {
-      const matchedMeta = Object.entries(PROJECT_META).find(([k, v]) => {
-        return String(k) === String(project.id) || v.summary === project.summary;
-      })?.[1] || {};
-
       return {
         ...project,
-        summary: project.summary || matchedMeta.summary || '',
-        risk: project.risk || matchedMeta.risk || 'Medium',
-        horizon: project.horizon || matchedMeta.horizon || '12 month cycle',
-        roi: project.roi || matchedMeta.roi || '1.0%',
-        health: project.health || matchedMeta.health || 'On Track',
+        summary: project.summary || '',
+        risk: project.risk || 'Medium',
+        horizon: project.horizon || '12 Months',
+        roi: project.roi || '1.0%',
+        health: project.health || 'On Track',
         update: project.update || '',
         allocation: project.allocation || '',
-        accent: project.accent || matchedMeta.accent || '#10B981',
-        valueLabel: cleanValue(project.value || '₹0 Cr'),
+        accent: SEGMENT_COLORS[project.segment] || '#10B981',
+        valueLabel: (project.value && project.value !== '₹0.0 Cr' && project.value !== '₹0 Cr')
+          ? cleanValue(project.value)
+          : formatCurrency(project.targetFunding || 0),
         valueCr: parseCroreValue(project.value || '₹0 Cr'),
-        initials: SEGMENT_ABBR[project.segment] || project.name.slice(0, 2).toUpperCase(),
+        initials: SEGMENT_ABBR[project.segment] || (project.name || 'KP').slice(0, 2).toUpperCase(),
       };
     });
   }, [projects]);
@@ -317,14 +265,26 @@ export default function Portfolio() {
           }}>
             <span>{drawerProject.initials}</span>
             <div>
-              <strong>{drawerProject.valueLabel}</strong>
-              <small>Portfolio value</small>
+              <strong style={{ fontSize: '0.9rem', color: '#F59E0B' }}>Max Target: {formatCurrency(drawerProject.targetFunding || drawerProject.value || 0)}</strong>
+              <small style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.72rem' }}>Min Investment: {formatCurrency(drawerProject.minInvestment || 0)}</small>
             </div>
           </div>
 
           <p className="kfpl-portfolio-drawer-summary">{drawerProject.summary}</p>
 
           <div className="kfpl-portfolio-drawer-kpis">
+            <div>
+              <span>Min. Investment</span>
+              <strong>{formatCurrency(drawerProject.minInvestment || 0)}</strong>
+            </div>
+            <div>
+              <span>Max Target Funding</span>
+              <strong style={{ color: '#F59E0B' }}>{formatCurrency(drawerProject.targetFunding || drawerProject.value || 0)}</strong>
+            </div>
+            <div>
+              <span>Funded Amount</span>
+              <strong style={{ color: '#10B981' }}>{formatCurrency(drawerProject.fundedAmount || 0)}</strong>
+            </div>
             <div>
               <span>Status</span>
               <strong>{drawerProject.status}</strong>
@@ -563,9 +523,16 @@ export default function Portfolio() {
               </div>
 
               <div className="kfpl-portfolio-card-body">
-                <div className="kfpl-portfolio-card-topline">
+                <div className="kfpl-portfolio-card-topline" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span className="kfpl-portfolio-segment">{project.segment}</span>
-                  <strong>{project.valueLabel}</strong>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ color: 'var(--color-text-muted, #64748B)', display: 'block', fontSize: '0.6875rem' }}>
+                      Min: <strong style={{ color: 'var(--color-text-primary, #1E293B)' }}>{formatCurrency(project.minInvestment || 0)}</strong>
+                    </span>
+                    <span style={{ color: 'var(--color-gold, #D97706)', fontWeight: 800, fontSize: '0.8125rem' }}>
+                      Max: {formatCurrency(project.targetFunding || project.value || 0)}
+                    </span>
+                  </div>
                 </div>
 
                 <h2>{project.name}</h2>
@@ -593,6 +560,20 @@ export default function Portfolio() {
                 <div className="kfpl-progress">
                   <div className="kfpl-progress-fill" style={{ width: `${project.milestone}%` }}></div>
                 </div>
+
+                {project.update && (
+                  <div style={{ marginTop: '12px', padding: '10px 12px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.25)', borderRadius: '8px', textAlign: 'left' }}>
+                    <div style={{ fontSize: '0.6875rem', fontWeight: 800, color: 'var(--color-success, #10B981)', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '3px' }}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}>
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                      </svg>
+                      LATEST UPDATE
+                    </div>
+                    <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-primary, #1E293B)', lineHeight: 1.4 }}>{project.update}</div>
+                  </div>
+                )}
               </div>
             </button>
           ))
