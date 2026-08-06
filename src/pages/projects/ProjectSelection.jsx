@@ -54,17 +54,71 @@ export default function ProjectSelection() {
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [applyModal, setApplyModal] = useState(null);
-  const [amount, setAmount] = useState('');
+  const [investAmount, setInvestAmount] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('Bank Transfer (IMPS/NEFT)');
+  const [transactionRef, setTransactionRef] = useState('');
+  const [proofFile, setProofFile] = useState(null);
   const [ackRisk, setAckRisk] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  const handleOpenApplyModal = (opp) => {
+    setApplyModal(opp);
+    setInvestAmount(opp.minInvestment || 5);
+    setPaymentMethod('Bank Transfer (IMPS/NEFT)');
+    setTransactionRef('');
+    setProofFile(null);
+    setAckRisk(false);
+    setAgreeTerms(false);
+  };
+
   const fetchProjects = async () => {
     try {
-      const data = await apiRequest('/api/client/projects');
+      const [data, invData, txData] = await Promise.all([
+        apiRequest('/api/client/projects').catch(() => null),
+        apiRequest('/api/client/investments').catch(() => null),
+        apiRequest('/api/client/transactions').catch(() => null)
+      ]);
+
       const raw = extractProjects(data);
       const filteredRaw = raw.filter(p => p.name !== '__KFPL_DUMMY__');
+
+      // Track project IDs that currently have a pending investment or deposit request
+      const pendingProjectIds = new Set();
+      const activeInvestmentsMap = new Map();
+
+      if (invData) {
+        const invList = Array.isArray(invData.data?.investments) 
+          ? invData.data.investments 
+          : (Array.isArray(invData.data) ? invData.data : (Array.isArray(invData) ? invData : []));
+
+        invList.forEach(i => {
+          const pId = String(i.projectId?._id || i.projectId || '');
+          if (!pId) return;
+          const st = (i.status || '').toLowerCase();
+          if (st === 'pending') {
+            pendingProjectIds.add(pId);
+          } else if (st === 'active') {
+            const current = activeInvestmentsMap.get(pId) || 0;
+            activeInvestmentsMap.set(pId, current + Number(i.investmentAmount || 0));
+          }
+        });
+      }
+
+      if (txData) {
+        const txList = Array.isArray(txData.data) ? txData.data : (Array.isArray(txData) ? txData : []);
+        txList.forEach(t => {
+          const pId = String(t.projectId?._id || t.projectId || '');
+          if (!pId) return;
+          const st = (t.status || '').toLowerCase();
+          if (st === 'pending' && t.type === 'deposit') {
+            pendingProjectIds.add(pId);
+          }
+        });
+      }
+
       const mapped = filteredRaw.map(p => {
+        const pId = String(p._id || p.id);
         const segStyle = getSegmentStyle(p.segment);
         const minInvestment = p.minInvestment || segStyle.minInvestment || 200000;
         const targetFunding = p.targetFunding || 25000000;
@@ -77,15 +131,22 @@ export default function ProjectSelection() {
           isFull = true;
         }
 
+        const isInvested = activeInvestmentsMap.has(pId);
+        const investedAmount = activeInvestmentsMap.get(pId) || 0;
+        const isPending = !isInvested && pendingProjectIds.has(pId);
+
         const fillPercent = targetFunding > 0
           ? Math.min(100, Math.round((fundedAmount / targetFunding) * 100))
           : Math.min(100, Math.round(((totalSlots - slotsAvailable) / (totalSlots || 1)) * 100));
 
         return {
-          id: p._id || p.id,
+          id: pId,
           name: p.name || '',
           segment: p.segment || 'Film Making',
-          status: isFull ? 'Slot Full' : 'Open',
+          status: isInvested ? 'Invested' : (isPending ? 'Pending Verification' : (isFull ? 'Slot Full' : 'Open')),
+          isPending,
+          isInvested,
+          investedAmount,
           minInvestment,
           targetFunding,
           fundedAmount,
@@ -109,8 +170,27 @@ export default function ProjectSelection() {
     }
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      setProofFile(file);
+    }
+  };
+
   const handleApply = async () => {
     if (!applyModal) return;
+    if (!investAmount || parseFloat(investAmount) <= 0) {
+      alert('Please enter a valid investment amount.');
+      return;
+    }
+    if (!transactionRef || !transactionRef.trim()) {
+      alert('Please enter your Transaction Reference / UTR Number as proof of payment.');
+      return;
+    }
+    if (!proofFile) {
+      alert('Please upload your Payment Proof Document (receipt / screenshot / PDF) to submit application.');
+      return;
+    }
     if (!ackRisk || !agreeTerms) {
       alert('Please acknowledge the risk profile and agree to terms of service.');
       return;
@@ -118,16 +198,30 @@ export default function ProjectSelection() {
 
     try {
       setSubmitting(true);
+
+      const formData = new FormData();
+      formData.append('amount', parseFloat(investAmount));
+      formData.append('paymentMethod', paymentMethod);
+      formData.append('transactionRef', transactionRef.trim());
+      formData.append('file', proofFile);
+      formData.append('ackRisk', 'true');
+      formData.append('agreeTerms', 'true');
+
       const res = await apiRequest(`/api/client/projects/${applyModal.id}/apply`, {
         method: 'POST',
-        body: JSON.stringify({})
+        body: formData
       });
-      alert(res.message || 'Application request submitted successfully! Super Admin has been notified.');
+
+      // Close modal IMMEDIATELY upon successful submission
       setApplyModal(null);
-      setAmount('');
+      setInvestAmount('');
+      setTransactionRef('');
+      setProofFile(null);
       setAckRisk(false);
       setAgreeTerms(false);
       fetchProjects();
+
+      alert(res.message || 'Payment deposit & project application request submitted successfully! Pending Super Admin approval.');
     } catch (err) {
       alert(err.message || 'Failed to submit investment application request');
     } finally {
@@ -139,7 +233,7 @@ export default function ProjectSelection() {
   const modalRoiPercent = applyModal ? getRoiRate(applyModal.riskReward) : 1.0;
   const modalIsAnnual = modalRoiPercent >= 5;
   const modalMonthlyRate = modalIsAnnual ? (modalRoiPercent / 12) / 100 : (modalRoiPercent / 100);
-  const modalNumAmount = parseFloat(amount) || 0;
+  const modalNumAmount = parseFloat(investAmount) || 0;
   const modalEstMonthlyReturn = modalNumAmount * modalMonthlyRate;
   const modalPerk = getPerkTier(modalNumAmount);
   const modalIsBelowMin = applyModal ? (modalNumAmount < applyModal.minInvestment) : false;
@@ -281,14 +375,59 @@ export default function ProjectSelection() {
 
                 {/* Action button */}
                 <div style={{ marginTop: '16px' }}>
-                  {opp.status === 'Open' ? (
+                  {opp.isInvested ? (
+                    <button
+                      className="kfpl-btn"
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        padding: '10px',
+                        background: '#ECFDF5',
+                        color: '#065F46',
+                        border: '1.5px solid #10B981',
+                        borderRadius: '8px',
+                        fontWeight: 700,
+                        fontSize: '0.85rem',
+                        cursor: 'default'
+                      }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      Active Investment: ₹{opp.investedAmount.toLocaleString('en-IN')}
+                    </button>
+                  ) : opp.isPending ? (
+                    <button
+                      className="kfpl-btn"
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        padding: '10px',
+                        background: '#FEF3C7',
+                        color: '#92400E',
+                        border: '1.5px solid #FCD34D',
+                        borderRadius: '8px',
+                        fontWeight: 700,
+                        fontSize: '0.85rem',
+                        cursor: 'not-allowed'
+                      }}
+                      disabled
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      Request Submitted (Pending Approval)
+                    </button>
+                  ) : opp.status === 'Open' ? (
                     <button
                       className="kfpl-btn kfpl-btn--primary"
-                      onClick={() => setApplyModal(opp)}
+                      onClick={() => handleOpenApplyModal(opp)}
                       style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px' }}
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                      Apply Now
+                      + Apply & Submit Payment
                     </button>
                   ) : (
                     <button
@@ -322,7 +461,7 @@ export default function ProjectSelection() {
                 backgroundSize: 'cover',
                 backgroundPosition: 'left center',
                 padding: '24px',
-                minHeight: '260px',
+                minHeight: '220px',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'flex-end',
@@ -339,7 +478,7 @@ export default function ProjectSelection() {
                   <span className="kfpl-ps-modal-banner-segment" style={{ color: 'rgba(255, 255, 255, 0.85)', display: 'block', fontWeight: 600 }}>
                     {applyModal.segment}
                   </span>
-                  <h2 className="kfpl-ps-modal-banner-title" style={{ color: '#fff', margin: '4px 0 0 0', textShadow: '0 2px 8px rgba(0,0,0,0.6)', fontSize: '1.4rem', fontWeight: 800 }}>
+                  <h2 className="kfpl-ps-modal-banner-title" style={{ color: '#fff', margin: '4px 0 0 0', textShadow: '0 2px 8px rgba(0,0,0,0.6)', fontSize: '1.35rem', fontWeight: 800 }}>
                     Apply for {applyModal.name}
                   </h2>
                 </div>
@@ -370,10 +509,12 @@ export default function ProjectSelection() {
             </div>
 
             {/* Project Quick Info Strip */}
-            <div className="kfpl-ps-modal-info-strip" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', background: '#F8FAF9', borderBottom: '1px solid var(--color-border)', textAlign: 'center', padding: '16px' }}>
+            <div className="kfpl-ps-modal-info-strip" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', background: '#F8FAF9', borderBottom: '1px solid var(--color-border)', textAlign: 'center', padding: '14px 16px' }}>
               <div>
-                <span style={{ display: 'block', fontSize: '0.6875rem', color: 'var(--color-text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Min. Investment</span>
-                <strong style={{ display: 'block', fontSize: '1rem', color: 'var(--color-text-primary)', marginTop: '4px' }}>₹{applyModal.minInvestment.toLocaleString('en-IN')}</strong>
+                <span style={{ display: 'block', fontSize: '0.6875rem', color: 'var(--color-text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Min - Max Required</span>
+                <strong style={{ display: 'block', fontSize: '0.925rem', color: 'var(--color-text-primary)', marginTop: '4px' }}>
+                  ₹{applyModal.minInvestment.toLocaleString('en-IN')} - ₹{(applyModal.targetFunding || 25000000).toLocaleString('en-IN')}
+                </strong>
               </div>
               <div style={{ borderLeft: '1px solid var(--color-border)', borderRight: '1px solid var(--color-border)' }}>
                 <span style={{ display: 'block', fontSize: '0.6875rem', color: 'var(--color-text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Slots Available</span>
@@ -386,10 +527,107 @@ export default function ProjectSelection() {
             </div>
 
             {/* Form Body */}
-            <div className="kfpl-ps-modal-body" style={{ padding: '24px', background: '#fff', overflowY: 'auto', flex: 1 }}>
+            <div className="kfpl-ps-modal-body" style={{ padding: '20px 24px', background: '#fff', overflowY: 'auto', flex: 1, maxHeight: '65vh' }}>
+              {/* Payment Deposit Form Fields */}
+              <div style={{ marginBottom: '18px', background: '#F8FAF9', padding: '16px', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
+                <h4 style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-navy)', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                  Payment & Deposit Details
+                </h4>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: '4px' }}>
+                      Investment Amount (₹) <span style={{ color: 'red' }}>*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min={applyModal.minInvestment || 1}
+                      max={applyModal.targetFunding || 25000000}
+                      className="kfpl-input"
+                      style={{ width: '100%', fontSize: '0.95rem', fontWeight: 700, padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                      value={investAmount}
+                      onChange={(e) => setInvestAmount(e.target.value)}
+                      placeholder={`Min ₹${applyModal.minInvestment.toLocaleString('en-IN')}`}
+                    />
+                    <span style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 600, marginTop: '3px', display: 'block' }}>
+                      Min: ₹{applyModal.minInvestment.toLocaleString('en-IN')} • Max: ₹{(applyModal.targetFunding || 25000000).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: '4px' }}>
+                      Payment Gateway / Method <span style={{ color: 'red' }}>*</span>
+                    </label>
+                    <select
+                      className="kfpl-input"
+                      style={{ width: '100%', fontSize: '0.85rem', fontWeight: 600, padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--color-border)', background: '#fff' }}
+                      value={paymentMethod}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                    >
+                      <option value="Bank Transfer (IMPS/NEFT)">Bank Transfer (IMPS/NEFT)</option>
+                      <option value="UPI Payment">UPI Payment (GPay/PhonePe)</option>
+                      <option value="Wire Transfer">Wire Transfer / Cheque</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: '4px' }}>
+                    Payment Reference / UTR Number <span style={{ color: 'red' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="kfpl-input"
+                    style={{ width: '100%', fontSize: '0.85rem', fontWeight: 600, padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                    value={transactionRef}
+                    onChange={(e) => setTransactionRef(e.target.value)}
+                    placeholder="e.g. UTR1234567890 or Txn Ref No."
+                  />
+                  <span style={{ fontSize: '0.728rem', color: 'var(--color-text-muted)', marginTop: '4px', display: 'block' }}>
+                    Enter UTR / transaction reference number from your banking/UPI app as proof of payment.
+                  </span>
+                </div>
+
+                <div style={{ marginTop: '12px' }}>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: '4px' }}>
+                    Payment Proof Document / Screenshot <span style={{ color: 'red' }}>*</span>
+                  </label>
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      padding: '12px 14px',
+                      background: proofFile ? 'rgba(16, 185, 129, 0.08)' : '#fff',
+                      border: proofFile ? '1.5px solid #10B981' : '1px dashed var(--color-border)',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      color: proofFile ? '#047857' : 'var(--color-text-secondary)',
+                      fontWeight: 600
+                    }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    {proofFile ? `Attached: ${proofFile.name} (${Math.round(proofFile.size / 1024)} KB)` : 'Click to Upload Payment Proof Document (PDF, Image, Doc)'}
+                    <input
+                      type="file"
+                      accept="*/*"
+                      onChange={handleFileChange}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
+                  {!proofFile && (
+                    <span style={{ fontSize: '0.72rem', color: '#DC2626', marginTop: '4px', display: 'block', fontWeight: 600 }}>
+                      ⚠️ Payment Proof Document is required before submitting application.
+                    </span>
+                  )}
+                </div>
+              </div>
               {/* Info Note */}
               <div style={{ marginBottom: '20px', background: 'var(--color-surface)', padding: '14px', borderRadius: '10px', fontSize: '0.875rem', color: 'var(--color-text-secondary)', lineHeight: 1.5, border: '1px solid var(--color-border-light)' }}>
-                <strong>Application Request Info:</strong> Submitting this request expresses your interest in <strong>{applyModal.name}</strong>. A notification will be sent directly to Super Admin. To fund your account, please submit a deposit via the <strong>Deposit & Withdrawal</strong> section.
+                <strong>Application Request Info:</strong> Submitting this request expresses your interest in <strong>{applyModal.name}</strong>. Your payment deposit proof will be sent directly to Super Admin for verification.
               </div>
 
               {/* Acknowledge Checkbox */}
@@ -429,20 +667,25 @@ export default function ProjectSelection() {
             <div className="kfpl-ps-modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', padding: '16px 24px', background: '#F8FAF9', borderTop: '1px solid var(--color-border)' }}>
               <button className="kfpl-btn kfpl-btn--ghost" onClick={() => setApplyModal(null)} style={{ padding: '10px 20px' }}>Cancel</button>
               <button
-                className="kfpl-btn kfpl-btn--primary"
-                disabled={!ackRisk || !agreeTerms || submitting}
+                className="kfpl-btn"
+                disabled={!proofFile || !ackRisk || !agreeTerms || submitting}
                 onClick={handleApply}
                 style={{
                   padding: '10px 24px',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  cursor: (!ackRisk || !agreeTerms || submitting) ? 'not-allowed' : 'pointer',
-                  opacity: (!ackRisk || !agreeTerms || submitting) ? 0.5 : 1
+                  background: (!proofFile || !ackRisk || !agreeTerms || submitting) ? 'var(--color-border)' : '#10B981',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: (!proofFile || !ackRisk || !agreeTerms || submitting) ? 'not-allowed' : 'pointer',
+                  opacity: (!proofFile || !ackRisk || !agreeTerms || submitting) ? 0.6 : 1
                 }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-                {submitting ? 'Submitting...' : 'Submit Interest Request'}
+                {submitting ? 'Submitting Application...' : 'Submit Payment Proof & Project Application'}
               </button>
             </div>
           </div>

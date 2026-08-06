@@ -50,6 +50,7 @@ export const RISK_PROFILES = [
 export const REQUEST_CATEGORIES = [
   'Profile Update',
   'Investment Query',
+  'Project Investment Request',
   'Risk Profile Change',
   'Contract Period Extended',
   'Payment Issue',
