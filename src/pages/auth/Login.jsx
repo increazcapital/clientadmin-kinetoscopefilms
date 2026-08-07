@@ -88,7 +88,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await fetch(getApiUrl('/api/auth/login'), {
+      const response = await fetch(getApiUrl('/api/client/auth/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -164,7 +164,7 @@ export default function Login() {
     }
 
     try {
-      const response = await fetch(getApiUrl('/api/auth/verify-2fa'), {
+      const response = await fetch(getApiUrl('/api/client/auth/verify-2fa'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp }),
@@ -782,9 +782,9 @@ export default function Login() {
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                   </svg>
                 </div>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', marginBottom: '6px' }}>Two-Factor Authentication</h2>
-                <p style={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.4, marginBottom: '12px' }}>
-                  We sent a 6-digit verification code to your registered email.<br />Please enter the code below.
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A', marginBottom: '6px' }}>Two-Factor Authentication</h2>
+                <p style={{ fontSize: '0.8125rem', color: '#475569', lineHeight: 1.4 }}>
+                  We sent a verification code to your email.<br />Please enter the 6-digit code below.
                 </p>
                 <div style={{
                   background: 'rgba(16, 185, 129, 0.12)',
@@ -812,7 +812,7 @@ export default function Login() {
 
               <form className="kfpl-login-form" onSubmit={handleOtpSubmit}>
                 <div className="kfpl-login-input-group">
-                  <label className="kfpl-login-label">Verification Code</label>
+                  <label className="kfpl-login-label" style={{ color: '#0F172A', fontWeight: 600 }}>Verification Code</label>
                   <input
                     type="text"
                     maxLength="6"
