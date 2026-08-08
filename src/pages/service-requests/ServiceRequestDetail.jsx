@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { apiRequest } from '../../config/apiHelper';
+import { getApiUrl } from '../../config/apiUrl';
 
 export default function ServiceRequestDetail() {
   const navigate = useNavigate();
@@ -215,7 +216,7 @@ export default function ServiceRequestDetail() {
                 <h4 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-muted)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Attachments</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <a 
-                    href={getAttachmentUrl(req).startsWith('http') ? getAttachmentUrl(req) : `http://192.168.1.28:5000${getAttachmentUrl(req).startsWith('/') ? '' : '/'}${getAttachmentUrl(req)}`}
+                    href={getAttachmentUrl(req).startsWith('http') ? getAttachmentUrl(req) : getApiUrl(getAttachmentUrl(req).startsWith('/') ? getAttachmentUrl(req) : '/' + getAttachmentUrl(req))}
                     target="_blank" 
                     rel="noreferrer" 
                     style={{ 
@@ -239,7 +240,7 @@ export default function ServiceRequestDetail() {
                   {/\.(jpg|jpeg|png|gif|webp)$/i.test(getAttachmentUrl(req)) && (
                     <div style={{ marginTop: '4px' }}>
                       <img 
-                        src={getAttachmentUrl(req).startsWith('http') ? getAttachmentUrl(req) : `http://192.168.1.28:5000${getAttachmentUrl(req).startsWith('/') ? '' : '/'}${getAttachmentUrl(req)}`}
+                        src={getAttachmentUrl(req).startsWith('http') ? getAttachmentUrl(req) : getApiUrl(getAttachmentUrl(req).startsWith('/') ? getAttachmentUrl(req) : '/' + getAttachmentUrl(req))}
                         alt="Attachment Preview"
                         style={{ maxWidth: '100%', maxHeight: '240px', borderRadius: '8px', border: '1px solid var(--color-border)', objectFit: 'contain', background: '#f8fafc', padding: '6px' }}
                       />

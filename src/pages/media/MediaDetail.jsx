@@ -452,7 +452,7 @@ export default function MediaDetail() {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                 <span>Investor Relations Advisory Notice</span>
               </div>
-              <p>{article.advisory || "The information contained in this report is intended solely for registered partners and qualified investors of Kinetoscope Film Production Pvt Ltd. Performance returns and projections are subject to standard entertainment industry risks. Please contact your dedicated account manager for custom portfolio modifications."}</p>
+              <p>{article.advisory || "The information contained in this report is intended solely for registered partners and qualified investors of Kinetoscope Films Production Pvt Ltd. Performance returns and projections are subject to standard entertainment industry risks. Please contact your dedicated account manager for custom portfolio modifications."}</p>
             </div>
 
             {/* Tags Row */}

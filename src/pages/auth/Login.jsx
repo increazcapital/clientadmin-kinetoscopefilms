@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getApiUrl } from '../../config/apiUrl';
+import { safeSetLocalStorage } from '../../config/apiHelper';
 import { useToast } from '../../components/ui/Toast';
 import { WORLD_COUNTRY_CODES } from '../../data/countryCodes';
 
@@ -106,10 +107,10 @@ export default function Login() {
           addToast('Verification code sent to your registered email address.', 'info', '2FA Authentication');
         } else {
           const clientObject = data.client || (data.data && data.data.user ? data.data.user : data.data) || data.user || {};
-          localStorage.setItem('kfpl_client_auth', JSON.stringify({ 
+          safeSetLocalStorage('kfpl_client_auth', { 
             token: data.token, 
             client: { ...clientObject, email, name: clientObject.name || clientObject.fullName || 'Investor' } 
-          }));
+          });
           window.location.href = '/dashboard';
         }
       } else {
@@ -132,10 +133,10 @@ export default function Login() {
       }
 
       if (localUser) {
-        localStorage.setItem('kfpl_client_auth', JSON.stringify({
+        safeSetLocalStorage('kfpl_client_auth', {
           token: 'mock-jwt-token-12345',
           client: localUser
-        }));
+        });
         addToast('Logged in successfully (Local offline mock)', 'success');
         window.location.href = '/dashboard';
       } else {
@@ -154,10 +155,10 @@ export default function Login() {
 
     const isTfaEnabled = localStorage.getItem('kfpl_tfa_enabled') === 'true';
     if (isTfaEnabled && !backendRequiresTfa && tempToken && mockOtp && otp === mockOtp) {
-      localStorage.setItem('kfpl_client_auth', JSON.stringify({ 
+      safeSetLocalStorage('kfpl_client_auth', { 
         token: tempToken, 
         client: { ...tempUser, email, name: tempUser.name || tempUser.fullName || 'Investor' } 
-      }));
+      });
       window.location.href = '/dashboard';
       setLoading(false);
       return;
@@ -172,10 +173,10 @@ export default function Login() {
       const data = await response.json();
       if (response.ok) {
         const clientObject = data.client || (data.data && data.data.user ? data.data.user : data.data) || data.user || {};
-        localStorage.setItem('kfpl_client_auth', JSON.stringify({ 
+        safeSetLocalStorage('kfpl_client_auth', { 
           token: data.token, 
           client: { ...clientObject, email, name: clientObject.name || clientObject.fullName || 'Investor' } 
-        }));
+        });
         window.location.href = '/dashboard';
       } else {
         setOtpError(data.message || 'Invalid OTP.');
@@ -392,7 +393,7 @@ export default function Login() {
           <div style={{ background: '#ffffff', padding: '6px', width: '68px', height: '68px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(0,0,0,0.2)', marginBottom: '16px' }}>
             <img src="/logokfpl.jpeg" alt="KFPL Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '10px', display: 'block' }} />
           </div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#ffffff', margin: 0, lineHeight: 1.15 }}>Kinetoscope Film Pvt Ltd</h1>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#ffffff', margin: 0, lineHeight: 1.15 }}>Kinetoscope Films Pvt Ltd</h1>
           <p style={{ fontSize: '12px', color: 'rgba(240, 253, 244, 0.9)', letterSpacing: '1.5px', textTransform: 'uppercase', marginTop: '6px', marginBottom: '12px', fontWeight: '700' }}>A Global Media Fund</p>
           <p>Portfolio investing at your fingertips. Track assets, manage transactions, and claim exclusive tier rewards.</p>
         </div>
@@ -848,7 +849,7 @@ export default function Login() {
           )}
 
           <div className="kfpl-login-footer">
-            © 2026 Kinetoscope Film Pvt Ltd. All rights reserved.
+            © 2026 Kinetoscope Films Pvt Ltd. All rights reserved.
           </div>
         </div>
       </div>

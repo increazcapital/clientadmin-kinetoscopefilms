@@ -24,7 +24,7 @@ export default function ForgotPassword() {
           <div style={{ background: '#ffffff', padding: '6px', width: '68px', height: '68px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(0,0,0,0.2)', marginBottom: '16px' }}>
             <img src="/logokfpl.jpeg" alt="KFPL Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '10px', display: 'block' }} />
           </div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#ffffff', margin: 0, lineHeight: 1.15 }}>Kinetoscope Film Pvt Ltd</h1>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#ffffff', margin: 0, lineHeight: 1.15 }}>Kinetoscope Films Pvt Ltd</h1>
           <p style={{ fontSize: '12px', color: 'rgba(240, 253, 244, 0.9)', letterSpacing: '1.5px', textTransform: 'uppercase', marginTop: '6px', marginBottom: '12px', fontWeight: '700' }}>A Global Media Fund</p>
           <p>Client Portal. Reset your credentials securely here.</p>
         </div>
@@ -81,7 +81,7 @@ export default function ForgotPassword() {
           )}
 
           <div className="kfpl-login-footer">
-            © 2026 Kinetoscope Film Pvt Ltd. All rights reserved.
+            © 2026 Kinetoscope Films Pvt Ltd. All rights reserved.
           </div>
         </div>
       </div>

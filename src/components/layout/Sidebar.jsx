@@ -3,6 +3,7 @@
    Description: Dark forest green sidebar with client portal navigation
    ============================================================ */
 
+import { useState, useCallback } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { getApiUrl } from '../../config/apiUrl';
 
@@ -114,6 +115,27 @@ export default function Sidebar({ isCollapsed, onToggle, isMobileOpen, onMobileC
     return location.pathname.startsWith(path);
   };
 
+  // ── Tooltip state for collapsed sidebar (renders outside scrolling container) ──
+  const [tooltip, setTooltip] = useState({ visible: false, text: '', top: 0, left: 0 });
+
+  const handleTooltipEnter = useCallback((e) => {
+    if (!isCollapsed) return;
+    const el = e.currentTarget;
+    const label = el.getAttribute('data-tooltip');
+    if (!label) return;
+    const rect = el.getBoundingClientRect();
+    setTooltip({
+      visible: true,
+      text: label,
+      top: rect.top + rect.height / 2,
+      left: rect.right + 12,
+    });
+  }, [isCollapsed]);
+
+  const handleTooltipLeave = useCallback(() => {
+    setTooltip(prev => ({ ...prev, visible: false }));
+  }, []);
+
   const handleLogout = async () => {
     const authData = localStorage.getItem('kfpl_client_auth');
     const token = authData ? JSON.parse(authData)?.token : null;
@@ -149,8 +171,8 @@ export default function Sidebar({ isCollapsed, onToggle, isMobileOpen, onMobileC
           <div className="kfpl-sidebar-logo-text" style={{ overflow: 'hidden', flex: 1, minWidth: 0 }}>
             <div className="kfpl-sidebar-marquee-wrapper">
               <div className="kfpl-sidebar-marquee-track">
-                <span>KINETOSCOPE FILM PVT LTD &nbsp;&nbsp;&bull;&nbsp;&nbsp;&nbsp;</span>
-                <span>KINETOSCOPE FILM PVT LTD &nbsp;&nbsp;&bull;&nbsp;&nbsp;&nbsp;</span>
+                <span>KINETOSCOPE FILMS PVT LTD &nbsp;&nbsp;&bull;&nbsp;&nbsp;&nbsp;</span>
+                <span>KINETOSCOPE FILMS PVT LTD &nbsp;&nbsp;&bull;&nbsp;&nbsp;&nbsp;</span>
               </div>
             </div>
             <span className="kfpl-sidebar-logo-tagline" style={{ fontSize: '9px', color: '#059669', textTransform: 'uppercase', letterSpacing: '0.8px', marginTop: '1px', display: 'block', fontWeight: '700' }}>A Global Media Fund</span>
@@ -169,6 +191,9 @@ export default function Sidebar({ isCollapsed, onToggle, isMobileOpen, onMobileC
                   to={item.path}
                   className={`kfpl-sidebar-item ${isActive(item.path) ? 'active' : ''}`}
                   onClick={onMobileClose}
+                  data-tooltip={item.label}
+                  onMouseEnter={handleTooltipEnter}
+                  onMouseLeave={handleTooltipLeave}
                 >
                   <span className="kfpl-sidebar-item-icon">{icons[item.icon]}</span>
                   <span className="kfpl-sidebar-item-label">{item.label}</span>
@@ -180,15 +205,43 @@ export default function Sidebar({ isCollapsed, onToggle, isMobileOpen, onMobileC
 
         {/* Bottom Section: Logout + Collapse */}
         <div className="kfpl-sidebar-bottom">
-          <div className="kfpl-sidebar-item kfpl-sidebar-logout" onClick={handleLogout}>
+          <div className="kfpl-sidebar-item kfpl-sidebar-logout" onClick={handleLogout} data-tooltip="Logout" onMouseEnter={handleTooltipEnter} onMouseLeave={handleTooltipLeave}>
             <span className="kfpl-sidebar-item-icon">{icons.logout}</span>
             <span className="kfpl-sidebar-item-label">Logout</span>
           </div>
-          <div className="kfpl-sidebar-toggle" onClick={onToggle}>
+          <div className="kfpl-sidebar-toggle" onClick={onToggle} data-tooltip={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'} onMouseEnter={handleTooltipEnter} onMouseLeave={handleTooltipLeave}>
             {icons.chevronLeft}
           </div>
         </div>
       </aside>
+
+      {/* Fixed-position tooltip rendered outside sidebar scroll container */}
+      {isCollapsed && tooltip.visible && (
+        <div
+          className="kfpl-sidebar-tooltip-fixed"
+          style={{
+            position: 'fixed',
+            top: tooltip.top,
+            left: tooltip.left,
+            transform: 'translateY(-50%)',
+            background: '#FFFFFF',
+            color: '#10B981',
+            padding: '6px 14px',
+            borderRadius: '8px',
+            fontSize: '0.8125rem',
+            fontWeight: 700,
+            whiteSpace: 'nowrap',
+            boxShadow: '0 4px 18px rgba(0, 0, 0, 0.15)',
+            border: '1px solid rgba(16, 185, 129, 0.18)',
+            zIndex: 99999999,
+            pointerEvents: 'none',
+            letterSpacing: '0.3px',
+            fontFamily: 'var(--font-family, Inter, sans-serif)',
+          }}
+        >
+          {tooltip.text}
+        </div>
+      )}
     </>
   );
 }

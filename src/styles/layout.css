@@ -224,15 +224,8 @@
 }
 
 .kfpl-sidebar-item.active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 4px;
-  bottom: 4px;
-  width: 3px;
-  background: var(--color-gold);
-  border-radius: 0 3px 3px 0;
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+  display: none !important;
+  content: none !important;
 }
 
 .kfpl-sidebar-item-icon {

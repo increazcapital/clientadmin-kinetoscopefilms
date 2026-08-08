@@ -9,7 +9,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { RISK_PROFILES, NOMINEE_RELATIONS } from '../../constants';
 import { useToast } from '../../components/ui/Toast';
-import { apiRequest } from '../../config/apiHelper';
+import { apiRequest, safeSetLocalStorage } from '../../config/apiHelper';
 import { getApiUrl } from '../../config/apiUrl';
 import KycAgreementCard from '../../components/common/KycAgreementCard';
 
@@ -189,10 +189,14 @@ export default function Profile() {
 
             setClient(normalized);
             setClientEmail(normalized.email || '');
-            localStorage.setItem('kfpl_client_profile_cache', JSON.stringify({
-              client: normalized,
-              clientEmail: normalized.email || ''
-            }));
+            try {
+              localStorage.setItem('kfpl_client_profile_cache', JSON.stringify({
+                client: normalized,
+                clientEmail: normalized.email || ''
+              }));
+            } catch (e) {
+              console.warn('Profile cache localStorage quota exceeded:', e);
+            }
           }
         }
       } catch (err) {
@@ -205,6 +209,127 @@ export default function Profile() {
 
     loadProfile();
   }, []);
+
+  const compressImage = (file, maxSide = 300, quality = 0.8) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          if (width > height) {
+            if (width > maxSide) {
+              height = Math.round((height * maxSide) / width);
+              width = maxSide;
+            }
+          } else {
+            if (height > maxSide) {
+              width = Math.round((width * maxSide) / height);
+              height = maxSide;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      addToast('error', 'Invalid File', 'Please select an image file (PNG, JPG, JPEG, WEBP).');
+      return;
+    }
+
+    try {
+      addToast('info', 'Uploading Avatar', 'Optimizing and saving profile picture...');
+      const base64Image = await compressImage(file, 300, 0.8);
+
+      const res = await apiRequest('/api/client/profile', {
+        method: 'PATCH',
+        body: JSON.stringify({ profilePic: base64Image })
+      });
+
+      const updatedPicUrl = res?.data?.profilePic || res?.data?.user?.profilePic || res?.data?.client?.profilePic || base64Image;
+
+      setClient(prev => ({ ...prev, profilePic: updatedPicUrl }));
+
+      try {
+        const cacheData = localStorage.getItem('kfpl_client_dashboard_cache');
+        if (cacheData) {
+          const parsed = JSON.parse(cacheData);
+          if (parsed.client) parsed.client.profilePic = updatedPicUrl;
+          safeSetLocalStorage('kfpl_client_dashboard_cache', parsed);
+        }
+      } catch (_) {}
+
+      try {
+        const authData = localStorage.getItem('kfpl_client_auth');
+        if (authData) {
+          const parsed = JSON.parse(authData);
+          if (parsed.client) parsed.client.profilePic = updatedPicUrl;
+          if (parsed.user) parsed.user.profilePic = updatedPicUrl;
+          parsed.profilePic = updatedPicUrl;
+          safeSetLocalStorage('kfpl_client_auth', parsed);
+        }
+      } catch (_) {}
+
+      window.dispatchEvent(new Event('clientProfileUpdated'));
+      addToast('success', 'Profile Picture Updated', 'Your profile photo has been updated successfully!');
+    } catch (err) {
+      console.error('Failed to upload client avatar:', err);
+      addToast('error', 'Upload Failed', err.message || 'Failed to update profile picture.');
+    }
+  };
+
+  const handleAvatarRemove = async () => {
+    try {
+      addToast('info', 'Removing Avatar', 'Removing profile picture...');
+      await apiRequest('/api/client/profile/avatar', {
+        method: 'DELETE'
+      });
+
+      setClient(prev => ({ ...prev, profilePic: '' }));
+
+      try {
+        const cacheData = localStorage.getItem('kfpl_client_dashboard_cache');
+        if (cacheData) {
+          const parsed = JSON.parse(cacheData);
+          if (parsed.client) parsed.client.profilePic = '';
+          safeSetLocalStorage('kfpl_client_dashboard_cache', parsed);
+        }
+      } catch (_) {}
+
+      try {
+        const authData = localStorage.getItem('kfpl_client_auth');
+        if (authData) {
+          const parsed = JSON.parse(authData);
+          if (parsed.client) parsed.client.profilePic = '';
+          if (parsed.user) parsed.user.profilePic = '';
+          parsed.profilePic = '';
+          safeSetLocalStorage('kfpl_client_auth', parsed);
+        }
+      } catch (_) {}
+
+      window.dispatchEvent(new Event('clientProfileUpdated'));
+      addToast('success', 'Profile Picture Removed', 'Your profile photo has been removed successfully!');
+    } catch (err) {
+      console.error('Failed to remove client avatar:', err);
+      addToast('error', 'Removal Failed', err.message || 'Failed to remove profile picture.');
+    }
+  };
 
   const riskProfile = client ? RISK_PROFILES.find(r => r.id.toLowerCase() === client.riskProfile?.toLowerCase()) : null;
 
@@ -408,6 +533,117 @@ export default function Profile() {
         {/* ==================== TAB 1: Profile Details ==================== */}
         {activeTab === 'details' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {/* Profile Avatar & Hero Header */}
+            <div className="kfpl-card" style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '24px',
+              background: 'linear-gradient(135deg, #061D13 0%, #0B3020 100%)',
+              color: '#FFFFFF',
+              padding: '24px 28px',
+              borderRadius: '16px',
+              boxShadow: '0 8px 32px rgba(6, 29, 19, 0.15)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                <div style={{
+                  width: '90px',
+                  height: '90px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '2rem',
+                  fontWeight: '800',
+                  color: '#FFFFFF',
+                  boxShadow: '0 6px 20px rgba(16, 185, 129, 0.3)',
+                  border: '3px solid rgba(255, 255, 255, 0.2)',
+                  overflow: 'hidden'
+                }}>
+                  {client.profilePic ? (
+                    <img src={client.profilePic} alt={client.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    (client.name || 'C').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+                  )}
+                </div>
+                <label
+                  htmlFor="client-avatar-upload"
+                  title="Upload Profile Picture"
+                  style={{
+                    position: 'absolute',
+                    bottom: '-2px',
+                    right: '-2px',
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    background: '#10B981',
+                    color: '#FFFFFF',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.4)',
+                    border: '2px solid #061D13',
+                    zIndex: 10,
+                    transition: 'transform 0.2s ease, background 0.2s ease'
+                  }}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px' }}>
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                </label>
+                {Boolean(client.profilePic) && (
+                  <button
+                    type="button"
+                    title="Remove Profile Picture"
+                    onClick={handleAvatarRemove}
+                    style={{
+                      position: 'absolute',
+                      bottom: '-2px',
+                      left: '-2px',
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      background: '#EF4444',
+                      color: '#FFFFFF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 10px rgba(0,0,0,0.4)',
+                      border: '2px solid #061D13',
+                      zIndex: 10,
+                      transition: 'transform 0.2s ease, background 0.2s ease'
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '15px', height: '15px' }}>
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                  </button>
+                )}
+                <input
+                  type="file"
+                  id="client-avatar-upload"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleAvatarUpload}
+                />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#10B981', fontWeight: 700 }}>Client Account</span>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '2px 0 4px', color: '#FFFFFF' }}>{client.name}</h2>
+                <div style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>ID: {client.clientId}</div>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
+                  <span className="kfpl-badge kfpl-badge--active">{client.status}</span>
+                  <span className="kfpl-badge" style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10B981', border: '1px solid rgba(16, 185, 129, 0.4)' }}>{(client.category || 'SILVER').toUpperCase()} TIER</span>
+                </div>
+              </div>
+            </div>
+
             <KycAgreementCard
               agreementUrl={client.agreementDocument}
               agreementVerified={client.agreementDocumentVerified}

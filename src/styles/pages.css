@@ -1926,11 +1926,13 @@
 
 /* Article Body container styled as a premium card box with large padding and margin */
 .kfpl-pub-article-container {
-  width: 1100px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   background: var(--color-white);
   border: 1px solid var(--color-border-light);
   border-radius: 24px;
-  padding: 64px 80px;
+  padding: 48px 56px;
   margin-bottom: 56px;
   box-shadow: 0 10px 40px rgba(6, 29, 19, 0.025);
 }

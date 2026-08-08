@@ -390,14 +390,18 @@ export default function DashboardHome() {
             roi: p.monthlyRoi || p.roi || '',
             health: p.health || 'On Track',
             bannerImg: p.bannerImage || p.bannerImg || '',
-            media: (p.mediaFiles || p.media || []).map((url, idx) => ({
-              id: url,
-              name: url.split('/').pop() || `File ${idx + 1}`,
-              type: url.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? 'image/png' : 'application/pdf',
-              size: 0,
-              dataUrl: url,
-              uploadedAt: new Date().toISOString()
-            }))
+            media: (p.mediaFiles || p.media || []).map((item, idx) => {
+              const fileUrl = typeof item === 'string' ? item : (item?.url || item?.path || '');
+              const fileName = typeof item === 'object' && item?.name ? item.name : (fileUrl ? fileUrl.split('/').pop() : `File ${idx + 1}`);
+              return {
+                id: fileUrl || idx,
+                name: fileName || `File ${idx + 1}`,
+                type: fileUrl && fileUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? 'image/png' : 'application/pdf',
+                size: 0,
+                dataUrl: fileUrl,
+                uploadedAt: new Date().toISOString()
+              };
+            })
           }));
           setProjects(updatedProjects);
 
@@ -442,16 +446,23 @@ export default function DashboardHome() {
         }
 
         // Save fresh data to SWR Cache
-        localStorage.setItem('kfpl_client_dashboard_cache', JSON.stringify({
-          client: updatedClient || client,
-          stats: updatedStats || stats,
-          investments: updatedInvestments,
-          roiHistory: updatedRoiHistory,
-          journey: updatedJourney || journey,
-          projects: updatedProjects,
-          statusHistory: updatedStatusHistory,
-          clientHistoryLogs: updatedHistoryLogs
-        }));
+        try {
+          const sanitizeClient = updatedClient || client ? { ...(updatedClient || client) } : null;
+          if (sanitizeClient?.profilePic && sanitizeClient.profilePic.length > 2000) {
+            delete sanitizeClient.profilePic;
+          }
+
+          localStorage.setItem('kfpl_client_dashboard_cache', JSON.stringify({
+            client: sanitizeClient,
+            stats: updatedStats || stats,
+            investments: updatedInvestments,
+            roiHistory: updatedRoiHistory,
+            journey: updatedJourney || journey,
+            projects: updatedProjects,
+            statusHistory: updatedStatusHistory,
+            clientHistoryLogs: updatedHistoryLogs
+          }));
+        } catch (_) {}
 
       } catch (err) {
         console.error('Failed to load client dashboard:', err);
@@ -1416,7 +1427,7 @@ export default function DashboardHome() {
                   fontWeight: '800',
                   boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)'
                 }}>
-                  {client.agentName.split(' ').map(n => n[0]).join('')}
+                  {(client.agentName || 'Agent').trim().split(/\s+/).map(n => n[0] || '').join('').toUpperCase() || 'AG'}
                 </div>
                 <div>
                   <h4 style={{ fontSize: '1rem', fontWeight: '700' }}>{client.agentName}</h4>

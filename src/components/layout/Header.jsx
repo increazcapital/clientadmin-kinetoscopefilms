@@ -43,20 +43,52 @@ export default function Header({ isCollapsed, onMenuClick }) {
   const dropdownRef = useRef(null);
   const notifRef = useRef(null);
 
-  // Read logged-in client info from localStorage
-  const authData = localStorage.getItem('kfpl_client_auth');
-  let clientInfo = null;
-  if (authData) {
+  // Read logged-in client info from localStorage (pure, no setState)
+  const readClientInfo = () => {
+    let info = null;
+    let profilePic = '';
+
     try {
-      const parsed = JSON.parse(authData);
-      const root = parsed?.client || parsed;
-      clientInfo = root?.client || root?.data || root?.user || root;
+      const authData = localStorage.getItem('kfpl_client_auth');
+      if (authData) {
+        const parsed = JSON.parse(authData);
+        const root = parsed?.client || parsed;
+        info = root?.client || root?.data || root?.user || root;
+        if (info && info.profilePic !== undefined) {
+          profilePic = info.profilePic || '';
+        }
+      }
+
+      const cacheData = localStorage.getItem('kfpl_client_dashboard_cache');
+      if (cacheData) {
+        const parsed = JSON.parse(cacheData);
+        if (parsed?.client) {
+          if (parsed.client.profilePic !== undefined) {
+            profilePic = parsed.client.profilePic || '';
+          }
+        }
+      }
     } catch (e) {
-      console.error('Failed to parse authData', e);
+      console.error('Failed to parse client info in Header', e);
     }
-  }
+
+    return { info, profilePic };
+  };
+
+  const [clientInfo, setClientInfo] = useState(() => readClientInfo().info);
+  const [clientPic, setClientPic] = useState(() => readClientInfo().profilePic);
   const clientName = clientInfo?.name || 'Investor';
   const clientEmail = clientInfo?.email || 'investor@kfpl.com';
+
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      const { info, profilePic } = readClientInfo();
+      setClientInfo(info);
+      setClientPic(profilePic);
+    };
+    window.addEventListener('clientProfileUpdated', handleProfileUpdate);
+    return () => window.removeEventListener('clientProfileUpdated', handleProfileUpdate);
+  }, []);
 
   const fetchNotifications = async () => {
     try {
@@ -298,7 +330,13 @@ export default function Header({ isCollapsed, onMenuClick }) {
         {/* Client Profile with Dropdown */}
         <div className="kfpl-dropdown-container" ref={dropdownRef} style={{ position: 'relative' }}>
           <div className="kfpl-header-profile" onClick={() => setShowDropdown(!showDropdown)}>
-            <div className="kfpl-header-avatar">{clientName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}</div>
+            <div className="kfpl-header-avatar" style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {clientPic ? (
+                <img src={clientPic} alt={clientName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                clientName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+              )}
+            </div>
             <div className="kfpl-header-profile-info">
               <span className="kfpl-header-profile-name">{clientName}</span>
               <span className="kfpl-header-profile-role">Investor</span>

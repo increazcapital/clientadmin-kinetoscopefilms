@@ -61,6 +61,12 @@ export async function apiRequest(path, options = {}) {
   }
 
   if (!response.ok) {
+    if (response.status === 401 && !window.location.pathname.includes('/login')) {
+      try {
+        localStorage.removeItem('kfpl_client_auth');
+      } catch (_) {}
+      window.location.href = '/login';
+    }
     const errorMessage = data.message || data.error || `Request failed with status ${response.status}`;
     const err = new Error(errorMessage);
     err.status = response.status;
@@ -69,4 +75,49 @@ export async function apiRequest(path, options = {}) {
   }
 
   return data;
+}
+
+/**
+ * Safely set item in localStorage.
+ * If QuotaExceededError occurs, automatically clears old non-essential caches
+ * and strips heavy Base64 profilePic before retrying.
+ */
+export function safeSetLocalStorage(key, value) {
+  const str = typeof value === 'string' ? value : JSON.stringify(value);
+  try {
+    localStorage.setItem(key, str);
+  } catch (e) {
+    console.warn(`QuotaExceededError on setting ${key}, clearing old non-essential caches...`, e);
+    try {
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && (k.includes('_cache') || k.includes('_detail_') || k.includes('_list') || k.includes('_session_') || k.includes('_history'))) {
+          keysToRemove.push(k);
+        }
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+
+      let finalStr = str;
+      if (typeof value === 'object' && value !== null) {
+        const copy = JSON.parse(JSON.stringify(value));
+        const sanitizeObj = (obj) => {
+          if (!obj || typeof obj !== 'object') return;
+          for (const prop in obj) {
+            if (prop === 'profilePic' && typeof obj[prop] === 'string' && obj[prop].length > 2000) {
+              delete obj[prop];
+            } else if (typeof obj[prop] === 'object') {
+              sanitizeObj(obj[prop]);
+            }
+          }
+        };
+        sanitizeObj(copy);
+        finalStr = JSON.stringify(copy);
+      }
+
+      localStorage.setItem(key, finalStr);
+    } catch (err2) {
+      console.error(`Fatal localStorage write error for ${key}:`, err2);
+    }
+  }
 }
