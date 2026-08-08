@@ -257,6 +257,28 @@ export default function Profile() {
       addToast('info', 'Uploading Avatar', 'Optimizing and saving profile picture...');
       const base64Image = await compressImage(file, 300, 0.8);
 
+      // INSTANT OPTIMISTIC UI & CACHE UPDATE (0ms)
+      setClient(prev => ({ ...prev, profilePic: base64Image }));
+      try {
+        const cacheData = localStorage.getItem('kfpl_client_dashboard_cache');
+        if (cacheData) {
+          const parsed = JSON.parse(cacheData);
+          if (parsed.client) parsed.client.profilePic = base64Image;
+          safeSetLocalStorage('kfpl_client_dashboard_cache', parsed);
+        }
+      } catch (_) {}
+      try {
+        const authData = localStorage.getItem('kfpl_client_auth');
+        if (authData) {
+          const parsed = JSON.parse(authData);
+          if (parsed.client) parsed.client.profilePic = base64Image;
+          if (parsed.user) parsed.user.profilePic = base64Image;
+          parsed.profilePic = base64Image;
+          safeSetLocalStorage('kfpl_client_auth', parsed);
+        }
+      } catch (_) {}
+      window.dispatchEvent(new Event('clientProfileUpdated'));
+
       const res = await apiRequest('/api/client/profile', {
         method: 'PATCH',
         body: JSON.stringify({ profilePic: base64Image })
@@ -296,11 +318,7 @@ export default function Profile() {
 
   const handleAvatarRemove = async () => {
     try {
-      addToast('info', 'Removing Avatar', 'Removing profile picture...');
-      await apiRequest('/api/client/profile/avatar', {
-        method: 'DELETE'
-      });
-
+      // INSTANT OPTIMISTIC REMOVAL (0ms)
       setClient(prev => ({ ...prev, profilePic: '' }));
 
       try {
@@ -325,6 +343,10 @@ export default function Profile() {
 
       window.dispatchEvent(new Event('clientProfileUpdated'));
       addToast('success', 'Profile Picture Removed', 'Your profile photo has been removed successfully!');
+
+      await apiRequest('/api/client/profile/avatar', {
+        method: 'DELETE'
+      });
     } catch (err) {
       console.error('Failed to remove client avatar:', err);
       addToast('error', 'Removal Failed', err.message || 'Failed to remove profile picture.');
