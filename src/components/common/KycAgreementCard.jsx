@@ -27,9 +27,13 @@ export default function KycAgreementCard({
 
   const nameKey = (clientName || 'client').replace(/\s+/g, '_');
 
-  // ── Calculate 24-hour expiration for verified banner on Dashboard Home ──
-  let isExpired24h = false;
-  if (agreementVerified) {
+  const [dismissed, setDismissed] = useState(() => {
+    return localStorage.getItem(`client_kyc_banner_dismissed_${nameKey}`) === 'true';
+  });
+
+  // ── Calculate 2-hour expiration for verified banner on Dashboard Home ──
+  let isExpired = dismissed;
+  if (agreementVerified && !isExpired) {
     let verifyTime = agreementVerifiedAt ? new Date(agreementVerifiedAt).getTime() : null;
     const storageKey = `client_agreement_verified_time_${nameKey}`;
     if (!verifyTime) {
@@ -44,18 +48,18 @@ export default function KycAgreementCard({
       localStorage.setItem(storageKey, verifyTime.toString());
     }
     const elapsedHours = (Date.now() - verifyTime) / (1000 * 60 * 60);
-    if (elapsedHours >= 24) {
-      isExpired24h = true;
+    if (elapsedHours >= 2) {
+      isExpired = true;
     }
   }
 
-  // 1. If on Dashboard Home & verified for > 24 hours -> Hide completely from Dashboard Home!
-  if (isDashboardHome && agreementVerified && isExpired24h) {
+  // 1. If on Dashboard Home & verified for > 2 hours or dismissed -> Hide completely from Dashboard Home!
+  if (isDashboardHome && agreementVerified && isExpired) {
     return null;
   }
 
-  // 2. If on Dashboard Home & verified for <= 24 hours -> Show Congratulations Banner!
-  if (isDashboardHome && agreementVerified && !isExpired24h) {
+  // 2. If on Dashboard Home & verified for <= 2 hours -> Show Congratulations Banner!
+  if (isDashboardHome && agreementVerified && !isExpired) {
     return (
       <div
         style={{
@@ -70,9 +74,10 @@ export default function KycAgreementCard({
           gap: '16px',
           flexWrap: 'wrap',
           boxShadow: '0 4px 15px rgba(16, 185, 129, 0.08)',
+          position: 'relative'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: '260px' }}>
           <div
             style={{
               width: '42px',
@@ -96,18 +101,41 @@ export default function KycAgreementCard({
               Congratulations! Official Agreement Verified & Approved 🎉
             </h4>
             <p style={{ margin: '3px 0 0', fontSize: '0.82rem', color: '#047857', lineHeight: 1.45 }}>
-              Your signed agreement and KYC documents have been successfully verified by Super Admin. You can view or download your official contract anytime in your <strong>My Profile</strong> page.
+              Your signed agreement and KYC documents have been successfully verified by Kinetoscope Films Team. You can view or download your official contract anytime in your <strong>My Profile</strong> page.
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          className="kfpl-btn kfpl-btn--secondary"
-          onClick={() => navigate('/profile')}
-          style={{ fontSize: '0.8rem', padding: '8px 16px', whiteSpace: 'nowrap' }}
-        >
-          View in My Profile
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button
+            type="button"
+            className="kfpl-btn kfpl-btn--secondary"
+            onClick={() => navigate('/profile')}
+            style={{ fontSize: '0.8rem', padding: '8px 16px', whiteSpace: 'nowrap' }}
+          >
+            View in My Profile
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              localStorage.setItem(`client_kyc_banner_dismissed_${nameKey}`, 'true');
+              setDismissed(true);
+            }}
+            style={{
+              background: 'rgba(6, 95, 70, 0.1)',
+              border: 'none',
+              color: '#065F46',
+              fontSize: '1.1rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              padding: '6px 10px',
+              borderRadius: '8px',
+              lineHeight: 1
+            }}
+            title="Dismiss banner"
+          >
+            ✕
+          </button>
+        </div>
       </div>
     );
   }

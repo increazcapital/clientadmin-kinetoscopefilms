@@ -266,14 +266,107 @@
 
 .kfpl-login-mock-otp span { font-size: 0.75rem; color: var(--color-gold); font-weight: 600; }
 
+.kfpl-phone-unified-wrap {
+  display: flex;
+  align-items: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  width: 100%;
+}
+
+.kfpl-phone-unified-wrap:focus-within {
+  border-color: var(--color-gold);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+.kfpl-phone-unified-wrap select {
+  border: none !important;
+  border-right: 1px solid #cbd5e1 !important;
+  border-radius: 0 !important;
+  background: #f8fafc !important;
+  padding: 10px 2px 10px 6px !important;
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+  outline: none !important;
+  cursor: pointer;
+  width: 76px !important;
+  min-width: 76px !important;
+  max-width: 76px !important;
+  flex-shrink: 0 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+}
+
+.kfpl-phone-unified-wrap select option {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+.kfpl-phone-unified-wrap input {
+  flex: 1 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  outline: none !important;
+  padding: 10px 12px !important;
+  font-size: 0.875rem !important;
+  color: #0f172a !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
 @media (max-width: 900px) {
   .kfpl-login { grid-template-columns: 1fr; height: auto; overflow: auto; }
   .kfpl-login-wallpaper { display: none; }
   .kfpl-login-panel {
     min-height: 100vh;
-    background: linear-gradient(180deg, rgba(6,29,19,0.92) 0%, rgba(6,29,19,0.98) 100%), url('/login-bg.jpg') center / cover no-repeat;
+    background: linear-gradient(180deg, rgba(6,29,19,0.95) 0%, rgba(6,29,19,0.99) 100%), url('/login-bg.jpg') center / cover no-repeat;
     overflow-y: auto;
     height: auto;
+  }
+  .kfpl-login-title {
+    color: #ffffff !important;
+  }
+  .kfpl-login-subtitle {
+    color: rgba(240, 253, 244, 0.85) !important;
+  }
+  .kfpl-login-tabs {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+  }
+  .kfpl-login-tab {
+    color: rgba(255, 255, 255, 0.9) !important;
+  }
+  .kfpl-login-tab:hover:not(.active) {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.18) !important;
+  }
+  .kfpl-login-tab.active {
+    background: linear-gradient(135deg, var(--color-gold) 0%, var(--color-gold-dark) 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 16px rgba(16,185,129,0.4) !important;
+  }
+  .kfpl-login-label {
+    color: rgba(240, 253, 244, 0.95) !important;
+  }
+  .kfpl-login-remember {
+    color: rgba(240, 253, 244, 0.85) !important;
+  }
+  .kfpl-login-forgot {
+    color: var(--color-gold) !important;
+  }
+  .kfpl-login-footer, .kfpl-login-copy {
+    color: rgba(240, 253, 244, 0.65) !important;
+  }
+  .kfpl-login-checkbox-label, .kfpl-login-checkbox-label span {
+    color: rgba(240, 253, 244, 0.9) !important;
   }
 }
 

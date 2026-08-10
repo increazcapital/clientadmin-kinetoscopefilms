@@ -61,11 +61,13 @@ export async function apiRequest(path, options = {}) {
   }
 
   if (!response.ok) {
-    if (response.status === 401 && !window.location.pathname.includes('/login')) {
+    if ((response.status === 401 || response.status === 403) && !window.location.pathname.includes('/login')) {
+      const reason = data.message || 'Your account has been deactivated or put on hold.';
       try {
         localStorage.removeItem('kfpl_client_auth');
       } catch (_) {}
-      window.location.href = '/login';
+      window.location.href = `/login?blocked=true&reason=${encodeURIComponent(reason)}`;
+      return;
     }
     const errorMessage = data.message || data.error || `Request failed with status ${response.status}`;
     const err = new Error(errorMessage);
