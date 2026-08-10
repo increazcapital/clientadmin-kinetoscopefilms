@@ -8,7 +8,7 @@ export default function MissingDocsReuploadCard({ client, loading = false, onDoc
 
   if (loading || !client) return null;
 
-  // Determine missing documents
+  // Determine missing documents (agreement is handled exclusively by KycAgreementCard)
   const missingList = [];
   if (!client.panDocument) {
     missingList.push({ key: 'panDocument', label: 'PAN Card Document' });
@@ -18,9 +18,6 @@ export default function MissingDocsReuploadCard({ client, loading = false, onDoc
   }
   if (!client.bankProofDocument) {
     missingList.push({ key: 'bankProofDocument', label: 'Bank Details Document' });
-  }
-  if (!client.agreementDocument && !client.signedAgreementUrl) {
-    missingList.push({ key: 'agreementDocument', label: 'Signed Participation Agreement' });
   }
 
   if (missingList.length === 0) return null;
