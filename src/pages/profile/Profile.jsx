@@ -12,6 +12,7 @@ import { useToast } from '../../components/ui/Toast';
 import { apiRequest, safeSetLocalStorage } from '../../config/apiHelper';
 import { getApiUrl } from '../../config/apiUrl';
 import KycAgreementCard from '../../components/common/KycAgreementCard';
+import MissingDocsReuploadCard from '../../components/common/MissingDocsReuploadCard';
 
 const formatClientID = (rawId) => {
   if (!rawId || rawId === '—') return '—';
@@ -659,12 +660,53 @@ export default function Profile() {
                 <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#10B981', fontWeight: 700 }}>Client Account</span>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '2px 0 4px', color: '#FFFFFF' }}>{client.name}</h2>
                 <div style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>ID: {client.clientId}</div>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
                   <span className="kfpl-badge kfpl-badge--active">{client.status}</span>
                   <span className="kfpl-badge" style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10B981', border: '1px solid rgba(16, 185, 129, 0.4)' }}>{(client.category || 'SILVER').toUpperCase()} TIER</span>
+                  {Boolean(client.agreementDocumentVerified) && String(client.kycStatus || client.kyc || '').toUpperCase() === 'VERIFIED' ? (
+                    <span className="kfpl-badge" style={{ background: 'rgba(16, 185, 129, 0.25)', color: '#34D399', border: '1px solid rgba(52, 211, 153, 0.5)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 11 12 14 22 4"/></svg>
+                      KYC VERIFIED
+                    </span>
+                  ) : String(client.kycStatus || client.kyc || '').toUpperCase() === 'REJECTED' ? (
+                    <span className="kfpl-badge" style={{ background: 'rgba(239, 68, 68, 0.25)', color: '#F87171', border: '1px solid rgba(248, 113, 113, 0.5)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                      KYC REJECTED
+                    </span>
+                  ) : (
+                    <span className="kfpl-badge" style={{ background: 'rgba(245, 158, 11, 0.25)', color: '#FBBF24', border: '1px solid rgba(251, 191, 36, 0.5)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      KYC PENDING
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
+
+            <MissingDocsReuploadCard
+              client={client}
+              loading={loading}
+              onDocUploaded={(docKey, newUrl) => {
+                setClient(prev => {
+                  const updated = { ...prev, [docKey]: newUrl };
+                  try {
+                    safeSetLocalStorage('kfpl_client_profile_cache', {
+                      client: updated,
+                      clientEmail: updated.email || '',
+                    });
+                    const authData = localStorage.getItem('kfpl_client_auth');
+                    if (authData) {
+                      const parsed = JSON.parse(authData);
+                      if (parsed.client) {
+                        parsed.client[docKey] = newUrl;
+                        safeSetLocalStorage('kfpl_client_auth', parsed);
+                      }
+                    }
+                  } catch (e) {}
+                  return updated;
+                });
+              }}
+            />
 
             <KycAgreementCard
               agreementUrl={client.agreementDocument}

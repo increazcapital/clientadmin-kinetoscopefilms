@@ -15,6 +15,7 @@ import KpiCard from '../../components/ui/KpiCard';
 import { apiRequest } from '../../config/apiHelper';
 import { getApiUrl } from '../../config/apiUrl';
 import KycAgreementCard from '../../components/common/KycAgreementCard';
+import MissingDocsReuploadCard from '../../components/common/MissingDocsReuploadCard';
 
 
 const formatAgentID = (rawId) => {
@@ -615,7 +616,7 @@ export default function DashboardHome() {
       </div>
 
       {/* KYC PENDING WARNING BANNER */}
-      {String(client.kycStatus || client.kyc || '').toUpperCase() === 'PENDING' && (
+      {String(client.kycStatus || client.kyc || '').toUpperCase() === 'PENDING' && !client.agreementDocumentVerified && (
         <div style={{
           background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.08) 100%)',
           border: '1px solid rgba(245, 158, 11, 0.4)',
@@ -642,7 +643,7 @@ export default function DashboardHome() {
                 KYC Verification Pending
               </h4>
               <p style={{ margin: 0, fontSize: '0.8125rem', color: '#92400E' }}>
-                Your KYC documents have been submitted and are currently awaiting review & approval by Super Admin.
+                Your KYC documents have been submitted and are currently awaiting review & approval by Kinetoscope Films Team.
               </p>
             </div>
           </div>
@@ -654,6 +655,32 @@ export default function DashboardHome() {
           </span>
         </div>
       )}
+
+      {/* MISSING DOCUMENTS RE-UPLOAD CARD */}
+      <MissingDocsReuploadCard
+        client={client}
+        loading={!client || !client.name}
+        onDocUploaded={(docKey, newUrl) => {
+          setClient(prev => {
+            const updated = { ...prev, [docKey]: newUrl };
+            try {
+              const cacheData = localStorage.getItem('kfpl_client_dashboard_cache');
+              if (cacheData) {
+                const parsed = JSON.parse(cacheData);
+                if (parsed.client) parsed.client[docKey] = newUrl;
+                safeSetLocalStorage('kfpl_client_dashboard_cache', parsed);
+              }
+              const authData = localStorage.getItem('kfpl_client_auth');
+              if (authData) {
+                const parsed = JSON.parse(authData);
+                if (parsed.client) parsed.client[docKey] = newUrl;
+                safeSetLocalStorage('kfpl_client_auth', parsed);
+              }
+            } catch (e) {}
+            return updated;
+          });
+        }}
+      />
 
       {/* KYC AGREEMENT CARD */}
       <div style={{ marginTop: '20px' }}>
