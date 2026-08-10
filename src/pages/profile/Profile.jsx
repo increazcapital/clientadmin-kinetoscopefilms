@@ -13,6 +13,7 @@ import { apiRequest, safeSetLocalStorage } from '../../config/apiHelper';
 import { getApiUrl } from '../../config/apiUrl';
 import KycAgreementCard from '../../components/common/KycAgreementCard';
 import MissingDocsReuploadCard from '../../components/common/MissingDocsReuploadCard';
+import SensitiveValueToggle from '../../components/common/SensitiveValueToggle';
 
 const formatClientID = (rawId) => {
   if (!rawId || rawId === '—') return '—';
@@ -754,6 +755,23 @@ export default function Profile() {
               ))}
             </div>
 
+            {/* Bank & KYC Details */}
+            <div className="kfpl-card">
+              <h3 style={{ marginBottom: '16px', paddingBottom: '12px', borderBottom: '2px solid var(--color-gold)' }}>Bank & KYC Details</h3>
+              {[
+                ['Bank Name', client.bankName || '—'],
+                ['Account Number', <SensitiveValueToggle key="acc" value={client.accountNumber || client.accountNo} />],
+                ['IFSC Code', <SensitiveValueToggle key="ifsc" value={client.ifscCode || client.ifsc} />],
+                ['PAN Card Number', <SensitiveValueToggle key="pan" value={client.panNumber || client.pan} />],
+                ['Aadhaar / ID Number', <SensitiveValueToggle key="aadh" value={client.aadhaarNumber || client.aadhaar} />],
+              ].map(([label, value]) => (
+                <div key={label} className="kfpl-profile-info-row">
+                  <span className="kfpl-profile-info-label">{label}</span>
+                  <span className="kfpl-profile-info-value">{value}</span>
+                </div>
+              ))}
+            </div>
+
             {/* Nominee Details */}
             <div className="kfpl-nominee-card">
               <div className="kfpl-nominee-card-header">
@@ -763,7 +781,7 @@ export default function Profile() {
               {[
                 ['Nominee Name', client.nominee?.name],
                 ['Relation', client.nominee?.relation],
-                ['Contact', client.nominee?.contact],
+                ['Contact', <SensitiveValueToggle key="nomcontact" value={client.nominee?.contact} />],
                 ['Email Address', client.nominee?.email || 'Not provided'],
               ].map(([label, value]) => (
                 <div key={label} className="kfpl-profile-info-row">
