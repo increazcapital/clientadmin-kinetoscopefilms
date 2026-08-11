@@ -195,7 +195,8 @@ export default function KycAgreementCard({
     }
   };
 
-  const hasAgreement = Boolean(agreementUrl && agreementUrl.trim() !== '');
+  const hasAgreement = Boolean(agreementUrl && String(agreementUrl).trim() !== '' && agreementUrl !== 'null' && agreementUrl !== 'undefined');
+  const isVerified = hasAgreement && Boolean(agreementVerified);
 
   return (
     <div
@@ -241,12 +242,12 @@ export default function KycAgreementCard({
                     borderRadius: '20px',
                     fontSize: '0.72rem',
                     fontWeight: 700,
-                    background: agreementVerified ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
-                    color: agreementVerified ? '#059669' : '#D97706',
-                    border: `1px solid ${agreementVerified ? '#10B981' : '#F59E0B'}`,
+                    background: isVerified ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                    color: isVerified ? '#059669' : '#D97706',
+                    border: `1px solid ${isVerified ? '#10B981' : '#F59E0B'}`,
                   }}
                 >
-                  {agreementVerified ? 'VERIFIED AGREEMENT' : 'SIGNED & UPLOADED (PENDING REVIEW)'}
+                  {isVerified ? 'VERIFIED AGREEMENT' : 'SIGNED & UPLOADED (PENDING REVIEW)'}
                 </span>
               ) : (
                 <span
@@ -271,7 +272,7 @@ export default function KycAgreementCard({
         </div>
 
         {/* Action Buttons */}
-        {!agreementVerified && (
+        {!isVerified && (
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
             <button
               type="button"
@@ -308,7 +309,7 @@ export default function KycAgreementCard({
       </div>
 
       {/* ═══ HIGHLIGHTED INSTRUCTION BOX FOR PDF UPLOAD (Only when not verified) ═══ */}
-      {!agreementVerified && (
+      {!isVerified && (
         <div
           style={{
             marginTop: '16px',

@@ -142,8 +142,8 @@ export default function PaymentRequests() {
     e.preventDefault();
     if (!form.amount || submitting) return;
 
-    if (activeTab === 'deposit' && !form.selectedProjectId) {
-      addToast('error', 'Project Required', 'Please select a target investment project for your deposit!');
+    if (activeTab === 'deposit' && !form.reference) {
+      addToast('error', 'Reference Required', 'Please enter the transaction reference number!');
       return;
     }
 
@@ -269,38 +269,20 @@ export default function PaymentRequests() {
             <div className="kfpl-input-group">
               <label className="kfpl-input-label">Payment Mode</label>
               <select className="kfpl-select" value={form.mode} onChange={e => setForm({ ...form, mode: e.target.value })}>
-                <option>Bank Transfer</option><option>NEFT</option><option>RTGS</option><option>UPI</option>
+                <option>Bank Transfer</option><option>NEFT</option><option>RTGS</option><option>UPI</option><option>Cash</option>
               </select>
             </div>
             {activeTab === 'deposit' && (
               <>
                 <div className="kfpl-input-group">
-                  <label className="kfpl-input-label">Target Investment Project <span className="required">*</span></label>
-                  <select
-                    className="kfpl-select"
-                    value={form.selectedProjectId}
+                  <label className="kfpl-input-label">Transaction Reference Number <span className="required">*</span></label>
+                  <input
+                    className="kfpl-input"
+                    placeholder="Enter transaction reference / UTR / Txn ID"
+                    value={form.reference}
                     required
-                    onChange={e => {
-                      const pid = e.target.value;
-                      const proj = dbProjects.find(p => String(p._id || p.id) === pid);
-                      setForm({
-                        ...form,
-                        selectedProjectId: pid,
-                        selectedProjectName: proj ? proj.name : ''
-                      });
-                    }}
-                  >
-                    <option value="">-- Select Target Investment Project --</option>
-                    {dbProjects.map(p => (
-                      <option key={p._id || p.id} value={p._id || p.id}>
-                        {p.name} [{p.segment || 'General'}]
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="kfpl-input-group">
-                  <label className="kfpl-input-label">Reference Number</label>
-                  <input className="kfpl-input" placeholder="Transaction reference (optional)" value={form.reference} onChange={e => setForm({ ...form, reference: e.target.value })} />
+                    onChange={e => setForm({ ...form, reference: e.target.value })}
+                  />
                 </div>
                 <div className="kfpl-input-group">
                   <label className="kfpl-input-label">Proof of Deposit (Receipt/Screenshot) <span className="required">*</span></label>

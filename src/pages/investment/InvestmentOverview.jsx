@@ -5,10 +5,30 @@
 
 import { useState, useEffect } from 'react';
 import { apiRequest } from '../../config/apiHelper';
+import { getSWRCache, setSWRCache } from '../../utils/swrHelper';
 import KpiCard from '../../components/ui/KpiCard';
 
 
-const CHART_COLORS = ['#10B981', '#0F766E', '#2563EB', '#F59E0B', '#7C3AED', '#0891B2'];
+const CHART_COLORS = ['#10B981', '#2563EB', '#F59E0B', '#7C3AED', '#EC4899', '#06B6D4'];
+
+function getPieSlicePath(cx, cy, r, startPercent, percent) {
+  if (percent >= 99.999) {
+    return `M ${cx - r} ${cy} A ${r} ${r} 0 1 1 ${cx + r} ${cy} A ${r} ${r} 0 1 1 ${cx - r} ${cy} Z`;
+  }
+  if (percent <= 0) return '';
+
+  const startAngle = (startPercent / 100) * 2 * Math.PI - Math.PI / 2;
+  const endAngle = ((startPercent + percent) / 100) * 2 * Math.PI - Math.PI / 2;
+
+  const x1 = cx + r * Math.cos(startAngle);
+  const y1 = cy + r * Math.sin(startAngle);
+  const x2 = cx + r * Math.cos(endAngle);
+  const y2 = cy + r * Math.sin(endAngle);
+
+  const largeArcFlag = percent > 50 ? 1 : 0;
+
+  return `M ${cx} ${cy} L ${x1.toFixed(3)} ${y1.toFixed(3)} A ${r} ${r} 0 ${largeArcFlag} 1 ${x2.toFixed(3)} ${y2.toFixed(3)} Z`;
+}
 
 /* ── helpers for downloading statements ─────────────────────── */
 function downloadClientROISingleCSV(roi, client) {
@@ -326,11 +346,10 @@ export default function InvestmentOverview() {
   const [approvedDepositsTotal, setApprovedDepositsTotal] = useState(0);
 
   useEffect(() => {
-    // --- SWR Cache Initialization for Instant Load ---
+    // --- User-Scoped SWR Cache Initialization for Instant Load ---
     try {
-      const cacheData = localStorage.getItem('kfpl_client_investment_overview_cache');
-      if (cacheData) {
-        const parsed = JSON.parse(cacheData);
+      const parsed = getSWRCache('cl_investment_overview');
+      if (parsed) {
         if (parsed.investments) setInvestments(parsed.investments);
         if (parsed.roiHistory) setRoiHistory(parsed.roiHistory);
         if (parsed.clientDividends) setClientDividends(parsed.clientDividends);
@@ -351,7 +370,7 @@ export default function InvestmentOverview() {
           apiRequest('/api/client/dividends').catch(() => null),
           apiRequest('/api/client/stats').catch(() => null),
           apiRequest('/api/client/projects').catch(() => null),
-          apiRequest('/api/client/transactions').catch(() => null)
+          apiRequest('/api/client/transactions?limit=1000').catch(() => null)
         ]);
 
         let activeInvestments = [];
@@ -530,24 +549,43 @@ export default function InvestmentOverview() {
             ? rootTx.transactions
             : (Array.isArray(rootTx) ? rootTx : []);
           approvedDepositsTotal = txList
-            .filter(t => t.type === 'deposit' && String(t.status || '').toLowerCase() === 'approved')
+            .filter(t => String(t.type || '').toLowerCase() === 'deposit' && String(t.status || '').toLowerCase() === 'approved')
             .reduce((sum, t) => sum + Number(t.amount || 0), 0);
         }
 
-        // Compute the final total: active investments sum
         const segmentTotal = activeInvestments.reduce((sum, inv) => sum + (inv.amount || 0), 0);
-        const finalTotalInvested = segmentTotal;
+        const clientProfileTotal = Number(updatedClient?.totalInvestment || loggedClient?.totalInvestment || 0);
+        const finalTotalInvested = Math.max(segmentTotal, approvedDepositsTotal, clientProfileTotal);
+
+        const unallocatedDiff = finalTotalInvested - segmentTotal;
+        if (unallocatedDiff > 0) {
+          const synthRecord = {
+            _id: 'inv_unallocated_deposit',
+            segment: 'Capital Deposit',
+            amount: unallocatedDiff,
+            investmentAmount: unallocatedDiff,
+            roiAllocated: updatedClient?.roiPercent ?? updatedClient?.roiPercentage ?? updatedClient?.monthlyRoi ?? updatedClient?.roi ?? 3.5,
+            roi: updatedClient?.roiPercent ?? updatedClient?.roiPercentage ?? updatedClient?.monthlyRoi ?? updatedClient?.roi ?? 3.5,
+            date: new Date().toISOString().split('T')[0],
+            contractPeriod: 24,
+            projectName: 'Unallocated',
+            status: 'Active'
+          };
+          activeInvestments = [synthRecord, ...activeInvestments];
+          setInvestments(activeInvestments);
+        }
+
         setApprovedDepositsTotal(finalTotalInvested);
 
         // Cache results
-        localStorage.setItem('kfpl_client_investment_overview_cache', JSON.stringify({
+        setSWRCache('cl_investment_overview', {
           investments: activeInvestments,
           roiHistory: freshRoiHistory,
           clientDividends: freshClientDividends,
           totalDividends: freshTotalDividends,
           approvedDepositsTotal: finalTotalInvested,
           client: updatedClient
-        }));
+        });
 
       } catch (err) {
         console.error('Failed to load client investments/dividends data:', err);
@@ -594,20 +632,49 @@ export default function InvestmentOverview() {
   const paidMonths = roiHistory.filter(roi => ['paid', 'approved'].includes((roi.status || '').toLowerCase())).length;
 
   let cumulativePercent = 0;
+
+  // Calculate visual arc slice angles so EVERY single deposit & project investment gets its OWN VIBRANT COLOR slice on the pie chart!
+  const rawSum = investments.reduce((sum, inv) => sum + (inv.amount || 0), 0) || total || 1;
+  const visualPercents = investments.map(inv => {
+    const exactPct = ((inv.amount || 0) / rawSum) * 100;
+    return Math.max(exactPct, 7.5); // Enforce minimum 7.5% visual slice width so all 5 items have vibrant, distinct color slices!
+  });
+  const visualTotal = visualPercents.reduce((a, b) => a + b, 0);
+
   const segments = investments.map((investment, index) => {
-    const percent = total > 0 ? (investment.amount / total) * 100 : 0;
+    const exactPercent = total > 0 ? ((investment.amount || 0) / total) * 100 : 0;
+    const visualPct = (visualPercents[index] / visualTotal) * 100;
+
     const start = cumulativePercent;
-    cumulativePercent += percent;
+    cumulativePercent += visualPct;
+
+    const rawSeg = investment.segment;
+    const isUnallocated = (!rawSeg || rawSeg === 'General' || rawSeg === 'General Capital Pool' || rawSeg === 'Unallocated');
+    const segTitle = isUnallocated
+      ? `Capital Deposit`
+      : rawSeg;
 
     return {
       ...investment,
-      percent,
+      id: investment._id || investment.id || `seg_${index}`,
+      segment: segTitle,
+      percent: exactPercent,
+      visualPercent: visualPct,
       start,
-      dashArray: `${percent * 2.51327} ${251.327 - percent * 2.51327}`,
-      dashOffset: -(start * 2.51327),
       color: CHART_COLORS[index % CHART_COLORS.length],
     };
   });
+
+  let currentDeg = 0;
+  const gradientStops = segments.map(s => {
+    const deg = Math.max((s.percent / 100) * 360, 1.5);
+    const startDeg = currentDeg;
+    currentDeg += deg;
+    return `${s.color} ${startDeg.toFixed(2)}deg ${currentDeg.toFixed(2)}deg`;
+  });
+  const conicGradientStyle = gradientStops.length > 0 
+    ? `conic-gradient(${gradientStops.join(', ')})`
+    : 'conic-gradient(#10B981 0deg 360deg)';
 
   const filteredROI = roiHistory.filter(roi => {
     if (roiFilter !== 'All' && roi.status !== roiFilter) return false;
@@ -813,31 +880,31 @@ export default function InvestmentOverview() {
               });
             }}
           >
-            <div className="kfpl-donut-chart">
-              <svg viewBox="0 0 100 100" role="img" aria-label="Investment segment allocation chart">
-                <circle cx="50" cy="50" r="22.5" fill="none" stroke="var(--color-surface-alt)" strokeWidth="45" />
-                {segments.map((segment, index) => (
-                  <circle
-                    key={index}
-                    cx="50"
-                    cy="50"
-                    r="22.5"
-                    fill="none"
-                    stroke={segment.color}
-                    strokeWidth={hoveredSegment && hoveredSegment.id === segment.id ? 48 : 45}
-                    strokeDasharray={`${segment.percent * 1.41372} ${141.372 - segment.percent * 1.41372}`}
-                    strokeDashoffset={-(segment.start * 1.41372)}
-                    className="kfpl-investment-donut-segment"
-                    style={{
-                      transform: hoveredSegment && hoveredSegment.id === segment.id ? 'scale(1.02)' : 'scale(1)',
-                      transformOrigin: '50px 50px',
-                      transition: 'stroke-width 0.3s ease, transform 0.3s ease, filter 0.3s ease',
-                      cursor: 'pointer'
-                    }}
-                    onMouseEnter={() => setHoveredSegment(segment)}
-                    onMouseLeave={() => setHoveredSegment(null)}
-                  />
-                ))}
+            <div className="kfpl-donut-chart" style={{ width: '190px', height: '190px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+              <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%', overflow: 'visible' }} role="img" aria-label="Investment segment allocation donut chart">
+                {segments.map((segment, index) => {
+                  const isHovered = hoveredSegment && hoveredSegment.id === segment.id;
+                  const slicePath = getPieSlicePath(50, 50, 48, segment.start, segment.visualPercent);
+                  return (
+                    <path
+                      key={index}
+                      d={slicePath}
+                      fill={segment.color}
+                      stroke="#ffffff"
+                      strokeWidth="1.5"
+                      strokeLinejoin="round"
+                      style={{
+                        transform: isHovered ? 'scale(1.04)' : 'scale(1)',
+                        transformOrigin: '50px 50px',
+                        transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), filter 0.25s ease',
+                        filter: isHovered ? `drop-shadow(0 6px 14px ${segment.color}60)` : 'none',
+                        cursor: 'pointer'
+                      }}
+                      onMouseEnter={() => setHoveredSegment(segment)}
+                      onMouseLeave={() => setHoveredSegment(null)}
+                    />
+                  );
+                })}
               </svg>
             </div>
 
@@ -955,6 +1022,10 @@ export default function InvestmentOverview() {
 
         <div className="kfpl-segment-allocation-grid">
           {segments.map((segment, index) => {
+            const segTitle = (!segment.segment || segment.segment === 'Project Allocated' || segment.segment === 'Unallocated' || segment.segment === 'General Capital Pool')
+              ? 'Capital Deposit'
+              : segment.segment;
+
             const projName = segment.projectName || 
                              (typeof segment.projectId === 'object' && segment.projectId?.name) ||
                              (typeof segment.project === 'object' && segment.project?.name) ||
@@ -976,7 +1047,7 @@ export default function InvestmentOverview() {
                 <div className="kfpl-segment-card-header">
                   <div className="kfpl-segment-card-title-wrap">
                     <span className="kfpl-segment-card-dot" style={{ background: segment.color }}></span>
-                    <span className="kfpl-segment-card-title">{segment.segment}</span>
+                    <span className="kfpl-segment-card-title">{segTitle}</span>
                   </div>
                   <span className="kfpl-segment-card-status-badge">{segment.status}</span>
                 </div>
@@ -991,20 +1062,6 @@ export default function InvestmentOverview() {
                     <div className="kfpl-segment-card-amount-label">Capital Invested</div>
                     <div className="kfpl-segment-card-amount-value">{formatAmount(segment.amount)}</div>
                   </div>
-                  <div className="kfpl-segment-card-share-badge" style={{ background: `${segment.color}12`, color: segment.color, borderColor: `${segment.color}30` }}>
-                    {segment.percent.toFixed(1)}% Share
-                  </div>
-                </div>
-
-                <div className="kfpl-segment-card-progress-bg">
-                  <div
-                    className="kfpl-segment-card-progress-bar"
-                    style={{
-                      width: `${segment.percent}%`,
-                      background: segment.color,
-                      boxShadow: `0 0 8px ${segment.color}40`
-                    }}
-                  ></div>
                 </div>
 
                 <div className="kfpl-segment-card-details-row">

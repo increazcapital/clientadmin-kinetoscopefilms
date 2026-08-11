@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react';
 import { PERK_TIERS } from '../../constants';
 import { apiRequest } from '../../config/apiHelper';
+import { getSWRCache, setSWRCache } from '../../utils/swrHelper';
 
 /* ── SVG Tier Icons ─────────────────────── */
 const TierIcons = {
@@ -142,11 +143,11 @@ export default function PerksAndRecognition() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // --- SWR Cache Initialization for Instant Load (0ms) ---
+    // --- User-Scoped SWR Cache Initialization for Instant Load (0ms) ---
     try {
-      const cacheData = localStorage.getItem('kfpl_client_perks_cache');
-      if (cacheData) {
-        setPerksData(JSON.parse(cacheData));
+      const parsed = getSWRCache('cl_perks');
+      if (parsed) {
+        setPerksData(parsed);
         setLoading(false);
       }
     } catch (e) {
@@ -191,7 +192,7 @@ export default function PerksAndRecognition() {
         };
 
         setPerksData(freshPerks);
-        localStorage.setItem('kfpl_client_perks_cache', JSON.stringify(freshPerks));
+        setSWRCache('cl_perks', freshPerks);
       } catch (err) {
         console.error('Failed to fetch client perks:', err);
       } finally {

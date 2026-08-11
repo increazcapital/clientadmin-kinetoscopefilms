@@ -93,22 +93,35 @@ export default function Header({ isCollapsed, onMenuClick }) {
   const fetchNotifications = async () => {
     try {
       const res = await apiRequest('/api/client/notifications');
-      if (res && (res.notifications || res.data)) {
-        const list = res.notifications || res.data || [];
+      if (res && (res.notifications || res.data || Array.isArray(res))) {
+        const list = res.notifications || res.data || (Array.isArray(res) ? res : []);
 
         let readIds = [];
+        let clearedIds = [];
+        let lastReadTime = 0;
         try {
-          const stored = localStorage.getItem('kfpl_client_read_notifs');
-          readIds = stored ? JSON.parse(stored) : [];
+          const storedIds = localStorage.getItem('kfpl_client_read_notifs');
+          readIds = storedIds ? JSON.parse(storedIds) : [];
+          const storedCleared = localStorage.getItem('kfpl_client_cleared_notifs');
+          clearedIds = storedCleared ? JSON.parse(storedCleared) : [];
+          const storedTime = localStorage.getItem('kfpl_client_notifs_last_read');
+          lastReadTime = storedTime ? parseInt(storedTime, 10) : 0;
         } catch (e) {}
 
-        const formatted = list.map((n) => ({
-          ...n,
-          isRead: readIds.includes(n.id),
-        }));
+        const activeList = list.filter((n) => !clearedIds.includes(n.id));
+
+        const formatted = activeList.map((n) => {
+          const nTime = n.date ? new Date(n.date).getTime() : 0;
+          const isRead = readIds.includes(n.id) || (lastReadTime > 0 && nTime <= lastReadTime);
+          return {
+            ...n,
+            isRead: !!isRead,
+          };
+        });
 
         setNotifications(formatted);
-        setUnreadCount(formatted.filter((n) => !n.isRead).length);
+        const unreadNum = formatted.filter((n) => !n.isRead).length;
+        setUnreadCount(unreadNum);
       }
     } catch (err) {
       console.warn('Failed to fetch client notifications:', err);
@@ -117,6 +130,9 @@ export default function Header({ isCollapsed, onMenuClick }) {
 
   useEffect(() => {
     fetchNotifications();
+    const interval = setInterval(() => {
+      fetchNotifications();
+    }, 3000);
 
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -127,12 +143,38 @@ export default function Header({ isCollapsed, onMenuClick }) {
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    window.addEventListener('focus', fetchNotifications);
+    window.addEventListener('clientNotificationsUpdated', fetchNotifications);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('focus', fetchNotifications);
+      window.removeEventListener('clientNotificationsUpdated', fetchNotifications);
+    };
   }, []);
 
+  const clearAllNotifications = () => {
+    try {
+      const allIds = notifications.map((n) => n.id);
+      let clearedIds = [];
+      try {
+        const stored = localStorage.getItem('kfpl_client_cleared_notifs');
+        clearedIds = stored ? JSON.parse(stored) : [];
+      } catch (e) {}
+      const updatedCleared = Array.from(new Set([...clearedIds, ...allIds]));
+      localStorage.setItem('kfpl_client_cleared_notifs', JSON.stringify(updatedCleared));
+    } catch (e) {}
+    setNotifications([]);
+    setUnreadCount(0);
+  };
+
   const markAllAsRead = () => {
-    const allIds = notifications.map((n) => n.id);
-    localStorage.setItem('kfpl_client_read_notifs', JSON.stringify(allIds));
+    const now = Date.now();
+    try {
+      const allIds = notifications.map((n) => n.id);
+      localStorage.setItem('kfpl_client_read_notifs', JSON.stringify(allIds));
+      localStorage.setItem('kfpl_client_notifs_last_read', now.toString());
+    } catch (e) {}
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     setUnreadCount(0);
   };
@@ -151,7 +193,8 @@ export default function Header({ isCollapsed, onMenuClick }) {
 
     setNotifications((prev) => {
       const updated = prev.map((n) => (n.id === id ? { ...n, isRead: true } : n));
-      setUnreadCount(updated.filter((n) => !n.isRead).length);
+      const unreadNum = updated.filter((n) => !n.isRead).length;
+      setUnreadCount(unreadNum);
       return updated;
     });
   };
@@ -246,19 +289,15 @@ export default function Header({ isCollapsed, onMenuClick }) {
             className="kfpl-header-icon-btn" 
             aria-label="Notifications"
             onClick={() => {
-              const next = !showNotifDropdown;
-              setShowNotifDropdown(next);
+              setShowNotifDropdown(!showNotifDropdown);
               setShowDropdown(false);
-              if (next) {
-                markAllAsRead();
-              }
             }}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
             </svg>
             {unreadCount > 0 && (
-              <span className="kfpl-header-notification-dot" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.625rem', fontWeight: 800, color: '#fff', background: '#e11d48', width: '15px', height: '15px', top: '-2px', right: '-2px', borderRadius: '50%', position: 'absolute' }}>
+              <span className="kfpl-header-notification-dot" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.625rem', fontWeight: 800, color: '#fff', background: '#e11d48', width: '16px', height: '16px', top: '-2px', right: '-2px', borderRadius: '50%', position: 'absolute' }}>
                 {unreadCount}
               </span>
             )}
@@ -268,14 +307,27 @@ export default function Header({ isCollapsed, onMenuClick }) {
             <div className="kfpl-notif-dropdown-card">
               <div className="kfpl-notif-dropdown-header">
                 <span className="kfpl-notif-dropdown-title">Client Notifications</span>
-                {notifications.some((n) => !n.isRead) && (
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); markAllAsRead(); }}
-                    style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '0.725rem', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
-                  >
-                    Mark all read
-                  </button>
-                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {notifications.some((n) => !n.isRead) && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); markAllAsRead(); }}
+                      style={{ background: 'none', border: 'none', color: '#2563eb', fontSize: '0.725rem', cursor: 'pointer', fontWeight: 600, padding: 0 }}
+                    >
+                      Mark all read
+                    </button>
+                  )}
+                  {notifications.length > 0 && (
+                    <>
+                      {notifications.some((n) => !n.isRead) && <span style={{ color: '#cbd5e1' }}>|</span>}
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); clearAllNotifications(); }}
+                        style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.725rem', cursor: 'pointer', fontWeight: 600, padding: 0 }}
+                      >
+                        Clear all
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
               <div className="kfpl-notif-dropdown-body">
                 {notifications.length === 0 ? (

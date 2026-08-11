@@ -149,6 +149,15 @@ export default function Sidebar({ isCollapsed, onToggle, isMobileOpen, onMobileC
         console.error('Failed to log out from server', err);
       }
     }
+    // Nuclear wipe all SWR cached data (user-scoped)
+    try {
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('swr_')) keysToRemove.push(k);
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+    } catch {}
     localStorage.removeItem('kfpl_client_auth');
     localStorage.removeItem('kfpl_client_dashboard_cache');
     window.location.href = '/login';

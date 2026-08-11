@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { apiRequest } from '../../config/apiHelper';
+import { getSWRCache, setSWRCache } from '../../utils/swrHelper';
 import { formatCurrency } from '../../utils/formatters';
 
 /* ── Segment color map ─────────────────────── */
@@ -161,7 +162,7 @@ export default function ProjectSelection() {
         };
       });
       setOpportunities(mapped);
-      localStorage.setItem('kfpl_client_opportunities_cache', JSON.stringify(mapped));
+      setSWRCache('cl_projects', mapped);
     } catch (err) {
       console.error('Failed to load selector projects:', err);
       setOpportunities([]);
@@ -239,11 +240,11 @@ export default function ProjectSelection() {
   const modalIsBelowMin = applyModal ? (modalNumAmount < applyModal.minInvestment) : false;
 
   useEffect(() => {
-    // --- SWR Cache Initialization for Instant Load (0ms) ---
+    // --- User-Scoped SWR Cache Initialization for Instant Load (0ms) ---
     try {
-      const cacheData = localStorage.getItem('kfpl_client_opportunities_cache');
-      if (cacheData) {
-        setOpportunities(JSON.parse(cacheData));
+      const parsed = getSWRCache('cl_projects');
+      if (parsed) {
+        setOpportunities(parsed);
         setLoading(false);
       }
     } catch (e) {

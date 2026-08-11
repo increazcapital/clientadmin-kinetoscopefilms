@@ -13,6 +13,7 @@ import LineChart from '../../components/charts/LineChart';
 import Modal from '../../components/ui/Modal';
 import KpiCard from '../../components/ui/KpiCard';
 import { apiRequest } from '../../config/apiHelper';
+import { getSWRCache, setSWRCache } from '../../utils/swrHelper';
 import { getApiUrl } from '../../config/apiUrl';
 import KycAgreementCard from '../../components/common/KycAgreementCard';
 import MissingDocsReuploadCard from '../../components/common/MissingDocsReuploadCard';
@@ -132,11 +133,10 @@ export default function DashboardHome() {
   const [historySegmentFilter, setHistorySegmentFilter] = useState('all');
 
   useEffect(() => {
-    // --- SWR Cache Initialization for Instant Load (0ms) ---
+    // --- User-Scoped SWR Cache Initialization for Instant Load (0ms) ---
     try {
-      const cacheData = localStorage.getItem('kfpl_client_dashboard_cache');
-      if (cacheData) {
-        const parsed = JSON.parse(cacheData);
+      const parsed = getSWRCache('cl_dashboard');
+      if (parsed) {
         if (parsed.client) setClient(parsed.client);
         if (parsed.stats) setStats(parsed.stats);
         if (parsed.investments) setInvestments(parsed.investments);
@@ -158,7 +158,7 @@ export default function DashboardHome() {
           apiRequest('/api/client/projects').catch(() => null),
           apiRequest('/api/client/projects/updates/history').catch(() => null),
           apiRequest('/api/client/wealth-advisor').catch(() => null),
-          apiRequest('/api/client/transactions').catch(() => null)
+          apiRequest('/api/client/transactions?limit=1000').catch(() => null)
         ]);
 
         let updatedClient = null;
@@ -293,11 +293,10 @@ export default function DashboardHome() {
             }
           }
           const approvedDepositsSum = transactionsList
-            .filter(t => t.type === 'deposit' && String(t.status || '').toLowerCase() === 'approved')
+            .filter(t => String(t.type || '').toLowerCase() === 'deposit' && String(t.status || '').toLowerCase() === 'approved')
             .reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
-          // Primary = Investment model value from backend
-          const finalTotalInvested = Number(backendTotal) || 0;
+          const finalTotalInvested = Math.max(Number(backendTotal) || 0, approvedDepositsSum, Number(rawClient?.totalInvestment || 0));
 
           updatedStats = {
             totalInvested: finalTotalInvested,
@@ -356,8 +355,9 @@ export default function DashboardHome() {
             setRoiHistory([]);
           }
           // Dynamically compute onboarding and journey steps in frontend
-          const isKycSubmitted = ['PENDING', 'VERIFIED', 'APPROVED'].includes(String(rawClient.kycStatus || rawClient.kyc || '').toUpperCase());
-          const isKycVerified = ['VERIFIED', 'APPROVED'].includes(String(rawClient.kycStatus || rawClient.kyc || '').toUpperCase());
+          const hasAgreementDoc = Boolean(rawClient.agreementDocument && String(rawClient.agreementDocument).trim() !== '' && rawClient.agreementDocument !== 'null');
+          const isAgreementVerified = hasAgreementDoc && Boolean(rawClient.agreementDocumentVerified || rawClient.agreementVerified);
+          const isKycVerified = isAgreementVerified && ['VERIFIED', 'APPROVED'].includes(String(rawClient.kycStatus || rawClient.kyc || '').toUpperCase());
 
           const hasInvestments = updatedInvestments.length > 0 || (root.totalInvestment > 0);
           const hasReceivedRoi = updatedRoiHistory.length > 0;
@@ -453,7 +453,7 @@ export default function DashboardHome() {
             delete sanitizeClient.profilePic;
           }
 
-          localStorage.setItem('kfpl_client_dashboard_cache', JSON.stringify({
+          setSWRCache('cl_dashboard', {
             client: sanitizeClient,
             stats: updatedStats || stats,
             investments: updatedInvestments,
@@ -462,7 +462,7 @@ export default function DashboardHome() {
             projects: updatedProjects,
             statusHistory: updatedStatusHistory,
             clientHistoryLogs: updatedHistoryLogs
-          }));
+          });
         } catch (_) {}
 
       } catch (err) {

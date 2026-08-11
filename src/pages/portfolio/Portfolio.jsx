@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { SEGMENTS } from '../../constants';
 import { apiRequest } from '../../config/apiHelper';
+import { getSWRCache, setSWRCache } from '../../utils/swrHelper';
 import { formatCurrency } from '../../utils/formatters';
 
 const SEGMENT_COLORS = {
@@ -74,11 +75,11 @@ export default function Portfolio() {
   };
 
   useEffect(() => {
-    // --- SWR Cache Initialization for Instant Load (0ms) ---
+    // --- User-Scoped SWR Cache Initialization for Instant Load (0ms) ---
     try {
-      const cacheData = localStorage.getItem('kfpl_client_portfolio_cache');
-      if (cacheData) {
-        setProjects(JSON.parse(cacheData));
+      const parsed = getSWRCache('cl_portfolio');
+      if (parsed) {
+        setProjects(parsed);
         setLoading(false);
       }
     } catch (e) {
@@ -173,7 +174,7 @@ export default function Portfolio() {
           allocation: p.allocationFocus || p.allocation || '',
         }));
         setProjects(mapped);
-        localStorage.setItem('kfpl_client_portfolio_cache', JSON.stringify(mapped));
+        setSWRCache('cl_portfolio', mapped);
       } catch (err) {
         console.error('Failed to load portfolio projects, using fallback:', err);
         const stored = localStorage.getItem('kfpl_portfolio_projects');

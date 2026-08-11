@@ -19,6 +19,9 @@ export default function MissingDocsReuploadCard({ client, loading = false, onDoc
   if (!client.bankProofDocument) {
     missingList.push({ key: 'bankProofDocument', label: 'Bank Details Document' });
   }
+  if (!client.agreementDocument) {
+    missingList.push({ key: 'agreementDocument', label: 'Signed Client Participation Agreement' });
+  }
 
   if (missingList.length === 0) return null;
 

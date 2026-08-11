@@ -10,10 +10,21 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { RISK_PROFILES, NOMINEE_RELATIONS } from '../../constants';
 import { useToast } from '../../components/ui/Toast';
 import { apiRequest, safeSetLocalStorage } from '../../config/apiHelper';
+import { getSWRCache, setSWRCache } from '../../utils/swrHelper';
 import { getApiUrl } from '../../config/apiUrl';
 import KycAgreementCard from '../../components/common/KycAgreementCard';
 import MissingDocsReuploadCard from '../../components/common/MissingDocsReuploadCard';
 import SensitiveValueToggle from '../../components/common/SensitiveValueToggle';
+
+const formatDateDMY = (dateStr) => {
+  if (!dateStr || dateStr === '—') return '—';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '—';
+  const day = String(d.getDate()).padStart(2, '0');
+  const mon = String(d.getMonth() + 1).padStart(2, '0');
+  const yr = d.getFullYear();
+  return `${day}/${mon}/${yr}`;
+};
 
 const formatClientID = (rawId) => {
   if (!rawId || rawId === '—') return '—';
@@ -96,11 +107,10 @@ export default function Profile() {
   }, []);
 
   useEffect(() => {
-    // --- SWR Cache Initialization for Instant Load (0ms) ---
+    // --- User-Scoped SWR Cache Initialization for Instant Load (0ms) ---
     try {
-      const cacheData = localStorage.getItem('kfpl_client_profile_cache');
-      if (cacheData) {
-        const parsed = JSON.parse(cacheData);
+      const parsed = getSWRCache('cl_profile');
+      if (parsed) {
         if (parsed.client) setClient(parsed.client);
         if (parsed.clientEmail) setClientEmail(parsed.clientEmail);
         setLoading(false);
@@ -152,6 +162,12 @@ export default function Profile() {
               category: rawProfile.tier || rawProfile.category || 'Silver',
               status: rawProfile.status || 'Active',
               memberSince: rawProfile.joinDate || rawProfile.memberSince || rawProfile.createdAt || '',
+              contractStartDate: rawProfile.contractStartDate || rawProfile.joinDate || rawProfile.createdAt || '',
+              contractEndDate: rawProfile.contractEndDate || '',
+              extendContractDate: rawProfile.extendContractDate || rawProfile.contractExtendedDate || '',
+              monthlyRoi: rawProfile.monthlyRoi || rawProfile.roiPercentage || '',
+              residencyStatus: rawProfile.residencyStatus || rawProfile.citizenship || 'National (Domestic)',
+              totalInvestment: rawProfile.totalInvestment || rawProfile.amount || 0,
               agentName: rawProfile.assignedAgentName || rawProfile.agentName || '',
               agentId: formatAgentID(rawProfile.assignedAgentCode || rawProfile.assignedAgent || rawProfile.agentId || ''),
               emergencyContact: rawProfile.emergencyContact || rawProfile.emergencyPhone || '—',
@@ -192,12 +208,12 @@ export default function Profile() {
             setClient(normalized);
             setClientEmail(normalized.email || '');
             try {
-              localStorage.setItem('kfpl_client_profile_cache', JSON.stringify({
+              setSWRCache('cl_profile', {
                 client: normalized,
                 clientEmail: normalized.email || ''
-              }));
+              });
             } catch (e) {
-              console.warn('Profile cache localStorage quota exceeded:', e);
+              console.warn('Profile cache quota exceeded:', e);
             }
           }
         }
@@ -664,7 +680,9 @@ export default function Profile() {
                 <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
                   <span className="kfpl-badge kfpl-badge--active">{client.status}</span>
                   <span className="kfpl-badge" style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10B981', border: '1px solid rgba(16, 185, 129, 0.4)' }}>{(client.category || 'SILVER').toUpperCase()} TIER</span>
-                  {Boolean(client.agreementDocumentVerified) && String(client.kycStatus || client.kyc || '').toUpperCase() === 'VERIFIED' ? (
+                  {Boolean(client.agreementDocument && String(client.agreementDocument).trim() !== '' && client.agreementDocument !== 'null') &&
+                   Boolean(client.agreementDocumentVerified || client.agreementVerified) &&
+                   String(client.kycStatus || client.kyc || '').toUpperCase() === 'VERIFIED' ? (
                     <span className="kfpl-badge" style={{ background: 'rgba(16, 185, 129, 0.25)', color: '#34D399', border: '1px solid rgba(52, 211, 153, 0.5)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 11 12 14 22 4"/></svg>
                       KYC VERIFIED
@@ -725,8 +743,12 @@ export default function Profile() {
                 ['Full Name', client.name],
                 ['Email Address', clientEmail],
                 ['Phone Number', client.phone],
-                ['Date of Birth', client.dob ? new Date(client.dob).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'],
+                ['Date of Birth (DD/MM/YYYY)', client.dob ? formatDateDMY(client.dob) : '—'],
                 ['Address', client.address],
+                ['Join Date (DD/MM/YYYY)', client.memberSince ? formatDateDMY(client.memberSince) : '—'],
+                ['Contract Start Date (DD/MM/YYYY)', client.contractStartDate ? formatDateDMY(client.contractStartDate) : '—'],
+                ['Contract End Date (DD/MM/YYYY)', client.contractEndDate ? formatDateDMY(client.contractEndDate) : '—'],
+                ['Contract Extended Date (DD/MM/YYYY)', client.extendContractDate ? formatDateDMY(client.extendContractDate) : '—'],
                 ['Emergency Contact', client.emergencyContact],
               ].map(([label, value]) => (
                 <div key={label} className="kfpl-profile-info-row">
@@ -759,6 +781,10 @@ export default function Profile() {
             <div className="kfpl-card">
               <h3 style={{ marginBottom: '16px', paddingBottom: '12px', borderBottom: '2px solid var(--color-gold)' }}>Bank & KYC Details</h3>
               {[
+                ['KYC Status', <span key="kycst" className={`kfpl-badge kfpl-badge--${(client.kycStatus || 'VERIFIED').toLowerCase() === 'verified' ? 'active' : 'warning'}`}>{(client.kycStatus || 'VERIFIED').toUpperCase()}</span>],
+                ['Risk Profile', client.riskProfile || 'Conservative'],
+                ['Monthly ROI Rate', client.monthlyRoi ? `${client.monthlyRoi}% Monthly` : '3.5% Monthly'],
+                ['Residency Status', client.residencyStatus || 'National (Domestic)'],
                 ['Bank Name', client.bankName || '—'],
                 ['Account Number', <SensitiveValueToggle key="acc" value={client.accountNumber || client.accountNo} />],
                 ['IFSC Code', <SensitiveValueToggle key="ifsc" value={client.ifscCode || client.ifsc} />],
