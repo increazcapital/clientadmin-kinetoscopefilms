@@ -79,7 +79,11 @@ export default function Portfolio() {
     try {
       const parsed = getSWRCache('cl_portfolio');
       if (parsed) {
-        setProjects(parsed);
+        const sanitizedCache = parsed.map(p => ({
+          ...p,
+          minInvestment: p.minInvestment !== undefined ? p.minInvestment : 200000
+        }));
+        setProjects(sanitizedCache);
         setLoading(false);
       }
     } catch (e) {
@@ -144,6 +148,8 @@ export default function Portfolio() {
           segment: p.segment || '',
           status: p.status || 'Planning',
           targetFunding: p.targetFunding || 0,
+          fundedAmount: p.fundedAmount || 0,
+          minInvestment: p.minInvestment !== undefined ? p.minInvestment : (p.minInvestmentAmount || 200000),
           value: p.targetFunding
             ? formatCurrency(p.targetFunding)
             : (p.portfolioValue && p.portfolioValue !== '₹0.0 Cr' && p.portfolioValue !== '₹0 Cr' ? p.portfolioValue : formatCurrency(Number(p.value || 0))),
