@@ -90,6 +90,8 @@ export default function DashboardHome() {
     roiRate: 0,
     perkTier: 'Silver',
     nextROIDate: '—',
+    roiReceived: 0,
+    totalWithdrawn: 0,
   });
   const [investments, setInvestments] = useState([]);
   const [roiHistory, setRoiHistory] = useState([]);
@@ -298,12 +300,23 @@ export default function DashboardHome() {
 
           const finalTotalInvested = Math.max(Number(backendTotal) || 0, approvedDepositsSum, Number(rawClient?.totalInvestment || 0));
 
+          // Calculate ROI received and withdrawal totals from transactions
+          const roiPaidTotal = (root.roiHistory || root.recentPayouts || [])
+            .filter(r => ['paid', 'approved'].includes(String(r.status || '').toLowerCase()))
+            .reduce((sum, r) => sum + Number(r.amount || r.received || 0), 0);
+
+          const approvedWithdrawals = transactionsList
+            .filter(t => String(t.type || '').toLowerCase() === 'withdrawal' && ['approved', 'paid', 'credited', 'completed'].includes(String(t.status || '').toLowerCase()))
+            .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+
           updatedStats = {
             totalInvested: finalTotalInvested,
             monthlyROI: monthlyRoiVal || root.expectedMonthlyRoi || root.stats?.monthlyROI || 0,
             roiRate: finalRoiRate ?? root.roiRate ?? root.roiAverage ?? root.stats?.roiRate ?? 0,
             perkTier: rawClient.tier || root.stats?.perkTier || 'Silver',
             nextROIDate: root.nextRoiDate || root.stats?.nextROIDate || '—',
+            roiReceived: Math.max(0, roiPaidTotal - approvedWithdrawals),
+            totalWithdrawn: approvedWithdrawals,
           };
           setStats(updatedStats);
 
@@ -1269,6 +1282,26 @@ export default function DashboardHome() {
           iconColor="info"
           className="kfpl-kpi-card--projects"
           delay={400}
+        />
+
+        <KpiCard
+          title="ROI Received"
+          value={formatCurrency(stats.roiReceived)}
+          trend="Available balance from ROI"
+          trendDirection="up"
+          icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>}
+          iconColor="success"
+          delay={480}
+        />
+
+        <KpiCard
+          title="Total Withdrawn"
+          value={formatCurrency(stats.totalWithdrawn)}
+          trend="Successfully withdrawn"
+          trendDirection="up"
+          icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>}
+          iconColor="info"
+          delay={560}
         />
       </div>
 
