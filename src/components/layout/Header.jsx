@@ -95,29 +95,10 @@ export default function Header({ isCollapsed, onMenuClick }) {
       const res = await apiRequest('/api/client/notifications');
       if (res && (res.notifications || res.data || Array.isArray(res))) {
         const list = res.notifications || res.data || (Array.isArray(res) ? res : []);
-
-        let readIds = [];
-        let clearedIds = [];
-        let lastReadTime = 0;
-        try {
-          const storedIds = localStorage.getItem('kfpl_client_read_notifs');
-          readIds = storedIds ? JSON.parse(storedIds) : [];
-          const storedCleared = localStorage.getItem('kfpl_client_cleared_notifs');
-          clearedIds = storedCleared ? JSON.parse(storedCleared) : [];
-          const storedTime = localStorage.getItem('kfpl_client_notifs_last_read');
-          lastReadTime = storedTime ? parseInt(storedTime, 10) : 0;
-        } catch (e) {}
-
-        const activeList = list.filter((n) => !clearedIds.includes(n.id));
-
-        const formatted = activeList.map((n) => {
-          const nTime = n.date ? new Date(n.date).getTime() : 0;
-          const isRead = readIds.includes(n.id) || (lastReadTime > 0 && nTime <= lastReadTime);
-          return {
-            ...n,
-            isRead: !!isRead,
-          };
-        });
+        const formatted = list.map((n) => ({
+          ...n,
+          isRead: !!(n.isRead || n.read),
+        }));
 
         setNotifications(formatted);
         const unreadNum = formatted.filter((n) => !n.isRead).length;
@@ -156,40 +137,35 @@ export default function Header({ isCollapsed, onMenuClick }) {
   const clearAllNotifications = () => {
     try {
       const allIds = notifications.map((n) => n.id);
-      let clearedIds = [];
-      try {
-        const stored = localStorage.getItem('kfpl_client_cleared_notifs');
-        clearedIds = stored ? JSON.parse(stored) : [];
-      } catch (e) {}
-      const updatedCleared = Array.from(new Set([...clearedIds, ...allIds]));
-      localStorage.setItem('kfpl_client_cleared_notifs', JSON.stringify(updatedCleared));
+      apiRequest('/api/client/notifications/all', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: allIds })
+      }).catch((e) => console.error('Failed to clear client notifications:', e));
     } catch (e) {}
     setNotifications([]);
     setUnreadCount(0);
   };
 
   const markAllAsRead = () => {
-    const now = Date.now();
     try {
       const allIds = notifications.map((n) => n.id);
-      localStorage.setItem('kfpl_client_read_notifs', JSON.stringify(allIds));
-      localStorage.setItem('kfpl_client_notifs_last_read', now.toString());
+      apiRequest('/api/client/notifications/all/read', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: allIds })
+      }).catch((e) => console.error('Failed to mark all client notifications read:', e));
     } catch (e) {}
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     setUnreadCount(0);
   };
 
   const markSingleAsRead = (id) => {
-    let readIds = [];
     try {
-      const stored = localStorage.getItem('kfpl_client_read_notifs');
-      readIds = stored ? JSON.parse(stored) : [];
+      apiRequest(`/api/client/notifications/${id}/read`, {
+        method: 'PATCH'
+      }).catch((e) => console.error('Failed to mark notification read:', e));
     } catch (e) {}
-
-    if (!readIds.includes(id)) {
-      readIds.push(id);
-      localStorage.setItem('kfpl_client_read_notifs', JSON.stringify(readIds));
-    }
 
     setNotifications((prev) => {
       const updated = prev.map((n) => (n.id === id ? { ...n, isRead: true } : n));
