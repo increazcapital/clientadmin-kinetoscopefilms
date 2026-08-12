@@ -213,6 +213,8 @@ export default function CompleteTransactionDetails() {
   });
 
   const totalDeposits = records.filter(r => r.category === 'deposit' && ['approved', 'completed', 'paid'].includes(r.status)).reduce((sum, r) => sum + (r.amount || 0), 0);
+  const totalWithdrawals = records.filter(r => r.category === 'withdrawal' && ['approved', 'completed', 'paid'].includes(r.status)).reduce((sum, r) => sum + (r.amount || 0), 0);
+  const netCapitalInvestment = Math.max(0, totalDeposits - totalWithdrawals);
   const totalRoiPaid = records.filter(r => r.category === 'roi' && ['paid', 'approved'].includes(r.status)).reduce((sum, r) => sum + (r.amount || 0), 0);
 
   const depositCount = records.filter(r => r.category === 'deposit').length;
@@ -255,8 +257,8 @@ export default function CompleteTransactionDetails() {
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
           </div>
           <div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '2px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Approved Deposits</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#059669' }}>{formatCurrency(totalDeposits)}</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '2px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Net Capital Investment</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#059669' }}>{formatCurrency(netCapitalInvestment)}</div>
           </div>
         </div>
 

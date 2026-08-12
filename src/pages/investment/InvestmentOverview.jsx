@@ -344,6 +344,7 @@ export default function InvestmentOverview() {
   const [hoveredSegment, setHoveredSegment] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const [approvedDepositsTotal, setApprovedDepositsTotal] = useState(0);
+  const [approvedWithdrawalsTotal, setApprovedWithdrawalsTotal] = useState(0);
 
   useEffect(() => {
     // --- User-Scoped SWR Cache Initialization for Instant Load ---
@@ -541,8 +542,9 @@ export default function InvestmentOverview() {
           setTotalDividends(freshTotalDividends);
         }
 
-        // 4. Compute approved deposits total
+        // 4. Compute approved deposits and withdrawals total
         let approvedDepositsTotal = 0;
+        let approvedWithdrawalsTotal = 0;
         if (txRes) {
           const rootTx = txRes.data || txRes;
           const txList = Array.isArray(rootTx.transactions)
@@ -551,11 +553,17 @@ export default function InvestmentOverview() {
           approvedDepositsTotal = txList
             .filter(t => String(t.type || '').toLowerCase() === 'deposit' && String(t.status || '').toLowerCase() === 'approved')
             .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+          approvedWithdrawalsTotal = txList
+            .filter(t => String(t.type || '').toLowerCase() === 'withdrawal' && String(t.status || '').toLowerCase() === 'approved')
+            .reduce((sum, t) => sum + Number(t.amount || 0), 0);
         }
 
+        setApprovedWithdrawalsTotal(approvedWithdrawalsTotal);
+
         const segmentTotal = activeInvestments.reduce((sum, inv) => sum + (inv.amount || 0), 0);
-        const clientProfileTotal = Number(updatedClient?.totalInvestment || loggedClient?.totalInvestment || 0);
-        const finalTotalInvested = Math.max(segmentTotal, approvedDepositsTotal, clientProfileTotal);
+        const netCapital = Math.max(0, approvedDepositsTotal - approvedWithdrawalsTotal);
+        const isFullCapitalWithdrawn = approvedWithdrawalsTotal >= approvedDepositsTotal && approvedDepositsTotal > 0;
+        const finalTotalInvested = isFullCapitalWithdrawn ? 0 : Math.max(segmentTotal, netCapital);
 
         const unallocatedDiff = finalTotalInvested - segmentTotal;
         if (unallocatedDiff > 0) {
@@ -617,7 +625,8 @@ export default function InvestmentOverview() {
   };
 
   const segmentsSum = investments.reduce((sum, investment) => sum + investment.amount, 0);
-  const total = Math.max(approvedDepositsTotal, segmentsSum);
+  const netCapitalVal = Math.max(0, approvedDepositsTotal - approvedWithdrawalsTotal);
+  const total = (approvedWithdrawalsTotal >= approvedDepositsTotal && approvedDepositsTotal > 0) ? 0 : Math.max(netCapitalVal, segmentsSum);
   const monthlyReturn = Math.round((calcPrincipal * calcRate) / 100);
   const annualReturn = Math.round(monthlyReturn * 12);
   const clientRoiRate = Number(client.roiPercent ?? client.roiPercentage ?? client.monthlyRoi ?? client.roi ?? 0);
@@ -813,6 +822,19 @@ export default function InvestmentOverview() {
       iconColor: 'gold',
       borderColor: 'var(--color-gold-dark)',
       variant: 'gold'
+    },
+    {
+      label: 'Total Withdrawal',
+      value: formatAmount(approvedWithdrawalsTotal),
+      trend: 'Approved capital withdrawals',
+      trendDirection: 'down',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>
+        </svg>
+      ),
+      iconColor: 'danger',
+      borderColor: 'var(--color-danger)'
     }
   ];
 
