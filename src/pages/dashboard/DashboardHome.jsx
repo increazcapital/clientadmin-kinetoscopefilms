@@ -301,9 +301,17 @@ export default function DashboardHome() {
           const finalTotalInvested = Math.max(Number(backendTotal) || 0, approvedDepositsSum, Number(rawClient?.totalInvestment || 0));
 
           // Calculate ROI received and withdrawal totals from transactions
-          const roiPaidTotal = (root.roiHistory || root.recentPayouts || [])
-            .filter(r => ['paid', 'approved'].includes(String(r.status || '').toLowerCase()))
-            .reduce((sum, r) => sum + Number(r.amount || r.received || 0), 0);
+          const roiPayoutsList = (root.roiHistory || root.recentPayouts || []);
+          const uniqueRoiPaidMap = new Map();
+          roiPayoutsList.forEach(r => {
+            if (['paid', 'approved'].includes(String(r.status || '').toLowerCase())) {
+              const key = r.period || r.month || r._id || r.id;
+              if (!uniqueRoiPaidMap.has(key)) {
+                uniqueRoiPaidMap.set(key, Number(r.amount || r.received || 0));
+              }
+            }
+          });
+          const roiPaidTotal = Array.from(uniqueRoiPaidMap.values()).reduce((sum, val) => sum + val, 0);
 
           const approvedWithdrawals = transactionsList
             .filter(t => String(t.type || '').toLowerCase() === 'withdrawal' && ['approved', 'paid', 'credited', 'completed'].includes(String(t.status || '').toLowerCase()))
@@ -1394,7 +1402,7 @@ export default function DashboardHome() {
                   No ROI payouts received yet.
                 </div>
               ) : (
-                roiHistory.slice(0, 5).map((roi, idx) => (
+                roiHistory.map((roi, idx) => (
                   <div className="kfpl-widget-item" key={idx}>
                     <div className="kfpl-widget-rank silver">
                       {idx + 1}

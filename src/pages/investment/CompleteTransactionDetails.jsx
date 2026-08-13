@@ -35,27 +35,31 @@ export default function CompleteTransactionDetails() {
     const fetchAllTransactionDetails = async () => {
       try {
         setLoading(true);
-        const [txRes, payoutsRes] = await Promise.all([
+        const [txRes, payoutsRes, dividendsRes] = await Promise.all([
           apiRequest('/api/client/transactions?limit=1000').catch(() => null),
-          apiRequest('/api/client/payouts?limit=1000').catch(() => null)
+          apiRequest('/api/client/payouts?limit=1000').catch(() => null),
+          apiRequest('/api/client/dividends?limit=1000').catch(() => null)
         ]);
 
         const rawTx = txRes?.data?.transactions || (Array.isArray(txRes) ? txRes : []);
         const rawPayouts = Array.isArray(payoutsRes) ? payoutsRes : (payoutsRes?.data?.payouts || payoutsRes?.payouts || (Array.isArray(payoutsRes?.data) ? payoutsRes.data : []));
+        const rawDividends = Array.isArray(dividendsRes) ? dividendsRes : (dividendsRes?.data?.allotments || dividendsRes?.allotments || (Array.isArray(dividendsRes?.data) ? dividendsRes.data : []));
 
         // Map deposit & withdrawal transactions
         const mappedTx = rawTx.map((t, idx) => {
           const isDeposit = String(t.type).toLowerCase() === 'deposit';
+          const isDivWithdrawal = t.withdrawalType === 'dividend' || String(t.description || t.remarks || '').toLowerCase().includes('dividend');
           return {
             id: t._id || t.id || `tx_${idx}`,
-            month: isDeposit ? 'Capital Deposit' : 'Capital Withdrawal',
+            month: isDeposit ? 'Capital Deposit' : (isDivWithdrawal ? 'Dividend Bonus Withdrawal' : 'Capital Withdrawal'),
             type: t.type ? t.type.toUpperCase() : 'DEPOSIT',
             amount: Number(t.amount || 0),
             status: (t.status || 'pending').toLowerCase(),
             paidAt: t.actionAt || t.updatedAt || t.createdAt,
             paymentMode: t.paymentMethod || 'Bank Transfer',
             transactionRef: t.referenceNumber || (t._id ? `REF-${String(t._id).slice(-8).toUpperCase()}` : `TXN${100000 + idx}`),
-            category: isDeposit ? 'deposit' : 'withdrawal'
+            category: isDeposit ? 'deposit' : 'withdrawal',
+            withdrawalType: t.withdrawalType
           };
         });
 
@@ -72,7 +76,20 @@ export default function CompleteTransactionDetails() {
           category: 'roi'
         }));
 
-        const combined = [...mappedTx, ...mappedPayouts].sort((a, b) => {
+        // Map Project Dividend allotments
+        const mappedDividends = rawDividends.map((div, idx) => ({
+          id: div._id || div.id || `div_${idx}`,
+          month: div.projectName ? `Project Dividend (${div.projectName})` : (div.remarks || 'Project Dividend / Bonus'),
+          type: 'DIVIDEND CREDIT',
+          amount: Number(div.allottedAmount || div.amount || 0),
+          status: 'paid',
+          paidAt: div.allotmentDate || div.createdAt,
+          paymentMode: 'Direct Credit',
+          transactionRef: div.transactionRef || (div._id ? `DIV-${String(div._id).slice(-8).toUpperCase()}` : `DIV${100000 + idx}`),
+          category: 'dividend'
+        }));
+
+        const combined = [...mappedTx, ...mappedPayouts, ...mappedDividends].sort((a, b) => {
           const dateA = new Date(a.paidAt || 0).getTime();
           const dateB = new Date(b.paidAt || 0).getTime();
           return dateB - dateA;
@@ -213,9 +230,11 @@ export default function CompleteTransactionDetails() {
   });
 
   const totalDeposits = records.filter(r => r.category === 'deposit' && ['approved', 'completed', 'paid'].includes(r.status)).reduce((sum, r) => sum + (r.amount || 0), 0);
-  const totalWithdrawals = records.filter(r => r.category === 'withdrawal' && ['approved', 'completed', 'paid'].includes(r.status)).reduce((sum, r) => sum + (r.amount || 0), 0);
-  const netCapitalInvestment = Math.max(0, totalDeposits - totalWithdrawals);
+  const totalCapitalWithdrawals = records.filter(r => r.category === 'withdrawal' && r.withdrawalType === 'capital' && ['approved', 'completed', 'paid'].includes(r.status)).reduce((sum, r) => sum + (r.amount || 0), 0);
+  const netCapitalInvestment = Math.max(0, totalDeposits - totalCapitalWithdrawals);
   const totalRoiPaid = records.filter(r => r.category === 'roi' && ['paid', 'approved'].includes(r.status)).reduce((sum, r) => sum + (r.amount || 0), 0);
+  const totalWithdrawals = records.filter(r => r.category === 'withdrawal' && ['approved', 'completed', 'paid'].includes(r.status)).reduce((sum, r) => sum + (r.amount || 0), 0);
+  const totalRoiReceived = Math.max(0, totalRoiPaid - totalWithdrawals);
 
   const depositCount = records.filter(r => r.category === 'deposit').length;
   const withdrawalCount = records.filter(r => r.category === 'withdrawal').length;
@@ -440,7 +459,7 @@ export default function CompleteTransactionDetails() {
                         <div>
                           <div style={{ fontWeight: 700, fontSize: '0.875rem', color: '#0F172A' }}>{rec.month}</div>
                           <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
-                            {isDeposit ? 'Capital Account Deposit' : isRoi ? 'Monthly ROI Dividend' : 'Capital Account Withdrawal'}
+                            {isDeposit ? 'Capital Account Deposit' : isRoi ? 'Monthly ROI Dividend' : (rec.withdrawalType === 'roi' ? 'ROI Dividend Payout Withdrawal' : 'Capital Account Withdrawal')}
                           </div>
                         </div>
                       </div>

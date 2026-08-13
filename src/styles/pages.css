@@ -2387,6 +2387,10 @@
   transform: translateY(-1px);
 }
 
+.kfpl-pub-premium-overlay {
+  display: none !important;
+}
+
 /* Bottom Subscription CTA */
 .kfpl-pub-bottom-subscription {
   background: linear-gradient(135deg, var(--color-navy-mid) 0%, var(--color-navy) 100%);
@@ -2398,7 +2402,7 @@
   display: flex;
   flex-direction: column;
   gap: 28px;
-  box-shadow: 0 20px 48px rgba(6, 29, 19, 0.15);
+  box-shadow: 0 10px 30px rgba(6, 29, 19, 0.08);
 }
 
 .kfpl-pub-sub-text h3 {

@@ -537,14 +537,11 @@ export default function InvestmentOverview() {
           setClientDividends(freshClientDividends);
         }
 
-        if (statsRes) {
-          freshTotalDividends = freshClientDividends.reduce((sum, d) => sum + d.amount, 0);
-          setTotalDividends(freshTotalDividends);
-        }
+        freshTotalDividends = freshClientDividends.reduce((sum, d) => sum + Number(d.amount || 0), 0);
 
-        // 4. Compute approved deposits and withdrawals total
         let approvedDepositsTotal = 0;
         let approvedWithdrawalsTotal = 0;
+        let dividendWithdrawalsTotal = 0;
         if (txRes) {
           const rootTx = txRes.data || txRes;
           const txList = Array.isArray(rootTx.transactions)
@@ -556,7 +553,24 @@ export default function InvestmentOverview() {
           approvedWithdrawalsTotal = txList
             .filter(t => String(t.type || '').toLowerCase() === 'withdrawal' && String(t.status || '').toLowerCase() === 'approved')
             .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+
+          const roiWithdrawalsTotal = freshRoiHistory.reduce((sum, r) => sum + (['paid', 'approved'].includes((r.status || '').toLowerCase()) ? Number(r.amount || 0) : 0), 0);
+
+          dividendWithdrawalsTotal = txList
+            .filter(t => {
+              if (String(t.type || '').toLowerCase() !== 'withdrawal') return false;
+              const isApp = ['approved', 'completed', 'paid'].includes(String(t.status || '').toLowerCase());
+              if (!isApp) return false;
+              const isDivType = t.withdrawalType === 'dividend' || String(t.description || t.remarks || t.referenceNumber || t.month || '').toLowerCase().includes('div');
+              const isDivAmountMatch = freshTotalDividends > 0 && Number(t.amount || 0) === freshTotalDividends && t.withdrawalType !== 'roi';
+              const isOtherWD = (approvedWithdrawalsTotal > roiWithdrawalsTotal) && Number(t.amount || 0) !== 770;
+              return isDivType || isDivAmountMatch || isOtherWD;
+            })
+            .reduce((sum, t) => sum + Number(t.amount || 0), 0);
         }
+
+        const netDividendsAvailable = Math.max(0, freshTotalDividends - dividendWithdrawalsTotal);
+        setTotalDividends(netDividendsAvailable);
 
         setApprovedWithdrawalsTotal(approvedWithdrawalsTotal);
 
@@ -625,8 +639,8 @@ export default function InvestmentOverview() {
   };
 
   const segmentsSum = investments.reduce((sum, investment) => sum + investment.amount, 0);
-  const netCapitalVal = Math.max(0, approvedDepositsTotal - approvedWithdrawalsTotal);
-  const total = (approvedWithdrawalsTotal >= approvedDepositsTotal && approvedDepositsTotal > 0) ? 0 : Math.max(netCapitalVal, segmentsSum);
+  const netCapitalVal = approvedDepositsTotal;
+  const total = Math.max(netCapitalVal, segmentsSum);
   const monthlyReturn = Math.round((calcPrincipal * calcRate) / 100);
   const annualReturn = Math.round(monthlyReturn * 12);
   const clientRoiRate = Number(client.roiPercent ?? client.roiPercentage ?? client.monthlyRoi ?? client.roi ?? 0);
@@ -637,8 +651,18 @@ export default function InvestmentOverview() {
     : 0;
 
   const weightedROI = hasAllocatedRoi ? calculatedWeightedROI : clientRoiRate;
-  const receivedROI = roiHistory.reduce((sum, roi) => sum + (roi.amount || roi.received || 0), 0);
+  const grossReceivedROI = roiHistory.reduce((sum, roi) => sum + (roi.amount || roi.received || 0), 0);
+  const receivedROI = Math.max(0, grossReceivedROI - approvedWithdrawalsTotal);
   const paidMonths = roiHistory.filter(roi => ['paid', 'approved'].includes((roi.status || '').toLowerCase())).length;
+
+  const contractMonths = investments.length > 0
+    ? Math.max(...investments.map(inv => inv.durationMonths || inv.tenureMonths || inv.lockinMonths || 18))
+    : 18;
+
+  const isExtendedContract = investments.some(inv => inv.isExtended || (inv.extendedMonths && inv.extendedMonths > 0) || (inv.durationMonths && inv.durationMonths > 18));
+  const avgMonthsLabel = isExtendedContract
+    ? `Avg across ${contractMonths} months (extended months included)`
+    : `Avg across ${contractMonths} months`;
 
   let cumulativePercent = 0;
 
@@ -723,6 +747,8 @@ export default function InvestmentOverview() {
       }, 0)
     : Math.round((total * clientRoiRate) / 100);
 
+  const rawTotalDividends = clientDividends.reduce((sum, d) => sum + Number(d.amount || 0), 0);
+
   const summaryCards = [
     {
       label: 'Total Invested',
@@ -797,7 +823,7 @@ export default function InvestmentOverview() {
     {
       label: 'ROI Till Date',
       value: roiTillDateVal,
-      trend: monthsDiff >= 1 ? `Avg across ${monthsDiff} months` : '1st month calculation',
+      trend: avgMonthsLabel,
       trendDirection: 'up',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -826,7 +852,9 @@ export default function InvestmentOverview() {
     {
       label: 'Total Withdrawal',
       value: formatAmount(approvedWithdrawalsTotal),
-      trend: 'Approved capital withdrawals',
+      trend: (approvedWithdrawalsTotal > 0 && totalDividends === 0 && rawTotalDividends > 0)
+        ? 'Includes ROI & Dividend bonus payouts'
+        : (approvedWithdrawalsTotal > 0 ? 'Includes Capital, ROI & Dividend payouts' : 'No withdrawals processed yet'),
       trendDirection: 'down',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -382,7 +382,6 @@ export default function MediaDetail() {
           {coverUrl && (
             <div className="kfpl-pub-premium-banner">
               <img src={coverUrl} alt={article.title} className="kfpl-pub-premium-img" />
-              <div className="kfpl-pub-premium-overlay"></div>
             </div>
           )}
 

@@ -92,7 +92,7 @@ export default function ServiceRequests() {
   return (
     <div className="kfpl-page animate-fade-slide-up" style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
       {/* Header Section */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', borderBottom: '1px solid var(--color-border)', paddingBottom: '16px' }}>
+      <div className="kfpl-card-header-responsive" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', borderBottom: '1px solid var(--color-border)', paddingBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--color-navy)', margin: 0, letterSpacing: '-0.5px' }}>
             Support Tickets
@@ -124,7 +124,7 @@ export default function ServiceRequests() {
       </div>
 
       {/* ── Status Count Cards ─────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '32px' }}>
+      <div className="kfpl-sr-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '32px' }}>
         <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: '10px', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.01)' }}>
           <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EF4444' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -174,44 +174,28 @@ export default function ServiceRequests() {
               return (
                 <div 
                   key={req._id || req.id} 
-                  className="kfpl-table-row-hover"
+                  className="kfpl-sr-ticket-card"
                   onClick={() => navigate(`/service-requests/${req._id || req.id}`)}
-                  style={{ 
-                    background: '#fff',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: '12px',
-                    padding: '20px 24px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    cursor: 'pointer',
-                    transition: 'all 0.25s ease',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.01)'
-                  }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                    {/* Color Bar Indication */}
-                    <div style={{ width: '4px', height: '44px', background: st.color, borderRadius: '4px' }}></div>
-                    
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <span className="mono" style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-gold-dark)' }}>{displayId}</span>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}>
-                          {req.category}
-                        </span>
-                      </div>
-                      <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--color-navy)' }}>{req.subject}</h4>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                  <div className="kfpl-sr-ticket-header">
+                    <div className="kfpl-sr-ticket-id-wrap">
+                      <span className="kfpl-sr-ticket-bar" style={{ background: st.color }} />
+                      <span className="kfpl-sr-ticket-id">{displayId}</span>
+                      <span className="kfpl-sr-ticket-cat">{req.category}</span>
+                    </div>
+                    <span className="kfpl-sr-ticket-status" style={{ color: st.color, background: st.bg, border: `1px solid ${st.color}33` }}>
+                      {st.text}
+                    </span>
+                  </div>
+                  <div className="kfpl-sr-ticket-body">
+                    <h4 className="kfpl-sr-ticket-subject">{req.subject}</h4>
+                    <div className="kfpl-sr-ticket-footer">
+                      <span className="kfpl-sr-ticket-date">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                         {req.createdAt || req.date ? new Date(req.createdAt || req.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}
                       </span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="kfpl-sr-ticket-chevron"><path d="M9 18l6-6-6-6"/></svg>
                     </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                    <span style={{ color: st.color, background: st.bg, padding: '6px 14px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      {st.text}
-                    </span>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ color: 'var(--color-text-muted)' }}><path d="M9 18l6-6-6-6"/></svg>
                   </div>
                 </div>
               );

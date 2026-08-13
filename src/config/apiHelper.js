@@ -61,7 +61,10 @@ export async function apiRequest(path, options = {}) {
   }
 
   if (!response.ok) {
-    if ((response.status === 401 || response.status === 403) && !window.location.pathname.includes('/login')) {
+    const isAccountBlockedOrUnauth = response.status === 401 ||
+      (response.status === 403 && data && (data.code === 'ACCOUNT_BLOCKED' || (data.message && data.message.toLowerCase().includes('account has been deactivated'))));
+
+    if (isAccountBlockedOrUnauth && !window.location.pathname.includes('/login')) {
       const reason = data.message || 'Your account has been deactivated or put on hold.';
       try {
         localStorage.removeItem('kfpl_client_auth');

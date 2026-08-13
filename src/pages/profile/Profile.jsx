@@ -523,7 +523,7 @@ export default function Profile() {
 
   return (
     <div className="kfpl-page">
-      <div className="kfpl-page-header">
+      <div className="kfpl-page-header kfpl-card-header-responsive">
         <div className="kfpl-page-header-left">
           <h1 className="kfpl-page-title">My Profile</h1>
           <p className="kfpl-page-subtitle">View your details, adjust security configurations, or get support</p>
@@ -539,7 +539,7 @@ export default function Profile() {
       </div>
 
       {/* Tabs Menu */}
-      <div className="kfpl-pay-tabs">
+      <div className="kfpl-pay-tabs kfpl-profile-tabs">
         <button
           className={`kfpl-pay-tab ${activeTab === 'details' ? 'kfpl-pay-tab--active' : ''}`}
           onClick={() => handleTabChange('details')}
@@ -574,7 +574,7 @@ export default function Profile() {
         {activeTab === 'details' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {/* Profile Avatar & Hero Header */}
-            <div className="kfpl-card" style={{
+            <div className="kfpl-card kfpl-profile-hero-card" style={{
               display: 'flex',
               alignItems: 'center',
               gap: '24px',

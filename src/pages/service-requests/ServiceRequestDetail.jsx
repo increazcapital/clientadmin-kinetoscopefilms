@@ -138,9 +138,9 @@ export default function ServiceRequestDetail() {
   }
 
   return (
-    <div className="kfpl-page animate-fade-slide-up" style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="kfpl-page kfpl-sr-detail-page animate-fade-slide-up" style={{ maxWidth: '1200px', margin: '0 auto' }}>
       {/* Premium Header Breadcrumb/Nav */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', borderBottom: '1px solid var(--color-border)', paddingBottom: '16px' }}>
+      <div className="kfpl-card-header-responsive" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', borderBottom: '1px solid var(--color-border)', paddingBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>
             <span>Account</span>
@@ -149,7 +149,7 @@ export default function ServiceRequestDetail() {
             <span>•</span>
             <span style={{ color: 'var(--color-gold-dark)' }}>{req.id || 'Details'}</span>
           </div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--color-navy)', margin: 0, letterSpacing: '-0.5px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <h1 className="kfpl-sr-detail-title" style={{ fontWeight: 800, color: 'var(--color-navy)', margin: 0, letterSpacing: '-0.5px', display: 'flex', alignItems: 'center', gap: '12px' }}>
             Request {getDisplayId(req)}
           </h1>
         </div>
@@ -176,10 +176,10 @@ export default function ServiceRequestDetail() {
         </button>
       </div>
 
-      <div className="kfpl-grid-2col" style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '28px', alignItems: 'start' }}>
+      <div className="kfpl-sr-detail-grid">
         {/* Main Details Sheet */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <div className="kfpl-card" style={{ padding: '28px', borderRadius: '12px', border: '1px solid var(--color-border)', background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.03)' }}>
+          <div className="kfpl-card kfpl-sr-detail-card" style={{ borderRadius: '12px', border: '1px solid var(--color-border)', background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.03)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid var(--color-border)', paddingBottom: '16px' }}>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-navy)', margin: 0 }}>Ticket Information</h3>
               <span className={`kfpl-request-status ${req.status.toLowerCase().replace(' ', '-')}`} style={{ padding: '6px 14px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
@@ -187,7 +187,7 @@ export default function ServiceRequestDetail() {
               </span>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px 30px', marginBottom: '24px' }}>
+            <div className="kfpl-sr-info-grid" style={{ marginBottom: '24px' }}>
               <div>
                 <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)', display: 'block', textTransform: 'uppercase', marginBottom: '4px' }}>Category</span>
                 <strong style={{ fontSize: '0.95rem', color: 'var(--color-navy)' }}>{req.category}</strong>
@@ -198,7 +198,7 @@ export default function ServiceRequestDetail() {
                   {req.createdAt || req.date ? new Date(req.createdAt || req.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'}
                 </strong>
               </div>
-              <div style={{ gridColumn: 'span 2' }}>
+              <div className="kfpl-sr-subject-col">
                 <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)', display: 'block', textTransform: 'uppercase', marginBottom: '4px' }}>Subject</span>
                 <strong style={{ fontSize: '1.05rem', color: 'var(--color-navy)' }}>{req.subject}</strong>
               </div>
@@ -253,12 +253,12 @@ export default function ServiceRequestDetail() {
 
           {/* Admin Remarks Card */}
           {(req.adminRemarks || req.adminNote || req.remarks) && (
-            <div className="kfpl-card" style={{ padding: '24px', borderRadius: '12px', borderLeft: '4px solid var(--color-gold)', background: 'var(--color-gold-light)', borderTop: '1px solid var(--color-border)', borderRight: '1px solid var(--color-border)', borderBottom: '1px solid var(--color-border)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ color: 'var(--color-gold-dark)' }}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                <h4 style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-gold-dark)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Official Administrator Response / Remarks</h4>
+            <div className="kfpl-card kfpl-sr-admin-remarks-card" style={{ padding: '20px 24px', borderRadius: '12px', borderLeft: '4px solid #10B981', background: '#ECFDF5', borderTop: '1px solid rgba(16, 185, 129, 0.2)', borderRight: '1px solid rgba(16, 185, 129, 0.2)', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <h4 style={{ fontSize: '0.78rem', fontWeight: 700, color: '#047857', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Official Administrator Response / Remarks</h4>
               </div>
-              <p style={{ fontSize: '0.95rem', color: 'var(--color-navy)', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap', fontWeight: 600 }}>
+              <p style={{ fontSize: '0.925rem', color: '#065F46', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-wrap', fontWeight: 600 }}>
                 {req.adminRemarks || req.adminNote || req.remarks}
               </p>
             </div>
@@ -266,7 +266,7 @@ export default function ServiceRequestDetail() {
         </div>
 
         {/* Dynamic Vertical Timeline */}
-        <div className="kfpl-card" style={{ padding: '28px', borderRadius: '12px', border: '1px solid var(--color-border)', background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.03)', position: 'relative' }}>
+        <div className="kfpl-card kfpl-sr-timeline-card" style={{ padding: '24px', borderRadius: '12px', border: '1px solid var(--color-border)', background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.03)', position: 'relative' }}>
           <h3 style={{ marginBottom: '24px', paddingBottom: '12px', borderBottom: '2px solid var(--color-gold)', color: 'var(--color-navy)', fontSize: '1.2rem', fontWeight: 700, margin: '0 0 24px 0' }}>
             Status Timeline
           </h3>

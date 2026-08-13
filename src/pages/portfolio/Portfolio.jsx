@@ -232,7 +232,31 @@ export default function Portfolio() {
     ? enrichedProjects
     : enrichedProjects.filter(project => (project.segment || '').trim().toLowerCase() === activeTab.trim().toLowerCase());
 
-  const totalValue = enrichedProjects.reduce((sum, project) => sum + project.valueCr, 0);
+  const clientInvestmentSum = useMemo(() => {
+    try {
+      const auth = localStorage.getItem('kfpl_client_auth');
+      if (auth) {
+        const parsed = JSON.parse(auth);
+        const user = parsed.client || parsed.user || {};
+        if (user.totalInvestment) return Number(user.totalInvestment);
+      }
+    } catch (e) {}
+    return 0;
+  }, []);
+
+  const totalRawPortfolioValue = useMemo(() => {
+    if (clientInvestmentSum > 0) return clientInvestmentSum;
+    return enrichedProjects.reduce((sum, p) => sum + Number(p.targetFunding || p.fundedAmount || p.minInvestment || 0), 0);
+  }, [enrichedProjects, clientInvestmentSum]);
+
+  const formattedPortfolioValue = useMemo(() => {
+    const val = totalRawPortfolioValue;
+    if (val <= 0) return '₹0';
+    if (val >= 10000000) return `₹${(val / 10000000).toFixed(2)} Cr`;
+    if (val >= 100000) return `₹${(val / 100000).toFixed(2)} L`;
+    return formatCurrency(val);
+  }, [totalRawPortfolioValue]);
+
   const averageProgress = Math.round(
     enrichedProjects.reduce((sum, project) => sum + (project.milestone || 0), 0) / (enrichedProjects.length || 1)
   );
@@ -240,7 +264,7 @@ export default function Portfolio() {
   const completedProjects = enrichedProjects.filter(project => project.milestone >= 100).length;
 
   const summaryCards = [
-    { label: 'Portfolio Value', value: `\u20B9${totalValue.toFixed(1)} Cr`, meta: 'Across active Kinetoscope assets' },
+    { label: 'Portfolio Value', value: formattedPortfolioValue, meta: 'Across active Kinetoscope assets' },
     { label: 'Live Projects', value: enrichedProjects.length, meta: `${activeProjects} currently in motion` },
     { label: 'Avg. Milestone', value: `${averageProgress}%`, meta: 'Weighted by active project count' },
     { label: 'Completed', value: completedProjects, meta: 'Released or fully delivered' },
