@@ -409,38 +409,116 @@ export default function PaymentRequests() {
       </div>
 
       {/* ── Request History Table ─────────────────────── */}
-      <div className="kfpl-pay-history">
-        <div className="kfpl-pay-history-header">
-          <div className="kfpl-pay-history-header-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
-          </div>
-          <h3 className="kfpl-pay-history-title">Request History</h3>
-        </div>
-        <div className="kfpl-pay-history-list">
-          {requestsList.map((req, i) => (
-            <div key={req.id || i} className="kfpl-pay-history-item" style={{ animationDelay: `${i * 0.06}s` }}>
-              <div className={`kfpl-pay-history-type ${req.type === 'Deposit' ? 'kfpl-pay-history-type--deposit' : 'kfpl-pay-history-type--withdraw'}`}>
-                {req.type === 'Deposit' ? (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
-                ) : (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg>
-                )}
-              </div>
-              <div className="kfpl-pay-history-info">
-                <span className="kfpl-pay-history-name">{req.type}</span>
-                <span className="kfpl-pay-history-note">{req.note} · {req.mode}</span>
-              </div>
-              <div className="kfpl-pay-history-amount">
-                <span className={req.type === 'Deposit' ? 'kfpl-pay-history-amount--positive' : 'kfpl-pay-history-amount--negative'}>
-                  {req.type === 'Deposit' ? '+' : '-'}{formatAmount(req.amount)}
-                </span>
-                <span className="kfpl-pay-history-date">
-                  {new Date(req.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                </span>
-              </div>
-              <span className={`kfpl-badge kfpl-badge--${req.status.toLowerCase()}`}>{req.status}</span>
+      <div className="kfpl-card" style={{ marginTop: '28px', borderRadius: '16px', border: '1px solid var(--color-border)', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', overflow: 'hidden', background: '#ffffff' }}>
+        <div style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface-elevated, #F8FAFC)', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.1)', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
             </div>
-          ))}
+            <div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: '800', margin: 0, color: 'var(--color-navy, #0f172a)' }}>
+                Request History & Financial Audit Log
+              </h3>
+              <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', margin: '2px 0 0' }}>
+                Complete track record of all capital deposit requests, profit withdrawals, and live processing statuses
+              </p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <span className="kfpl-badge" style={{ background: '#E0E7FF', color: '#3730A3', fontWeight: '700', padding: '6px 14px', borderRadius: '20px', fontSize: '0.78rem' }}>
+              Total: {requestsList.length}
+            </span>
+            <span className="kfpl-badge" style={{ background: '#D1FAE5', color: '#065F46', fontWeight: '700', padding: '6px 14px', borderRadius: '20px', fontSize: '0.78rem' }}>
+              Deposits: +{formatAmount(requestsList.filter(r => r.type === 'Deposit' && String(r.status).toLowerCase() === 'approved').reduce((s, r) => s + r.amount, 0))}
+            </span>
+            <span className="kfpl-badge" style={{ background: '#FEE2E2', color: '#991B1B', fontWeight: '700', padding: '6px 14px', borderRadius: '20px', fontSize: '0.78rem' }}>
+              Withdrawals: -{formatAmount(requestsList.filter(r => r.type === 'Withdrawal' && String(r.status).toLowerCase() === 'approved').reduce((s, r) => s + r.amount, 0))}
+            </span>
+          </div>
+        </div>
+
+        <div style={{ overflowX: 'auto' }}>
+          <table className="kfpl-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: 'var(--color-surface-alt, #F1F5F9)', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.05em', color: 'var(--color-text-muted)' }}>
+                <th style={{ padding: '14px 20px', textAlign: 'left' }}>Date & Time</th>
+                <th style={{ padding: '14px 20px', textAlign: 'left' }}>Type</th>
+                <th style={{ padding: '14px 20px', textAlign: 'left' }}>Reference ID</th>
+                <th style={{ padding: '14px 20px', textAlign: 'left' }}>Payment Method / Note</th>
+                <th style={{ padding: '14px 20px', textAlign: 'right' }}>Amount</th>
+                <th style={{ padding: '14px 20px', textAlign: 'center' }}>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {requestsList.length === 0 ? (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--color-text-muted)' }}>
+                    <div style={{ fontSize: '1.8rem', marginBottom: '8px' }}>📂</div>
+                    <div style={{ fontWeight: '600', fontSize: '0.95rem' }}>No payment requests recorded yet.</div>
+                    <div style={{ fontSize: '0.8rem', marginTop: '4px' }}>Submit a deposit or withdrawal request above to start your transaction history.</div>
+                  </td>
+                </tr>
+              ) : (
+                requestsList.map((req, i) => {
+                  const isDeposit = req.type === 'Deposit';
+                  const statusNorm = String(req.status || 'pending').toLowerCase();
+                  const isApproved = statusNorm === 'approved' || statusNorm === 'paid' || statusNorm === 'completed';
+                  const isPending = statusNorm === 'pending';
+
+                  const badgeBg = isApproved ? '#D1FAE5' : isPending ? '#FEF3C7' : '#FEE2E2';
+                  const badgeColor = isApproved ? '#065F46' : isPending ? '#92400E' : '#991B1B';
+                  const statusLabel = isApproved ? '✓ APPROVED' : isPending ? '⏳ PENDING' : '✕ REJECTED';
+
+                  const dateFormatted = req.date
+                    ? new Date(req.date).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                    : '—';
+
+                  const refIdStr = req.reference || (req.id ? `TXN-${String(req.id).slice(-8)}` : `TXN-${1000 + i}`);
+                  const noteStr = req.note || req.mode || 'Bank Transfer';
+
+                  return (
+                    <tr key={req.id || i} style={{ borderBottom: '1px solid var(--color-border)', transition: 'background 0.2s ease' }}>
+                      <td style={{ padding: '16px 20px', fontWeight: '600', fontSize: '0.85rem', color: 'var(--color-navy, #0f172a)' }}>
+                        {dateFormatted}
+                      </td>
+                      <td style={{ padding: '16px 20px' }}>
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '4px 10px',
+                          borderRadius: '20px',
+                          fontSize: '0.78rem',
+                          fontWeight: '800',
+                          background: isDeposit ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                          color: isDeposit ? '#059669' : '#DC2626'
+                        }}>
+                          {isDeposit ? '↓ DEPOSIT' : '↑ WITHDRAWAL'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '16px 20px' }}>
+                        <span style={{ fontFamily: 'monospace', fontWeight: '700', background: 'var(--color-surface-elevated, #F8FAFC)', padding: '4px 10px', borderRadius: '6px', border: '1px solid var(--color-border)', fontSize: '0.82rem', color: '#334155' }}>
+                          {refIdStr}
+                        </span>
+                      </td>
+                      <td style={{ padding: '16px 20px', fontSize: '0.83rem', color: 'var(--color-text)' }}>
+                        <div style={{ fontWeight: '700', color: 'var(--color-navy, #0f172a)' }}>{req.mode || 'Bank Transfer'}</div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>{noteStr}</div>
+                      </td>
+                      <td style={{ padding: '16px 20px', textAlign: 'right', fontWeight: '800', fontSize: '0.95rem', color: isDeposit ? 'var(--color-primary-green, #059669)' : '#DC2626' }}>
+                        {isDeposit ? '+' : '-'}{formatAmount(req.amount)}
+                      </td>
+                      <td style={{ padding: '16px 20px', textAlign: 'center' }}>
+                        <span style={{ display: 'inline-block', background: badgeBg, color: badgeColor, fontWeight: '800', fontSize: '0.72rem', padding: '4px 12px', borderRadius: '20px', letterSpacing: '0.04em' }}>
+                          {statusLabel}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
