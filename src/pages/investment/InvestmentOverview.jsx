@@ -356,6 +356,7 @@ export default function InvestmentOverview() {
         if (parsed.clientDividends) setClientDividends(parsed.clientDividends);
         if (parsed.totalDividends) setTotalDividends(parsed.totalDividends);
         if (parsed.approvedDepositsTotal) setApprovedDepositsTotal(parsed.approvedDepositsTotal);
+        if (parsed.approvedWithdrawalsTotal !== undefined) setApprovedWithdrawalsTotal(parsed.approvedWithdrawalsTotal);
         if (parsed.client) setClient(parsed.client);
       }
     } catch (e) {
@@ -472,7 +473,8 @@ export default function InvestmentOverview() {
           if (Array.isArray(rawHistory) && rawHistory.length > 0) {
             freshRoiHistory = rawHistory.map((r, idx) => {
               const amt = Number(r.amount || r.received || r.expected || 0);
-              const isPaidOrApproved = ['paid', 'approved'].includes(String(r.status || '').toLowerCase());
+              const isPaidOrApproved = ['paid', 'approved', 'completed'].includes(String(r.status || '').toLowerCase());
+              const isWd = r.isWithdrawal || /withdrawal/i.test(String(r.type || r.commissionType || r.category || r.payoutDetail || ''));
               const rawDate = r.date || r.paidAt || r.processedDate || r.payoutDate || r.createdAt;
               let derivedMonth = r.month || r.payoutMonth || r.period;
               if (!derivedMonth || derivedMonth === '—') {
@@ -496,7 +498,9 @@ export default function InvestmentOverview() {
                 received: isPaidOrApproved ? (r.received || amt) : 0,
                 amount: amt,
                 status: isPaidOrApproved ? (String(r.status).toLowerCase() === 'paid' ? 'Paid' : 'Approved') : (r.status || 'Approved'),
-                processedDate: r.processedDate || r.paidAt || '—'
+                processedDate: r.processedDate || r.paidAt || '—',
+                isWithdrawal: isWd,
+                type: r.type || r.commissionType || (isWd ? 'Withdrawal' : 'ROI')
               };
             });
           }
@@ -548,10 +552,10 @@ export default function InvestmentOverview() {
             ? rootTx.transactions
             : (Array.isArray(rootTx) ? rootTx : []);
           approvedDepositsTotal = txList
-            .filter(t => String(t.type || '').toLowerCase() === 'deposit' && String(t.status || '').toLowerCase() === 'approved')
+            .filter(t => String(t.type || '').toLowerCase() === 'deposit' && ['approved', 'paid', 'completed'].includes(String(t.status || '').toLowerCase()))
             .reduce((sum, t) => sum + Number(t.amount || 0), 0);
           approvedWithdrawalsTotal = txList
-            .filter(t => String(t.type || '').toLowerCase() === 'withdrawal' && String(t.status || '').toLowerCase() === 'approved')
+            .filter(t => String(t.type || '').toLowerCase() === 'withdrawal' && ['approved', 'paid', 'completed'].includes(String(t.status || '').toLowerCase()))
             .reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
           const roiWithdrawalsTotal = freshRoiHistory.reduce((sum, r) => sum + (['paid', 'approved'].includes((r.status || '').toLowerCase()) ? Number(r.amount || 0) : 0), 0);
@@ -606,6 +610,7 @@ export default function InvestmentOverview() {
           clientDividends: freshClientDividends,
           totalDividends: freshTotalDividends,
           approvedDepositsTotal: finalTotalInvested,
+          approvedWithdrawalsTotal: approvedWithdrawalsTotal,
           client: updatedClient
         });
 
@@ -651,9 +656,21 @@ export default function InvestmentOverview() {
     : 0;
 
   const weightedROI = hasAllocatedRoi ? calculatedWeightedROI : clientRoiRate;
-  const grossReceivedROI = roiHistory.reduce((sum, roi) => sum + (roi.amount || roi.received || 0), 0);
+  const grossReceivedROI = roiHistory
+    .filter(roi => {
+      const st = String(roi.status || '').toLowerCase();
+      const isPaid = ['paid', 'approved', 'completed'].includes(st);
+      const isWd = roi.isWithdrawal || /withdrawal/i.test(String(roi.type || roi.commissionType || roi.category || roi.payoutDetail || ''));
+      return isPaid && !isWd;
+    })
+    .reduce((sum, roi) => sum + Number(roi.received || roi.amount || 0), 0);
   const receivedROI = Math.max(0, grossReceivedROI - approvedWithdrawalsTotal);
-  const paidMonths = roiHistory.filter(roi => ['paid', 'approved'].includes((roi.status || '').toLowerCase())).length;
+  const paidMonths = roiHistory.filter(roi => {
+    const st = String(roi.status || '').toLowerCase();
+    const isPaid = ['paid', 'approved', 'completed'].includes(st);
+    const isWd = roi.isWithdrawal || /withdrawal/i.test(String(roi.type || roi.commissionType || roi.category || roi.payoutDetail || ''));
+    return isPaid && !isWd;
+  }).length;
 
   const contractMonths = investments.length > 0
     ? Math.max(...investments.map(inv => inv.durationMonths || inv.tenureMonths || inv.lockinMonths || 18))
