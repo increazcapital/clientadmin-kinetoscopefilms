@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
-    base: env.VITE_BASE_PATH || './',
+    base: env.VITE_BASE_PATH || '/',
     esbuild: mode === 'production' ? {
       drop: ['console', 'debugger']
     } : {},
