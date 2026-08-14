@@ -12,7 +12,7 @@ export const getApiUrl = (path) => {
 
   // In local dev, Vite proxy handles routing to the correct backend
   // In production, use the cloud backend URL directly
-  const baseUrl = isLocal ? '' : (import.meta.env.VITE_API_URL_CLOUD || 'https://kinetoscope-backend-tau.vercel.app');
+  const baseUrl = isLocal ? '' : (import.meta.env.VITE_API_URL_CLOUD || 'https://server.kinetoscopefilms.com');
   return `${baseUrl}${path}`;
 };
 
