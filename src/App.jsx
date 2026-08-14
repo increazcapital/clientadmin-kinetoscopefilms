@@ -49,32 +49,36 @@ export default function App() {
 
           {/* Protected Routes (MainLayout wraps all) */}
           <Route
+            path="/"
             element={
               <ProtectedRoute>
                 <MainLayout />
               </ProtectedRoute>
             }
           >
-            <Route path="/dashboard" element={<DashboardHome />} />
-            <Route path="/investment" element={<InvestmentOverview />} />
-            <Route path="/complete-transaction-details" element={<CompleteTransactionDetails />} />
-            <Route path="/portfolio" element={<Portfolio />} />
-            <Route path="/projects" element={<ProjectSelection />} />
-            <Route path="/perks" element={<PerksAndRecognition />} />
-            <Route path="/payments" element={<PaymentRequests />} />
-            <Route path="/service-requests" element={<ServiceRequests />} />
-            <Route path="/service-requests/new" element={<NewServiceRequest />} />
-            <Route path="/service-requests/:id" element={<ServiceRequestDetail />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/media" element={<MediaFeed />} />
-            <Route path="/media/:id" element={<MediaDetail />} />
-            <Route path="/onboarding/details" element={<OnboardingDetails />} />
-            <Route path="/faq" element={<FAQPage />} />
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={<DashboardHome />} />
+            <Route path="investment" element={<InvestmentOverview />} />
+            <Route path="complete-transaction-details" element={<CompleteTransactionDetails />} />
+            <Route path="portfolio" element={<Portfolio />} />
+            <Route path="projects" element={<ProjectSelection />} />
+            <Route path="perks" element={<PerksAndRecognition />} />
+            <Route path="payments" element={<PaymentRequests />} />
+            <Route path="service-requests" element={<ServiceRequests />} />
+            <Route path="service-requests/new" element={<NewServiceRequest />} />
+            <Route path="service-requests/:id" element={<ServiceRequestDetail />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="media" element={<MediaFeed />} />
+            <Route path="media/:id" element={<MediaDetail />} />
+            <Route path="onboarding/details" element={<OnboardingDetails />} />
+            <Route path="faq" element={<FAQPage />} />
+
+            {/* 404 inside layout */}
+            <Route path="*" element={<NotFound />} />
           </Route>
 
           {/* Redirects & Catch-all */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<NotFound />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </ToastProvider>
     </BrowserRouter>
