@@ -19,7 +19,16 @@ export default function MissingDocsReuploadCard({ client, loading = false, onDoc
   if (!client.bankProofDocument) {
     missingList.push({ key: 'bankProofDocument', label: 'Bank Details Document' });
   }
-  if (!client.agreementDocument) {
+  // Agreement document should ONLY appear in the Red Re-upload Banner if Super Admin explicitly requested a re-upload or deleted it
+  const isAgreementReuploadRequested = Boolean(
+    client.agreementReuploadRequested || 
+    client.reuploadRequested || 
+    client.agreementReupload || 
+    client.documentStatus === 'reupload_required' ||
+    (Array.isArray(client.reuploadDocs) && client.reuploadDocs.includes('agreementDocument'))
+  );
+
+  if (!client.agreementDocument && isAgreementReuploadRequested) {
     missingList.push({ key: 'agreementDocument', label: 'Signed Client Participation Agreement' });
   }
 
