@@ -5984,91 +5984,94 @@
 .kfpl-sr-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   animation: fadeSlideUp 0.5s ease both;
   animation-delay: 0.1s;
 }
 
 .kfpl-sr-card {
-  background: var(--color-white);
-  border: 1.5px solid var(--color-border-light);
-  border-radius: var(--radius-xl);
-  padding: 20px 24px;
+  background: var(--color-white, #ffffff);
+  border: 1px solid var(--color-border, #E2E8F0);
+  border-radius: 14px;
+  padding: 18px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
-  transition: var(--transition-smooth);
-  animation: fadeSlideUp 0.4s ease both;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
 .kfpl-sr-card:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-card-hover);
-  border-color: var(--color-border);
+  box-shadow: 0 10px 24px rgba(6, 29, 19, 0.08);
+  border-color: #CBD5E1;
 }
 
 .kfpl-sr-card-left {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 16px;
   flex: 1;
 }
 
 .kfpl-sr-card-status-dot {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.04);
 }
 
 .kfpl-sr-card-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .kfpl-sr-card-top {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .kfpl-sr-card-id {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  color: var(--color-text-muted);
+  font-family: monospace;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #0F172A;
   letter-spacing: 0.5px;
-  text-transform: uppercase;
-  background: var(--color-surface);
-  padding: 2px 6px;
-  border-radius: var(--radius-sm);
+  background: #F1F5F9;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #E2E8F0;
 }
 
 .kfpl-sr-card-category {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  color: var(--color-gold-dark);
-  background: var(--color-gold-light);
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #047857;
+  background: #ECFDF5;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 .kfpl-sr-card-subject {
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin-top: 2px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0;
+  line-height: 1.35;
 }
 
 .kfpl-sr-card-date {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  color: #64748B;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  margin-top: 2px;
+  gap: 6px;
+  font-weight: 500;
 }
 
 .kfpl-sr-card-right {
@@ -6079,22 +6082,22 @@
 
 .kfpl-sr-card-status {
   display: inline-flex;
-  padding: 4px 10px;
-  border-radius: var(--radius-full);
-  font-size: 0.6875rem;
-  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
 }
 
 .kfpl-sr-card-arrow {
-  color: var(--color-text-muted);
+  color: #94A3B8;
   transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.25s ease;
 }
 
 .kfpl-sr-card:hover .kfpl-sr-card-arrow {
   transform: translateX(4px);
-  color: var(--color-text-primary);
+  color: #0F172A;
 }
 
 /* ── Service Requests Empty State ── */

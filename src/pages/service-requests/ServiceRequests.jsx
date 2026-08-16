@@ -167,35 +167,35 @@ export default function ServiceRequests() {
       ) : (
         <>
           {/* ── Request List ─────────────────────── */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="kfpl-sr-list">
             {requests.map((req, i) => {
               const st = getStatusStyle(req.status);
               const displayId = seqMap[req._id || req.id] || req.id || (req._id ? 'SR-' + req._id.substring(req._id.length - 6).toUpperCase() : 'N/A');
               return (
                 <div 
                   key={req._id || req.id} 
-                  className="kfpl-sr-ticket-card"
+                  className="kfpl-sr-card"
                   onClick={() => navigate(`/service-requests/${req._id || req.id}`)}
                 >
-                  <div className="kfpl-sr-ticket-header">
-                    <div className="kfpl-sr-ticket-id-wrap">
-                      <span className="kfpl-sr-ticket-bar" style={{ background: st.color }} />
-                      <span className="kfpl-sr-ticket-id">{displayId}</span>
-                      <span className="kfpl-sr-ticket-cat">{req.category}</span>
-                    </div>
-                    <span className="kfpl-sr-ticket-status" style={{ color: st.color, background: st.bg, border: `1px solid ${st.color}33` }}>
-                      {st.text}
-                    </span>
-                  </div>
-                  <div className="kfpl-sr-ticket-body">
-                    <h4 className="kfpl-sr-ticket-subject">{req.subject}</h4>
-                    <div className="kfpl-sr-ticket-footer">
-                      <span className="kfpl-sr-ticket-date">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  <div className="kfpl-sr-card-left">
+                    <span className="kfpl-sr-card-status-dot" style={{ background: st.color }} />
+                    <div className="kfpl-sr-card-info">
+                      <div className="kfpl-sr-card-top">
+                        <span className="kfpl-sr-card-id">{displayId}</span>
+                        <span className="kfpl-sr-card-category">{req.category || 'General Inquiry'}</span>
+                      </div>
+                      <h4 className="kfpl-sr-card-subject">{req.subject}</h4>
+                      <span className="kfpl-sr-card-date">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                         {req.createdAt || req.date ? new Date(req.createdAt || req.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}
                       </span>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="kfpl-sr-ticket-chevron"><path d="M9 18l6-6-6-6"/></svg>
                     </div>
+                  </div>
+                  <div className="kfpl-sr-card-right">
+                    <span className="kfpl-sr-card-status" style={{ color: st.color, background: st.bg, border: `1px solid ${st.color}33` }}>
+                      {st.text}
+                    </span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="kfpl-sr-card-arrow"><path d="M9 18l6-6-6-6"/></svg>
                   </div>
                 </div>
               );
