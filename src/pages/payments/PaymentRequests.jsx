@@ -159,7 +159,9 @@ export default function PaymentRequests() {
         formData.append('type', 'deposit');
         formData.append('amount', form.amount);
         formData.append('paymentMethod', form.mode);
-        formData.append('referenceNumber', form.reference || `TXN${Date.now()}`);
+        formData.append('referenceNumber', form.reference || '');
+        formData.append('reference', form.reference || '');
+        formData.append('transactionRef', form.reference || '');
         formData.append('remarks', form.note || '');
         if (form.selectedProjectId) {
           formData.append('projectId', form.selectedProjectId);
