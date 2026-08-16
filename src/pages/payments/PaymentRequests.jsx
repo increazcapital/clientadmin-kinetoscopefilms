@@ -65,7 +65,7 @@ export default function PaymentRequests() {
         status: req.status ? (req.status.charAt(0).toUpperCase() + req.status.slice(1)) : 'Pending',
         mode: req.paymentMethod || req.mode || 'Bank Transfer',
         note: req.remarks || req.note || '',
-        reference: req.referenceNumber || req.reference || req.referenceId || req.utrNumber || '',
+        reference: req.referenceNumber || req.reference || req.referenceId || req.transactionRef || req.transactionRefId || req.utrNumber || '',
         reason: req.remarks || req.reason || '',
         proofFile: req.proofFile || req.fileUrl || '',
         projectName: req.projectName || ''

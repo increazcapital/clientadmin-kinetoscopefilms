@@ -275,11 +275,6 @@ export default function Login() {
       setError('Account numbers do not match!');
       return;
     }
-    if (!panFile || !aadhaarFile || !bankFile) {
-      addToast('Please upload all required KYC documents (PAN, Aadhaar, Bank Proof)', 'danger', 'Document Upload Required');
-      setError('PAN, Aadhaar, and Bank Proof document uploads are required.');
-      return;
-    }
 
     setLoading(true);
 
@@ -691,19 +686,19 @@ export default function Login() {
                   {/* Documents Upload */}
                   <div className="kfpl-login-section-label">KYC Document Uploads</div>
                   <div className="kfpl-login-input-group">
-                    <label className="kfpl-login-label">{regForm.citizenship === 'International' ? 'Tax ID Upload' : 'PAN Card'}</label>
+                    <label className="kfpl-login-label">{regForm.citizenship === 'International' ? 'Tax ID Upload *' : 'PAN Card *'}</label>
                     <input type="file" className="kfpl-login-input" onChange={(e) => setPanFile(e.target.files[0])} />
                   </div>
                   <div className="kfpl-login-input-group">
-                    <label className="kfpl-login-label">{regForm.citizenship === 'International' ? 'Passport Card' : 'Aadhaar Card'}</label>
+                    <label className="kfpl-login-label">{regForm.citizenship === 'International' ? 'Passport / National ID *' : 'Aadhaar Card *'}</label>
                     <input type="file" className="kfpl-login-input" onChange={(e) => setAadhaarFile(e.target.files[0])} />
                   </div>
                   <div className="kfpl-login-input-group">
-                    <label className="kfpl-login-label">Bank Proof Document</label>
+                    <label className="kfpl-login-label">Bank Proof Document (Optional)</label>
                     <input type="file" className="kfpl-login-input" onChange={(e) => setBankFile(e.target.files[0])} />
                   </div>
                   <div className="kfpl-login-input-group">
-                    <label className="kfpl-login-label">Nominee Proof Document</label>
+                    <label className="kfpl-login-label">Nominee Proof Document (Optional)</label>
                     <input type="file" className="kfpl-login-input" onChange={(e) => setNomineeFile(e.target.files[0])} />
                   </div>
 

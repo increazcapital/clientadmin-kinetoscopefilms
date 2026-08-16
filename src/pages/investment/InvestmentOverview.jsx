@@ -334,8 +334,8 @@ export default function InvestmentOverview() {
   const [roiHistory, setRoiHistory] = useState([]);
 
   const [roiFilter, setRoiFilter] = useState('All');
-  const [calcPrincipal, setCalcPrincipal] = useState(6000000);
-  const [calcRate, setCalcRate] = useState(1.2);
+  const [calcPrincipal, setCalcPrincipal] = useState('');
+  const [calcRate, setCalcRate] = useState('');
   const [segmentFilter, setSegmentFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [yearFilter, setYearFilter] = useState('all');
@@ -646,7 +646,9 @@ export default function InvestmentOverview() {
   const segmentsSum = investments.reduce((sum, investment) => sum + investment.amount, 0);
   const netCapitalVal = approvedDepositsTotal;
   const total = Math.max(netCapitalVal, segmentsSum);
-  const monthlyReturn = Math.round((calcPrincipal * calcRate) / 100);
+  const numPrincipal = calcPrincipal !== '' ? Number(calcPrincipal) : 0;
+  const numRate = calcRate !== '' ? Number(calcRate) : 0;
+  const monthlyReturn = (numPrincipal && numRate) ? Math.round((numPrincipal * numRate) / 100) : 0;
   const annualReturn = Math.round(monthlyReturn * 12);
   const clientRoiRate = Number(client.roiPercent ?? client.roiPercentage ?? client.monthlyRoi ?? client.roi ?? 0);
   const hasAllocatedRoi = investments.length > 0 && investments.some(inv => (inv.roiAllocated || inv.roiPercentage || inv.roi) > 0);
@@ -1052,8 +1054,9 @@ export default function InvestmentOverview() {
               <input
                 type="number"
                 className="kfpl-input"
+                placeholder="Enter Principal Amount (₹)"
                 value={calcPrincipal}
-                onChange={event => setCalcPrincipal(Number(event.target.value))}
+                onChange={event => setCalcPrincipal(event.target.value)}
               />
             </div>
 
@@ -1062,9 +1065,10 @@ export default function InvestmentOverview() {
               <input
                 type="number"
                 className="kfpl-input"
+                placeholder="Enter Monthly ROI %"
                 value={calcRate}
-                onChange={event => setCalcRate(Number(event.target.value))}
-                step="0.5"
+                onChange={event => setCalcRate(event.target.value)}
+                step="0.1"
               />
             </div>
           </div>

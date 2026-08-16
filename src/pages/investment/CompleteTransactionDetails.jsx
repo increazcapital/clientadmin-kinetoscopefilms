@@ -49,6 +49,16 @@ export default function CompleteTransactionDetails() {
         const mappedTx = rawTx.map((t, idx) => {
           const isDeposit = String(t.type).toLowerCase() === 'deposit';
           const isDivWithdrawal = t.withdrawalType === 'dividend' || String(t.description || t.remarks || '').toLowerCase().includes('dividend');
+          const realRef = (t.referenceNumber && t.referenceNumber !== '—' && t.referenceNumber !== '-')
+            ? t.referenceNumber
+            : ((t.transactionRefId && t.transactionRefId !== '—' && t.transactionRefId !== '-')
+              ? t.transactionRefId
+              : ((t.transactionRef && t.transactionRef !== '—' && t.transactionRef !== '-')
+                ? t.transactionRef
+                : ((t.utrNumber && t.utrNumber !== '—')
+                  ? t.utrNumber
+                  : (t._id ? `REF-${String(t._id).slice(-8).toUpperCase()}` : `TXN${100000 + idx}`))));
+
           return {
             id: t._id || t.id || `tx_${idx}`,
             month: isDeposit ? 'Capital Deposit' : (isDivWithdrawal ? 'Dividend Bonus Withdrawal' : 'Capital Withdrawal'),
@@ -57,37 +67,57 @@ export default function CompleteTransactionDetails() {
             status: (t.status || 'pending').toLowerCase(),
             paidAt: t.actionAt || t.updatedAt || t.createdAt,
             paymentMode: t.paymentMethod || 'Bank Transfer',
-            transactionRef: t.referenceNumber || (t._id ? `REF-${String(t._id).slice(-8).toUpperCase()}` : `TXN${100000 + idx}`),
+            transactionRef: realRef,
             category: isDeposit ? 'deposit' : 'withdrawal',
             withdrawalType: t.withdrawalType
           };
         });
 
         // Map ROI payouts
-        const mappedPayouts = rawPayouts.map((r, idx) => ({
-          id: r._id || r.id || `payout_${idx}`,
-          month: r.month || r.period || 'ROI Payout',
-          type: 'ROI RETURN',
-          amount: Number(r.amount || r.received || 0),
-          status: (r.status || 'paid').toLowerCase(),
-          paidAt: r.paidAt || r.date || r.processedDate,
-          paymentMode: r.paymentMode || 'Bank Transfer',
-          transactionRef: r.transactionRef || r.transactionRefId || (r._id ? `ROI-${String(r._id).slice(-8).toUpperCase()}` : `ROI${100000 + idx}`),
-          category: 'roi'
-        }));
+        const mappedPayouts = rawPayouts.map((r, idx) => {
+          const realRef = (r.transactionRefId && r.transactionRefId !== '—' && r.transactionRefId !== '-')
+            ? r.transactionRefId
+            : ((r.transactionRef && r.transactionRef !== '—' && r.transactionRef !== '-')
+              ? r.transactionRef
+              : ((r.referenceNumber && r.referenceNumber !== '—' && r.referenceNumber !== '-')
+                ? r.referenceNumber
+                : ((r.refId && r.refId !== '—' && r.refId !== '-')
+                  ? r.refId
+                  : (r._id ? `ROI-${String(r._id).slice(-8).toUpperCase()}` : `ROI${100000 + idx}`))));
+
+          return {
+            id: r._id || r.id || `payout_${idx}`,
+            month: r.month || r.period || r.payoutMonth || 'ROI Payout',
+            type: 'ROI RETURN',
+            amount: Number(r.amount || r.received || 0),
+            status: (r.status || 'paid').toLowerCase(),
+            paidAt: r.paidAt || r.date || r.processedDate,
+            paymentMode: r.paymentMode || 'Bank Transfer',
+            transactionRef: realRef,
+            category: 'roi'
+          };
+        });
 
         // Map Project Dividend allotments
-        const mappedDividends = rawDividends.map((div, idx) => ({
-          id: div._id || div.id || `div_${idx}`,
-          month: div.projectName ? `Project Dividend (${div.projectName})` : (div.remarks || 'Project Dividend / Bonus'),
-          type: 'DIVIDEND CREDIT',
-          amount: Number(div.allottedAmount || div.amount || 0),
-          status: 'paid',
-          paidAt: div.allotmentDate || div.createdAt,
-          paymentMode: 'Direct Credit',
-          transactionRef: div.transactionRef || (div._id ? `DIV-${String(div._id).slice(-8).toUpperCase()}` : `DIV${100000 + idx}`),
-          category: 'dividend'
-        }));
+        const mappedDividends = rawDividends.map((div, idx) => {
+          const realRef = (div.transactionRef && div.transactionRef !== '—' && div.transactionRef !== '-')
+            ? div.transactionRef
+            : ((div.referenceNumber && div.referenceNumber !== '—')
+              ? div.referenceNumber
+              : (div._id ? `DIV-${String(div._id).slice(-8).toUpperCase()}` : `DIV${100000 + idx}`));
+
+          return {
+            id: div._id || div.id || `div_${idx}`,
+            month: div.projectName ? `Project Dividend (${div.projectName})` : (div.remarks || 'Project Dividend / Bonus'),
+            type: 'DIVIDEND CREDIT',
+            amount: Number(div.allottedAmount || div.amount || 0),
+            status: 'paid',
+            paidAt: div.allotmentDate || div.createdAt,
+            paymentMode: 'Direct Credit',
+            transactionRef: realRef,
+            category: 'dividend'
+          };
+        });
 
         const combined = [...mappedTx, ...mappedPayouts, ...mappedDividends].sort((a, b) => {
           const dateA = new Date(a.paidAt || 0).getTime();
