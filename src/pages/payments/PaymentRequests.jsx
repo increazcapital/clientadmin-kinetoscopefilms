@@ -65,7 +65,7 @@ export default function PaymentRequests() {
         status: req.status ? (req.status.charAt(0).toUpperCase() + req.status.slice(1)) : 'Pending',
         mode: req.paymentMethod || req.mode || 'Bank Transfer',
         note: req.remarks || req.note || '',
-        reference: req.referenceNumber || req.reference || '',
+        reference: req.referenceNumber || req.reference || req.referenceId || req.utrNumber || '',
         reason: req.remarks || req.reason || '',
         proofFile: req.proofFile || req.fileUrl || '',
         projectName: req.projectName || ''
@@ -473,7 +473,7 @@ export default function PaymentRequests() {
                     ? new Date(req.date).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
                     : '—';
 
-                  const refIdStr = req.reference || (req.id ? `TXN-${String(req.id).slice(-8)}` : `TXN-${1000 + i}`);
+                  const refIdStr = req.reference || req.referenceNumber || req.referenceId || (req.id ? `TXN-${String(req.id).slice(-8)}` : `TXN-${1000 + i}`);
                   const noteStr = req.note || req.mode || 'Bank Transfer';
 
                   return (
