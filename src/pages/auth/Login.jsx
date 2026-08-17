@@ -446,7 +446,7 @@ export default function Login() {
             <div style={{ background: '#ffffff', padding: '6px', width: '56px', height: '56px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 20px rgba(16, 185, 129, 0.18)', border: '1px solid #e2e8f0', marginBottom: '12px' }}>
               <img src="/logokfpl.jpeg" alt="KFPL Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '8px', display: 'block' }} />
             </div>
-            <h1 className="kfpl-login-title">Client Portal</h1>
+            <h1 className="kfpl-login-title">Investor Dashboard</h1>
             <p className="kfpl-login-subtitle">Access your media production portfolio</p>
           </div>
 

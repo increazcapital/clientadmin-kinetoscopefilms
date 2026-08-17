@@ -26,7 +26,7 @@ const routeConfig = {
 function getPageConfig(pathname) {
   if (routeConfig[pathname]) return routeConfig[pathname];
   if (pathname.match(/^\/service-requests\/.+/)) return { title: 'Request Details', breadcrumb: 'Account / Service Requests' };
-  return { title: 'Client Portal', breadcrumb: '' };
+  return { title: 'Investor Dashboard', breadcrumb: '' };
 }
 
 export default function Header({ isCollapsed, onMenuClick }) {

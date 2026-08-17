@@ -210,7 +210,7 @@ export default function CompleteTransactionDetails() {
         <div class="header">
           <div>
             <h1 class="title">Official Transaction Statement</h1>
-            <p style="margin: 4px 0 0; font-size: 12px; color: #4B6B5B;">Kinetoscope Films Production Pvt Ltd — Client Portal</p>
+            <p style="margin: 4px 0 0; font-size: 12px; color: #4B6B5B;">Kinetoscope Films Production Pvt Ltd — Investor Dashboard</p>
           </div>
           <div style="text-align: right;">
             <div style="font-size: 14px; font-weight: 700; color: #061D13;">${client.name || 'Client'}</div>
