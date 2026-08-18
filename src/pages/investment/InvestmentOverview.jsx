@@ -417,7 +417,8 @@ export default function InvestmentOverview() {
             ? targetInvRes 
             : (targetInvRes.investments || targetInvRes.data?.investments || (Array.isArray(targetInvRes.data) ? targetInvRes.data : []));
           if (Array.isArray(list)) {
-            const normalizedList = list.map(inv => {
+            const normalizedList = [];
+            list.forEach((inv, invIdx) => {
               const rawProj = inv.projectId || inv.project || '';
               let projIdStr = '';
               let matchedProjName = '';
@@ -441,17 +442,39 @@ export default function InvestmentOverview() {
               const activeClientObj = rootDash.profile || rootDash.client || rootDash.user || targetInvRes.client || targetInvRes.user || loggedClient || {};
               const clientRoiRate = activeClientObj.roiPercent ?? activeClientObj.roiPercentage ?? activeClientObj.monthlyRoi ?? activeClientObj.roi ?? null;
               const finalRoi = clientRoiRate ?? inv.roiPercentage ?? inv.roiAllocated ?? inv.roi ?? 0;
+              const baseAmount = Number(inv.investmentAmount || inv.amount || 0);
 
-              return {
-                ...inv,
-                segment: inv.segment || 'Unallocated',
-                amount: inv.investmentAmount || inv.amount || 0,
-                roiAllocated: finalRoi,
-                roi: finalRoi,
-                date: inv.investmentDate || inv.date || inv.createdAt,
-                contractPeriod: inv.durationMonths || inv.contractPeriod || 24,
-                projectName: matchedProjName || 'Unallocated'
-              };
+              // If the investment has dynamic multiple segment allocations, unroll each segment dynamically
+              if (Array.isArray(inv.segmentAllocation) && inv.segmentAllocation.length > 0) {
+                inv.segmentAllocation.forEach((alloc, allocIdx) => {
+                  const allocPct = Number(alloc.allocationPercentage || 0);
+                  const allocatedAmount = Math.round(baseAmount * (allocPct / 100));
+                  normalizedList.push({
+                    ...inv,
+                    _id: `${inv._id || inv.id || invIdx}_seg_${allocIdx}`,
+                    id: `${inv._id || inv.id || invIdx}_seg_${allocIdx}`,
+                    segment: alloc.segmentName || inv.segment || 'Unallocated',
+                    amount: allocatedAmount,
+                    allocationPercentage: allocPct,
+                    roiAllocated: finalRoi,
+                    roi: finalRoi,
+                    date: inv.investmentDate || inv.date || inv.createdAt,
+                    contractPeriod: inv.durationMonths || inv.contractPeriod || 24,
+                    projectName: matchedProjName || 'Unallocated'
+                  });
+                });
+              } else {
+                normalizedList.push({
+                  ...inv,
+                  segment: inv.segment || 'Unallocated',
+                  amount: baseAmount,
+                  roiAllocated: finalRoi,
+                  roi: finalRoi,
+                  date: inv.investmentDate || inv.date || inv.createdAt,
+                  contractPeriod: inv.durationMonths || inv.contractPeriod || 24,
+                  projectName: matchedProjName || 'Unallocated'
+                });
+              }
             });
             setInvestments(normalizedList);
             activeInvestments = normalizedList;

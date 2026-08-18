@@ -328,15 +328,39 @@ export default function DashboardHome() {
           };
           setStats(updatedStats);
 
-          if (root.investments) {
-            updatedInvestments = root.investments.map(inv => ({
-              ...inv,
-              amount: inv.investmentAmount || inv.amount || 0,
-              roiAllocated: finalRoiRate || inv.roiPercentage || inv.roiAllocated || inv.roi || 0,
-              roi: finalRoiRate || inv.roiPercentage || inv.roiAllocated || inv.roi || 0,
-              date: inv.investmentDate || inv.date || inv.createdAt,
-              contractPeriod: inv.durationMonths || inv.contractPeriod || 24
-            }));
+          if (root.investments && Array.isArray(root.investments)) {
+            const expandedInv = [];
+            root.investments.forEach((inv, invIdx) => {
+              const baseAmt = Number(inv.investmentAmount || inv.amount || 0);
+              const finalRoi = finalRoiRate || inv.roiPercentage || inv.roiAllocated || inv.roi || 0;
+              if (Array.isArray(inv.segmentAllocation) && inv.segmentAllocation.length > 0) {
+                inv.segmentAllocation.forEach((alloc, allocIdx) => {
+                  const allocPct = Number(alloc.allocationPercentage || 0);
+                  expandedInv.push({
+                    ...inv,
+                    _id: `${inv._id || inv.id || invIdx}_seg_${allocIdx}`,
+                    id: `${inv._id || inv.id || invIdx}_seg_${allocIdx}`,
+                    segment: alloc.segmentName || inv.segment || 'Capital Deposit',
+                    amount: Math.round(baseAmt * (allocPct / 100)),
+                    allocationPercentage: allocPct,
+                    roiAllocated: finalRoi,
+                    roi: finalRoi,
+                    date: inv.investmentDate || inv.date || inv.createdAt,
+                    contractPeriod: inv.durationMonths || inv.contractPeriod || 24
+                  });
+                });
+              } else {
+                expandedInv.push({
+                  ...inv,
+                  amount: baseAmt,
+                  roiAllocated: finalRoi,
+                  roi: finalRoi,
+                  date: inv.investmentDate || inv.date || inv.createdAt,
+                  contractPeriod: inv.durationMonths || inv.contractPeriod || 24
+                });
+              }
+            });
+            updatedInvestments = expandedInv;
             setInvestments(updatedInvestments);
           }
           const rawHistory = root.roiHistory || root.recentPayouts || [];
