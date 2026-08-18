@@ -31,6 +31,9 @@ export default function PaymentRequests() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
+  // Withdrawable balance state (ROI + Dividend received minus approved withdrawals)
+  const [withdrawableData, setWithdrawableData] = useState({ roiTotal: 0, dividendTotal: 0, approvedWithdrawals: 0 });
+
   const formatAmount = (num) => `₹${Number(num).toLocaleString('en-IN')}`;
 
   const fetchProjects = async () => {
@@ -40,6 +43,37 @@ export default function PaymentRequests() {
       setDbProjects(list.filter(p => p.name !== '__KFPL_DUMMY__'));
     } catch (e) {
       console.error('Failed to load projects for deposit dropdown:', e);
+    }
+  };
+
+  const fetchWithdrawableBalance = async () => {
+    try {
+      const [payoutsRes, dividendsRes, txRes] = await Promise.all([
+        apiRequest('/api/client/payouts?limit=1000').catch(() => null),
+        apiRequest('/api/client/dividends?limit=1000').catch(() => null),
+        apiRequest('/api/client/transactions?limit=1000').catch(() => null)
+      ]);
+
+      // Parse ROI payouts — only paid/approved
+      const rawPayouts = Array.isArray(payoutsRes) ? payoutsRes : (payoutsRes?.data?.payouts || payoutsRes?.payouts || (Array.isArray(payoutsRes?.data) ? payoutsRes.data : []));
+      const roiTotal = rawPayouts
+        .filter(r => ['paid', 'approved'].includes((r.status || 'paid').toLowerCase()))
+        .reduce((sum, r) => sum + Number(r.amount || r.received || 0), 0);
+
+      // Parse Dividend allotments
+      const rawDividends = Array.isArray(dividendsRes) ? dividendsRes : (dividendsRes?.data?.allotments || dividendsRes?.allotments || (Array.isArray(dividendsRes?.data) ? dividendsRes.data : []));
+      const dividendTotal = rawDividends
+        .reduce((sum, d) => sum + Number(d.allottedAmount || d.amount || 0), 0);
+
+      // Parse approved withdrawals
+      const rawTx = txRes?.data?.transactions || (Array.isArray(txRes) ? txRes : []);
+      const approvedWithdrawals = rawTx
+        .filter(t => String(t.type).toLowerCase() === 'withdrawal' && ['approved', 'completed', 'paid'].includes((t.status || '').toLowerCase()))
+        .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+
+      setWithdrawableData({ roiTotal, dividendTotal, approvedWithdrawals });
+    } catch (e) {
+      console.error('Failed to fetch withdrawable balance:', e);
     }
   };
 
@@ -135,7 +169,7 @@ export default function PaymentRequests() {
       console.warn('Failed to parse payments cache:', e);
     }
     fetchProjects();
-    fetchTransactions();
+    Promise.all([fetchTransactions(), fetchWithdrawableBalance()]);
   }, []);
 
   const handleSubmit = async (e) => {
@@ -259,6 +293,89 @@ export default function PaymentRequests() {
               <WithdrawIcon /> Withdrawal
             </button>
           </div>
+
+          {/* ── Withdrawable Balance Card (only on Withdrawal tab) ── */}
+          {activeTab === 'withdrawal' && (() => {
+            const availableBalance = Math.max(0, withdrawableData.roiTotal + withdrawableData.dividendTotal - withdrawableData.approvedWithdrawals);
+            const hasRoi = withdrawableData.roiTotal > 0;
+            const hasDividend = withdrawableData.dividendTotal > 0;
+            return (
+              <div style={{
+                background: 'linear-gradient(135deg, #fefce8 0%, #fef9c3 50%, #fefce8 100%)',
+                borderRadius: '14px',
+                border: '1px solid #fde68a',
+                padding: '18px 20px',
+                marginBottom: '16px',
+                position: 'relative',
+                overflow: 'hidden'
+              }}>
+                <div style={{
+                  position: 'absolute', top: 0, left: 0, right: 0, height: '3px',
+                  background: 'linear-gradient(90deg, #d97706, #f59e0b, #fbbf24)',
+                  borderRadius: '14px 14px 0 0'
+                }} />
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{
+                      width: '38px', height: '38px', borderRadius: '10px',
+                      background: 'rgba(217, 119, 6, 0.12)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: '#b45309', flexShrink: 0
+                    }}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/>
+                        <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/>
+                        <path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.72rem', color: '#92400e', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Available Withdrawable Balance</div>
+                      <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#78350f', marginTop: '2px', fontFamily: "'JetBrains Mono', monospace" }}>
+                        {formatAmount(availableBalance)}
+                      </div>
+                    </div>
+                  </div>
+                  {/* Source Type Pills */}
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    {hasRoi && (
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '4px',
+                        padding: '4px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 700,
+                        background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0'
+                      }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                        ROI — {formatAmount(withdrawableData.roiTotal)}
+                      </span>
+                    )}
+                    {hasDividend && (
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '4px',
+                        padding: '4px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 700,
+                        background: '#e0e7ff', color: '#3730a3', border: '1px solid #c7d2fe'
+                      }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                        Dividend — {formatAmount(withdrawableData.dividendTotal)}
+                      </span>
+                    )}
+                    {!hasRoi && !hasDividend && (
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '4px',
+                        padding: '4px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 700,
+                        background: '#f1f5f9', color: '#64748b', border: '1px solid #e2e8f0'
+                      }}>
+                        No income received yet
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {withdrawableData.approvedWithdrawals > 0 && (
+                  <div style={{ marginTop: '10px', fontSize: '0.72rem', color: '#92400e', textAlign: 'right' }}>
+                    Already withdrawn: <strong style={{ color: '#dc2626' }}>−{formatAmount(withdrawableData.approvedWithdrawals)}</strong>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           <form className="kfpl-form" onSubmit={handleSubmit}>
             <div className="kfpl-input-group">
