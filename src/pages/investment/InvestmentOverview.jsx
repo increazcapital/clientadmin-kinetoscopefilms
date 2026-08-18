@@ -449,6 +449,26 @@ export default function InvestmentOverview() {
                 inv.segmentAllocation.forEach((alloc, allocIdx) => {
                   const allocPct = Number(alloc.allocationPercentage || 0);
                   const allocatedAmount = Math.round(baseAmount * (allocPct / 100));
+
+                  // Resolve dynamic per-segment project
+                  let segProjName = alloc.projectName || '';
+                  if (!segProjName && alloc.projectId) {
+                    const rawAllocProj = alloc.projectId;
+                    const allocProjId = typeof rawAllocProj === 'object' ? (rawAllocProj._id || rawAllocProj.id) : rawAllocProj;
+                    const foundProj = allProjects.find(p => String(p._id || p.id) === String(allocProjId));
+                    segProjName = foundProj ? foundProj.name : (typeof rawAllocProj === 'object' ? rawAllocProj.name : '');
+                  }
+
+                  // If not explicitly set on alloc, check if top-level project matches this segment
+                  if (!segProjName && matchedProjName && projIdStr) {
+                    const topProj = allProjects.find(p => String(p._id || p.id) === projIdStr);
+                    const topProjSeg = (topProj?.segment || inv.segment || '').toLowerCase().trim();
+                    const currentSeg = (alloc.segmentName || '').toLowerCase().trim();
+                    if (topProjSeg && (topProjSeg.includes(currentSeg) || currentSeg.includes(topProjSeg))) {
+                      segProjName = matchedProjName;
+                    }
+                  }
+
                   normalizedList.push({
                     ...inv,
                     _id: `${inv._id || inv.id || invIdx}_seg_${allocIdx}`,
@@ -460,7 +480,7 @@ export default function InvestmentOverview() {
                     roi: finalRoi,
                     date: inv.investmentDate || inv.date || inv.createdAt,
                     contractPeriod: inv.durationMonths || inv.contractPeriod || 24,
-                    projectName: matchedProjName || 'Unallocated'
+                    projectName: segProjName || 'Unallocated'
                   });
                 });
               } else {
