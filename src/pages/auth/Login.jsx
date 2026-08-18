@@ -928,14 +928,14 @@ export default function Login() {
             animation: 'scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}>
             {/* Elegant Header Block */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-              <h3 style={{ fontWeight: 800, fontSize: '1.6rem', color: '#0f172a', margin: 0, letterSpacing: '-0.4px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', gap: '16px' }}>
+              <h3 style={{ fontWeight: 800, fontSize: '1.5rem', color: '#0f172a', margin: 0, letterSpacing: '-0.4px' }}>
                 {agreementStep === 'agreement' && '1. Media Financing Participation Agreement'}
                 {agreementStep === 'privacy' && '2. Privacy Policy'}
                 {agreementStep === 'tnc' && '3. Terms & Conditions'}
               </h3>
               {!isSingleDocRead && (
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-gold, #10b981)', background: 'rgba(16, 185, 129, 0.1)', padding: '6px 12px', borderRadius: '100px' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-gold, #10b981)', background: 'rgba(16, 185, 129, 0.1)', padding: '6px 14px', borderRadius: '100px', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   {agreementStep === 'agreement' && 'Step 1 of 3'}
                   {agreementStep === 'privacy' && 'Step 2 of 3'}
                   {agreementStep === 'tnc' && 'Step 3 of 3'}
@@ -959,18 +959,18 @@ export default function Login() {
               }}
             >
               <h4 style={{ textAlign: 'center', fontWeight: 800, marginBottom: '4px', color: '#0f172a' }}>MEDIA FINANCING PARTICIPATION AGREEMENT</h4>
-              <p style={{ textAlign: 'center', fontSize: '0.75rem', fontWeight: 600, color: '#64748b', marginBottom: '20px' }}>(Production & Pre-Production Financing – India)</p>
+              <p style={{ textAlign: 'center', fontSize: '0.75rem', fontWeight: 600, color: '#64748b', marginBottom: '20px' }}>(Production &amp; Pre-Production Financing – India)</p>
               
               <p>This Media Financing Participation Agreement (“<strong>Agreement</strong>”) is entered into on this <u>&nbsp; {new Date().getDate()} &nbsp;</u> day of <u>&nbsp; {new Date().toLocaleString('default', { month: 'long' })} &nbsp;</u> 20<u>{String(new Date().getFullYear()).slice(2)}</u> (“<strong>Effective Date</strong>”)</p>
               
               <h5 style={{ fontWeight: 700, marginTop: '16px', marginBottom: '6px', color: '#1e293b' }}>PARTIES:</h5>
-              <p style={{ margin: '0 0 8px' }}><strong>KFPL Media Fund</strong>, a Private Limited Company incorporated under the laws of India, having its registered office at Mumbai, India (“<strong>Media Platform</strong>” or “<strong>Company</strong>”);</p>
+              <p style={{ margin: '0 0 8px' }}><strong>KINETOSCOPE FILMS PVT LTD</strong> (CIN: U59141MH2025PTC438600), a company incorporated in India under the Companies Act, 2013 (18 of 2013) limited by shares having PAN No. <strong>AALCK5262H</strong> and having its registered address at C 101, 1st Floor, Nishit CHSL, M G Road, Kandivali West, Mumbai – 400067, India (“<strong>The Company</strong>” or “<strong>Media Platform</strong>”);</p>
               <p style={{ margin: '0 0 8px' }}>AND</p>
               <p style={{ margin: '0 0 16px' }}><strong>{regForm.fullName || '[Participating Party Name]'}</strong>, an individual / body corporate having its address at {regForm.address || '__________________________'} (“<strong>Participating Party</strong>”).</p>
               
               <p>The Company and the Participating Party are hereinafter individually referred to as a “Party” and collectively as the “Parties”.</p>
 
-              <h5 style={{ fontWeight: 700, marginTop: '20px', marginBottom: '6px', color: '#1e293b' }}>1. DEFINITIONS & INTERPRETATION</h5>
+              <h5 style={{ fontWeight: 700, marginTop: '20px', marginBottom: '6px', color: '#1e293b' }}>1. DEFINITIONS &amp; INTERPRETATION</h5>
               <p style={{ margin: '0 0 10px' }}>1.1 “<strong>Media Platform</strong>” means a professionally managed media production and financing entity engaged in:<br />
               • development, production, co-production, and exploitation of motion pictures and audio-visual content; and<br />
               • provision of pre-production, development, and bridge financing for film projects primarily in India.</p>
@@ -1004,7 +1004,7 @@ export default function Login() {
               • a partnership, joint venture, or agency; or<br />
               • conferring managerial or control rights.</p>
 
-              <h5 style={{ fontWeight: 700, marginTop: '20px', marginBottom: '6px', color: '#1e293b' }}>5. COMMENCEMENT & DEPLOYMENT</h5>
+              <h5 style={{ fontWeight: 700, marginTop: '20px', marginBottom: '6px', color: '#1e293b' }}>5. COMMENCEMENT &amp; DEPLOYMENT</h5>
               <p style={{ margin: '0 0 10px' }}>5.1 The Participation Amount shall be deemed commercially deployed only upon expiry of the Cooling-Off Period.</p>
               <p style={{ margin: '0 0 10px' }}>5.2 The Contract Period of eighteen (18) months shall commence from the Deployment Date.</p>
 
@@ -1052,7 +1052,7 @@ export default function Login() {
               • guaranteed compensation; or<br />
               • a lending obligation.</p>
 
-              <h5 style={{ fontWeight: 700, marginTop: '20px', marginBottom: '6px', color: '#1e293b' }}>9. MANAGEMENT & CONTROL</h5>
+              <h5 style={{ fontWeight: 700, marginTop: '20px', marginBottom: '6px', color: '#1e293b' }}>9. MANAGEMENT &amp; CONTROL</h5>
               <p style={{ margin: '0 0 10px' }}>9.1 The Media Platform shall retain sole and absolute discretion over:<br />
               • project selection;<br />
               • budgets and timelines;<br />
@@ -1068,7 +1068,7 @@ export default function Login() {
               <p style={{ margin: '0 0 10px' }}>11.1 The Participating Party acknowledges that media production and financing involve commercial variables, including production timelines, market conditions, and distribution outcomes, which may impact performance.</p>
               <p style={{ margin: '0 0 10px' }}>11.2 The Participating Party confirms that participation is undertaken after independent evaluation of the commercial model and with an understanding of the inherent business considerations associated with the media industry.</p>
 
-              <h5 style={{ fontWeight: 700, marginTop: '20px', marginBottom: '6px', color: '#1e293b' }}>12. REDEMPTION & EXPIRY</h5>
+              <h5 style={{ fontWeight: 700, marginTop: '20px', marginBottom: '6px', color: '#1e293b' }}>12. REDEMPTION &amp; EXPIRY</h5>
               <p style={{ margin: '0 0 10px' }}>12.1 Upon expiry of the Contract Period, the Media Platform shall return the principal Participation Amount within thirty (30) days, subject to reconciliation.</p>
               <p style={{ margin: '0 0 10px' }}>12.2 No early redemption shall be permitted unless agreed in writing.</p>
 
@@ -1086,7 +1086,7 @@ export default function Login() {
               16.1.1 All taxes, duties, levies, or statutory charges (including income tax, withholding tax, or any similar impost) arising in connection with the commercial participation or any amounts payable to the Participating Party under this Agreement shall be borne and discharged by the Participating Party independently, in accordance with applicable laws.<br />
               16.1.2 The Media Platform shall not be responsible for:<br />
               • the tax treatment of amounts received by the Participating Party; or<br />
-              • any indirect tax obligations of the Participating Party.<br />
+              • any personal, corporate, or indirect tax obligations of the Participating Party.<br />
               16.1.3 Where the Media Platform is required under applicable law to withhold or deduct taxes at source, such deduction shall be made in compliance with law, and the net amount paid shall be deemed to constitute full settlement of the amount payable.</p>
               
               <p style={{ margin: '0 0 10px' }}><strong>16.2 Entire Agreement</strong><br />
@@ -1114,13 +1114,14 @@ export default function Login() {
               <h5 style={{ fontWeight: 700, marginTop: '24px', marginBottom: '8px', color: '#1e293b' }}>SIGNATURES:</h5>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '12px', borderTop: '1px dashed #cbd5e1', paddingTop: '12px', fontSize: '0.75rem' }}>
                 <div>
-                  <p style={{ margin: 0 }}><strong>For KFPL Media Fund</strong></p>
-                  <p style={{ margin: '4px 0 0' }}>Name: Authorized Representative</p>
-                  <p style={{ margin: '2px 0 0' }}>Designation: Director</p>
+                  <p style={{ margin: 0 }}><strong>For KINETOSCOPE FILMS PVT LTD</strong></p>
+                  <p style={{ margin: '4px 0 0' }}>Name: Sudeep Kumar Mukherjee</p>
+                  <p style={{ margin: '2px 0 0' }}>Designation: Authorised Signatory</p>
+                  <p style={{ margin: '2px 0 0' }}>Signature: [Executed Electronically]</p>
                 </div>
                 <div>
                   <p style={{ margin: 0 }}><strong>For Participating Party</strong></p>
-                  <p style={{ margin: '4px 0 0' }}>Name: {regForm.fullName || '__________________________'}</p>
+                  <p style={{ margin: '4px 0 0' }}>Name: {regForm.fullName || '[Participating Party Name]'}</p>
                   <p style={{ margin: '2px 0 0' }}>Signature: [Executed Electronically]</p>
                 </div>
               </div>

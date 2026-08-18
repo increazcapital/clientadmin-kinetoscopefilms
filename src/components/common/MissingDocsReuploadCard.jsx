@@ -14,10 +14,16 @@ export default function MissingDocsReuploadCard({ client, loading = false, onDoc
     missingList.push({ key: 'panDocument', label: 'PAN Card Document' });
   }
   if (!client.aadhaarDocument && !client.idProofDocument) {
-    missingList.push({ key: 'aadhaarDocument', label: 'ID Proof (Aadhaar / Passport)' });
+    missingList.push({ key: 'aadhaarDocument', label: 'Aadhaar Card (Front Side) Upload' });
   }
-  if (!client.bankProofDocument) {
-    missingList.push({ key: 'bankProofDocument', label: 'Bank Details Document' });
+  if (!client.aadhaarBackDocument && !client.idProofBackDocument) {
+    missingList.push({ key: 'aadhaarBackDocument', label: 'Aadhaar Card Back Side (Required for Address Proof)' });
+  }
+  const isBankProofReuploadRequested = Boolean(
+    Array.isArray(client.reuploadDocs) && client.reuploadDocs.includes('bankProofDocument')
+  );
+  if (!client.bankProofDocument && isBankProofReuploadRequested) {
+    missingList.push({ key: 'bankProofDocument', label: 'Cancelled Cheque (Optional)' });
   }
   // Agreement document should ONLY appear in the Red Re-upload Banner if Super Admin explicitly requested a re-upload or deleted it
   const isAgreementReuploadRequested = Boolean(
