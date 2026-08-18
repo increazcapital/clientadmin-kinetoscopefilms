@@ -34,7 +34,48 @@ export default function PaymentRequests() {
   // Withdrawable balance state (ROI + Dividend received minus approved withdrawals)
   const [withdrawableData, setWithdrawableData] = useState({ roiTotal: 0, dividendTotal: 0, approvedWithdrawals: 0 });
 
+  // Bank details state for withdrawal (auto-fetched & editable)
+  const [bankDetails, setBankDetails] = useState({
+    accountHolderName: '',
+    bankName: '',
+    accountNumber: '',
+    ifscCode: '',
+    upiId: ''
+  });
+
   const formatAmount = (num) => `₹${Number(num).toLocaleString('en-IN')}`;
+
+  const fetchClientBankDetails = async () => {
+    try {
+      const res = await apiRequest('/api/client/profile');
+      const p = res.data?.profile || res.profile || res.data || {};
+      const u = res.data?.user || res.user || {};
+      setBankDetails({
+        accountHolderName: p.accountHolderName || p.fullName || u.name || '',
+        bankName: p.bankName || p.bankDetails?.bankName || '',
+        accountNumber: p.accountNumber || p.accountNo || p.bankDetails?.accountNumber || '',
+        ifscCode: p.ifscCode || p.ifsc || p.bankDetails?.ifscCode || '',
+        upiId: p.upiId || p.bankDetails?.upiId || ''
+      });
+    } catch (e) {
+      console.error('Failed to load bank details from profile:', e);
+      try {
+        const authData = localStorage.getItem('kfpl_client_auth');
+        if (authData) {
+          const parsed = JSON.parse(authData);
+          const p = parsed.client?.profile || parsed.profile || {};
+          const u = parsed.client?.user || parsed.user || {};
+          setBankDetails({
+            accountHolderName: p.accountHolderName || p.fullName || u.name || '',
+            bankName: p.bankName || '',
+            accountNumber: p.accountNumber || p.accountNo || '',
+            ifscCode: p.ifscCode || p.ifsc || '',
+            upiId: p.upiId || ''
+          });
+        }
+      } catch (_) {}
+    }
+  };
 
   const fetchProjects = async () => {
     try {
@@ -102,6 +143,7 @@ export default function PaymentRequests() {
         reference: req.referenceNumber || req.reference || req.referenceId || req.transactionRef || req.transactionRefId || req.utrNumber || '',
         reason: req.remarks || req.reason || '',
         proofFile: req.proofFile || req.fileUrl || '',
+        bankDetails: req.bankDetails || null,
         projectName: req.projectName || ''
       }));
       setRequestsList(mapped);
@@ -169,6 +211,7 @@ export default function PaymentRequests() {
       console.warn('Failed to parse payments cache:', e);
     }
     fetchProjects();
+    fetchClientBankDetails();
     Promise.all([fetchTransactions(), fetchWithdrawableBalance()]);
   }, []);
 
@@ -184,6 +227,15 @@ export default function PaymentRequests() {
     if (activeTab === 'deposit' && !form.proofFile) {
       addToast('error', 'Proof Required', 'Please upload a proof of deposit receipt!');
       return;
+    }
+
+    if (activeTab === 'withdrawal') {
+      if (form.mode !== 'Cash') {
+        if (!bankDetails.accountNumber || !bankDetails.ifscCode) {
+          addToast('error', 'Bank Details Required', 'Please enter your Account Number and IFSC Code for withdrawal!');
+          return;
+        }
+      }
     }
 
     try {
@@ -213,7 +265,14 @@ export default function PaymentRequests() {
           type: 'withdrawal',
           amount: Number(form.amount),
           paymentMethod: form.mode,
-          remarks: form.reason || form.note || ''
+          remarks: form.reason || form.note || '',
+          bankDetails: {
+            accountHolderName: bankDetails.accountHolderName,
+            bankName: bankDetails.bankName,
+            accountNumber: bankDetails.accountNumber,
+            ifscCode: bankDetails.ifscCode,
+            upiId: bankDetails.upiId
+          }
         };
         await apiRequest('/api/client/transactions', {
           method: 'POST',
@@ -395,6 +454,91 @@ export default function PaymentRequests() {
                 <option>Bank Transfer</option><option>NEFT</option><option>RTGS</option><option>UPI</option><option>Cash</option>
               </select>
             </div>
+
+            {/* ── Bank Details for Withdrawal (Auto-fetched & Editable) ── */}
+            {activeTab === 'withdrawal' && (
+              <div style={{
+                background: 'var(--color-surface, #F8FAFC)',
+                border: '1.5px solid var(--color-border-light, #E2E8F0)',
+                borderRadius: '10px',
+                padding: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                margin: '4px 0 16px 0',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-primary, #0F172A)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                      Recipient Bank Account Details
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '0.7rem', color: '#047857', background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
+                    ⚡ Auto-fetched from Profile (Editable)
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
+                  <div className="kfpl-input-group" style={{ margin: 0 }}>
+                    <label className="kfpl-input-label" style={{ fontSize: '0.75rem' }}>Account Holder Name <span className="required">*</span></label>
+                    <input
+                      className="kfpl-input"
+                      placeholder="Account Holder Full Name"
+                      value={bankDetails.accountHolderName}
+                      onChange={e => setBankDetails({ ...bankDetails, accountHolderName: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="kfpl-input-group" style={{ margin: 0 }}>
+                    <label className="kfpl-input-label" style={{ fontSize: '0.75rem' }}>Bank Name <span className="required">*</span></label>
+                    <input
+                      className="kfpl-input"
+                      placeholder="e.g. HDFC Bank, SBI, ICICI"
+                      value={bankDetails.bankName}
+                      onChange={e => setBankDetails({ ...bankDetails, bankName: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
+                  <div className="kfpl-input-group" style={{ margin: 0 }}>
+                    <label className="kfpl-input-label" style={{ fontSize: '0.75rem' }}>Account Number <span className="required">*</span></label>
+                    <input
+                      className="kfpl-input"
+                      placeholder="Enter Full Account Number"
+                      value={bankDetails.accountNumber}
+                      onChange={e => setBankDetails({ ...bankDetails, accountNumber: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="kfpl-input-group" style={{ margin: 0 }}>
+                    <label className="kfpl-input-label" style={{ fontSize: '0.75rem' }}>IFSC Code <span className="required">*</span></label>
+                    <input
+                      className="kfpl-input"
+                      placeholder="e.g. HDFC0001234"
+                      value={bankDetails.ifscCode}
+                      onChange={e => setBankDetails({ ...bankDetails, ifscCode: e.target.value.toUpperCase() })}
+                      required
+                      style={{ textTransform: 'uppercase', fontFamily: 'monospace', fontWeight: 600 }}
+                    />
+                  </div>
+                </div>
+
+                {form.mode === 'UPI' && (
+                  <div className="kfpl-input-group" style={{ margin: 0 }}>
+                    <label className="kfpl-input-label" style={{ fontSize: '0.75rem' }}>UPI ID (Optional)</label>
+                    <input
+                      className="kfpl-input"
+                      placeholder="e.g. name@okhdfcbank"
+                      value={bankDetails.upiId}
+                      onChange={e => setBankDetails({ ...bankDetails, upiId: e.target.value })}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
             {activeTab === 'deposit' && (
               <>
                 <div className="kfpl-input-group">
