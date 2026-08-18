@@ -77,6 +77,7 @@ export default function Login() {
   // Register File upload states
   const [panFile, setPanFile] = useState(null);
   const [aadhaarFile, setAadhaarFile] = useState(null);
+  const [aadhaarBackFile, setAadhaarBackFile] = useState(null);
   const [bankFile, setBankFile] = useState(null);
   const [nomineeFile, setNomineeFile] = useState(null);
   const [agreementFile, setAgreementFile] = useState(null);
@@ -318,6 +319,7 @@ export default function Login() {
       // Append files
       if (panFile) formData.append('panDocument', panFile);
       if (aadhaarFile) formData.append('aadhaarDocument', aadhaarFile);
+      if (aadhaarBackFile) formData.append('aadhaarBackDocument', aadhaarBackFile);
       if (bankFile) formData.append('bankProofDocument', bankFile);
       if (nomineeFile) formData.append('nomineeProofDocument', nomineeFile);
       if (agreementFile) formData.append('agreementDocument', agreementFile);
@@ -690,11 +692,15 @@ export default function Login() {
                     <input type="file" className="kfpl-login-input" onChange={(e) => setPanFile(e.target.files[0])} />
                   </div>
                   <div className="kfpl-login-input-group">
-                    <label className="kfpl-login-label">{regForm.citizenship === 'International' ? 'Passport / National ID *' : 'Aadhaar Card *'}</label>
+                    <label className="kfpl-login-label">{regForm.citizenship === 'International' ? 'Passport / National ID (Front Side) *' : 'Aadhaar Card (Front Side) *'}</label>
                     <input type="file" className="kfpl-login-input" onChange={(e) => setAadhaarFile(e.target.files[0])} />
                   </div>
                   <div className="kfpl-login-input-group">
-                    <label className="kfpl-login-label">Bank Proof Document (Optional)</label>
+                    <label className="kfpl-login-label">{regForm.citizenship === 'International' ? 'National ID / Address Proof (Back Side) *' : 'Aadhaar Card Back Side (Required for Address Proof) *'}</label>
+                    <input type="file" className="kfpl-login-input" onChange={(e) => setAadhaarBackFile(e.target.files[0])} />
+                  </div>
+                  <div className="kfpl-login-input-group">
+                    <label className="kfpl-login-label">Cancelled Cheque (Optional)</label>
                     <input type="file" className="kfpl-login-input" onChange={(e) => setBankFile(e.target.files[0])} />
                   </div>
                   <div className="kfpl-login-input-group">
