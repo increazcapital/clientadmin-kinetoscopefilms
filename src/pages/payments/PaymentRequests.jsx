@@ -396,17 +396,102 @@ export default function PaymentRequests() {
           </form>
         </div>
 
-        {/* ── Online Payment Coming Soon ─────────────────────── */}
-        <div className="kfpl-pay-coming-soon">
-          <div className="kfpl-pay-coming-soon-icon">
-            <CreditCardIcon />
+        {/* ── Bank Details for Money Deposit ─────────────────────── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0fdf4 100%)',
+            borderRadius: '16px',
+            border: '1px solid #d1fae5',
+            padding: '24px',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            {/* Decorative accent */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '4px',
+              background: 'linear-gradient(90deg, #059669, #10b981, #34d399)',
+              borderRadius: '16px 16px 0 0'
+            }} />
+
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '12px',
+                background: 'rgba(5, 150, 105, 0.12)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#059669',
+                flexShrink: 0
+              }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                  <line x1="1" y1="10" x2="23" y2="10"/>
+                </svg>
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#064e3b' }}>Bank Details for Money Deposit</h3>
+                <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#6b7280' }}>Transfer funds to the below account</p>
+              </div>
+            </div>
+
+            {/* Bank Details */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {[
+                { label: 'Account Name', value: 'KINETOSCOPE FILMS PVT LTD' },
+                { label: 'Account No.', value: '7049743035' },
+                { label: 'IFSC Code', value: 'KKBK0001401' },
+                { label: 'Bank', value: 'Kotak Mahindra Bank' },
+                { label: 'Branch', value: 'Lokhandwala Andheri W, Mumbai' },
+              ].map((item, i) => (
+                <div key={i} style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '10px 14px',
+                  background: '#ffffff',
+                  borderRadius: '10px',
+                  border: '1px solid #e5e7eb',
+                  gap: '12px'
+                }}>
+                  <span style={{ fontSize: '0.8rem', color: '#6b7280', fontWeight: 600, whiteSpace: 'nowrap' }}>{item.label}</span>
+                  <span style={{
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    color: '#0f172a',
+                    textAlign: 'right',
+                    fontFamily: item.label === 'Account No.' || item.label === 'IFSC Code' ? "'JetBrains Mono', monospace" : 'inherit',
+                    letterSpacing: item.label === 'Account No.' ? '0.5px' : 'normal',
+                    userSelect: 'all'
+                  }}>{item.value}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Disclaimer */}
+            <p style={{ margin: '14px 0 0', fontSize: '0.72rem', color: '#9ca3af', lineHeight: 1.5, textAlign: 'center' }}>
+              After transferring, please submit a deposit request with the UTR / reference number as proof.
+            </p>
           </div>
-          <h3 className="kfpl-pay-coming-soon-title">Online Payment</h3>
-          <p className="kfpl-pay-coming-soon-text">PSP integration coming soon. You'll be able to make payments directly online.</p>
-          <span className="kfpl-pay-coming-soon-badge">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            Coming Soon
-          </span>
+
+          {/* ── Online Payment Coming Soon ─────────────────────── */}
+          <div className="kfpl-pay-coming-soon" style={{ marginTop: '0' }}>
+            <div className="kfpl-pay-coming-soon-icon">
+              <CreditCardIcon />
+            </div>
+            <h3 className="kfpl-pay-coming-soon-title">Online Payment</h3>
+            <p className="kfpl-pay-coming-soon-text">PSP integration coming soon. You'll be able to make payments directly online.</p>
+            <span className="kfpl-pay-coming-soon-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Coming Soon
+            </span>
+          </div>
         </div>
       </div>
 
