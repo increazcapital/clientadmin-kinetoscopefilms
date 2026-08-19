@@ -182,9 +182,19 @@ export default function ProjectSelection() {
         const investedAmount = activeInvestmentsMap.get(pId) || 0;
         const isPending = !isInvested && pendingProjectIds.has(pId);
 
-        const fillPercent = targetFunding > 0
-          ? Math.min(100, Math.round((fundedAmount / targetFunding) * 100))
-          : Math.min(100, Math.round(((totalSlots - slotsAvailable) / (totalSlots || 1)) * 100));
+        const bookedSlots = p.bookedSlots !== undefined ? p.bookedSlots : Math.max(0, totalSlots - slotsAvailable);
+
+        let fillPercent = 0;
+        if (targetFunding > 0) {
+          const rawPct = (fundedAmount / targetFunding) * 100;
+          if (rawPct > 0 && rawPct < 1) {
+            fillPercent = 1; // visually display active progress for micro amounts
+          } else {
+            fillPercent = Math.min(100, Math.round(rawPct));
+          }
+        } else {
+          fillPercent = Math.min(100, Math.round((bookedSlots / (totalSlots || 1)) * 100));
+        }
 
         return {
           id: pId,
@@ -200,6 +210,7 @@ export default function ProjectSelection() {
           fillPercent,
           slotsAvailable,
           totalSlots,
+          bookedSlots,
           riskReward: `${p.riskLevel || p.risk || 'Medium'} / ${p.monthlyRoi || p.roi || '1.0%'} ROI`,
           bannerImg: p.bannerImage || p.bannerImg || '',
           summary: p.summary || 'Entertainment production opportunity.',
@@ -392,7 +403,7 @@ export default function ProjectSelection() {
                   </div>
                   <div>
                     <span>Available</span>
-                    <strong>{opp.slotsAvailable} slots</strong>
+                    <strong>{opp.slotsAvailable} / {opp.totalSlots} slots</strong>
                   </div>
                 </div>
 

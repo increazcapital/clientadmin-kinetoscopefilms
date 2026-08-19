@@ -169,6 +169,9 @@ export default function Portfolio() {
           value: p.targetFunding
             ? formatCurrency(p.targetFunding)
             : (p.portfolioValue && p.portfolioValue !== '₹0.0 Cr' && p.portfolioValue !== '₹0 Cr' ? p.portfolioValue : formatCurrency(Number(p.value || 0))),
+          totalSlots: p.totalSlots !== undefined ? p.totalSlots : 20,
+          slotsAvailable: p.slotsAvailable !== undefined ? p.slotsAvailable : 20,
+          bookedSlots: p.bookedSlots !== undefined ? p.bookedSlots : Math.max(0, (p.totalSlots || 20) - (p.slotsAvailable || 20)),
           milestone: p.milestoneProgress !== undefined ? p.milestoneProgress : (p.milestone !== undefined ? p.milestone : 0),
           summary: p.summary || '',
           risk: p.riskLevel || p.risk || 'Medium',
@@ -331,6 +334,15 @@ export default function Portfolio() {
             <div>
               <span>Funded Amount</span>
               <strong style={{ color: '#10B981' }}>{formatCurrency(drawerProject.fundedAmount || 0)}</strong>
+            </div>
+            <div>
+              <span>Available Slots</span>
+              <strong style={{ color: 'var(--color-text-primary)' }}>
+                {drawerProject.slotsAvailable ?? 20} / {drawerProject.totalSlots ?? 20} Slots
+              </strong>
+              <small style={{ display: 'block', color: 'var(--color-text-muted)', fontSize: '0.7rem', marginTop: '2px' }}>
+                {Math.max(0, (drawerProject.totalSlots ?? 20) - (drawerProject.slotsAvailable ?? 20))} Booked • {drawerProject.slotsAvailable ?? 20} Remaining
+              </small>
             </div>
             <div>
               <span>Status</span>

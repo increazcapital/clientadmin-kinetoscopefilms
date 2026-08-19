@@ -272,7 +272,7 @@ export default function DashboardHome() {
           if (Array.isArray(root.investments)) {
             monthlyRoiVal = root.investments.reduce((sum, inv) => {
               const amt = inv.investmentAmount || inv.amount || 0;
-              const roi = finalRoiRate || inv.roiPercentage || inv.roi || 0;
+              const roi = (finalRoiRate !== null && finalRoiRate !== undefined) ? finalRoiRate : (inv.roiPercentage ?? inv.roi ?? 0);
               return sum + (amt * (roi / 100));
             }, 0);
           }
@@ -332,7 +332,7 @@ export default function DashboardHome() {
             const expandedInv = [];
             root.investments.forEach((inv, invIdx) => {
               const baseAmt = Number(inv.investmentAmount || inv.amount || 0);
-              const finalRoi = finalRoiRate || inv.roiPercentage || inv.roiAllocated || inv.roi || 0;
+              const finalRoi = (finalRoiRate !== null && finalRoiRate !== undefined) ? finalRoiRate : (inv.roiPercentage ?? inv.roiAllocated ?? inv.roi ?? 0);
               if (Array.isArray(inv.segmentAllocation) && inv.segmentAllocation.length > 0) {
                 inv.segmentAllocation.forEach((alloc, allocIdx) => {
                   const allocPct = Number(alloc.allocationPercentage || 0);
