@@ -117,6 +117,7 @@ export default function Portfolio() {
             : (investmentsRes.investments || investmentsRes.data?.investments || (Array.isArray(investmentsRes.data) ? investmentsRes.data : []));
           
           list.forEach(inv => {
+            // Extract from top-level projectId
             const proj = inv.projectId || inv.project || '';
             if (proj && typeof proj === 'object') {
               myProjectIds.push(String(proj._id || proj.id || ''));
@@ -125,6 +126,21 @@ export default function Portfolio() {
             }
             if (inv.segment) {
               mySegments.push(inv.segment.trim().toLowerCase());
+            }
+
+            // Also extract from segmentAllocation[] for multi-segment investments
+            if (Array.isArray(inv.segmentAllocation)) {
+              inv.segmentAllocation.forEach(alloc => {
+                if (alloc.projectId) {
+                  const allocProjId = typeof alloc.projectId === 'object'
+                    ? String(alloc.projectId._id || alloc.projectId.id || '')
+                    : String(alloc.projectId);
+                  if (allocProjId) myProjectIds.push(allocProjId);
+                }
+                if (alloc.segmentName) {
+                  mySegments.push(alloc.segmentName.trim().toLowerCase());
+                }
+              });
             }
           });
         }

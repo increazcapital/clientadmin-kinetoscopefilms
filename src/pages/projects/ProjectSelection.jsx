@@ -94,14 +94,60 @@ export default function ProjectSelection() {
           : (Array.isArray(invData.data) ? invData.data : (Array.isArray(invData) ? invData : []));
 
         invList.forEach(i => {
-          const pId = String(i.projectId?._id || i.projectId || '');
-          if (!pId) return;
           const st = (i.status || '').toLowerCase();
-          if (st === 'pending') {
-            pendingProjectIds.add(pId);
-          } else if (st === 'active') {
-            const current = activeInvestmentsMap.get(pId) || 0;
-            activeInvestmentsMap.set(pId, current + Number(i.investmentAmount || 0));
+          const totalAmount = Number(i.investmentAmount || 0);
+
+          // Process segmentAllocation[] for multi-segment investments
+          if (Array.isArray(i.segmentAllocation) && i.segmentAllocation.length > 0) {
+            const totalAllocPercent = i.segmentAllocation.reduce((sum, a) => sum + (a.allocationPercentage || 0), 0);
+
+            i.segmentAllocation.forEach(alloc => {
+              // Determine project ID from allocation entry
+              let allocProjId = '';
+              if (alloc.projectId) {
+                allocProjId = typeof alloc.projectId === 'object'
+                  ? String(alloc.projectId._id || alloc.projectId.id || '')
+                  : String(alloc.projectId);
+              }
+
+              // Fallback: match by segment name against fetched projects list
+              if (!allocProjId && alloc.segmentName && filteredRaw.length > 0) {
+                const segLower = alloc.segmentName.trim().toLowerCase();
+                const matchedProject = filteredRaw.find(p => (p.segment || '').trim().toLowerCase() === segLower);
+                if (matchedProject) {
+                  allocProjId = String(matchedProject._id || matchedProject.id);
+                }
+              }
+
+              if (!allocProjId) return;
+
+              // Calculate proportional amount for this allocation
+              const proportion = totalAllocPercent > 0
+                ? (alloc.allocationPercentage || 0) / totalAllocPercent
+                : 1 / i.segmentAllocation.length;
+              const allocAmount = Math.round(totalAmount * proportion);
+
+              if (st === 'pending') {
+                pendingProjectIds.add(allocProjId);
+              } else if (st === 'active') {
+                const current = activeInvestmentsMap.get(allocProjId) || 0;
+                activeInvestmentsMap.set(allocProjId, current + allocAmount);
+              }
+            });
+          }
+
+          // Also process top-level projectId (for single-project investments)
+          const pId = String(i.projectId?._id || i.projectId || '');
+          if (pId) {
+            if (st === 'pending') {
+              pendingProjectIds.add(pId);
+            } else if (st === 'active') {
+              // Only add if not already covered by segmentAllocation
+              if (!Array.isArray(i.segmentAllocation) || i.segmentAllocation.length === 0) {
+                const current = activeInvestmentsMap.get(pId) || 0;
+                activeInvestmentsMap.set(pId, current + totalAmount);
+              }
+            }
           }
         });
       }
