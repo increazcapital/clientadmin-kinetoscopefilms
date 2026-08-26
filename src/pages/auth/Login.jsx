@@ -511,10 +511,10 @@ export default function Login() {
                     <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
                   </svg>
                   <div style={{ fontSize: '0.8125rem', lineHeight: '1.45' }}>
-                    <strong>Account Status:</strong> {blockedReason.includes('info@kinetoscopefilms.com') ? blockedReason : `${blockedReason} Please contact `}
-                    {!blockedReason.includes('info@kinetoscopefilms.com') && (
-                      <a href="mailto:info@kinetoscopefilms.com" style={{ color: '#b45309', fontWeight: '700', textDecoration: 'underline', marginLeft: '4px' }}>
-                        info@kinetoscopefilms.com
+                    <strong>Account Status:</strong> {blockedReason.includes('info@yieldiq.online') ? blockedReason : `${blockedReason} Please contact `}
+                    {!blockedReason.includes('info@yieldiq.online') && (
+                      <a href="mailto:info@yieldiq.online" style={{ color: '#b45309', fontWeight: '700', textDecoration: 'underline', marginLeft: '4px' }}>
+                        info@yieldiq.online
                       </a>
                     )}
                   </div>
