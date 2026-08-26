@@ -34,6 +34,16 @@ export default function PaymentRequests() {
   // Withdrawable balance state (ROI + Dividend received minus approved withdrawals)
   const [withdrawableData, setWithdrawableData] = useState({ roiTotal: 0, dividendTotal: 0, approvedWithdrawals: 0 });
 
+// Company deposit bank details state (dynamically fetched from Super Admin settings)
+  const [companyBankDetails, setCompanyBankDetails] = useState({
+    bankAccountName: '',
+    bankAccountNumber: '',
+    bankIfscCode: '',
+    bankName: '',
+    bankBranch: '',
+    bankUpiId: ''
+  });
+
   // Bank details state for withdrawal (auto-fetched & editable)
   const [bankDetails, setBankDetails] = useState({
     accountHolderName: '',
@@ -44,6 +54,28 @@ export default function PaymentRequests() {
   });
 
   const formatAmount = (num) => `₹${Number(num).toLocaleString('en-IN')}`;
+
+const fetchCompanyBankDetails = async () => {
+    try {
+      const res = await apiRequest('/api/system-settings/bank-details');
+      if (res?.data) {
+        const freshData = {
+          bankAccountName: res.data.bankAccountName || '',
+          bankAccountNumber: res.data.bankAccountNumber || '',
+          bankIfscCode: res.data.bankIfscCode || '',
+          bankName: res.data.bankName || '',
+          bankBranch: res.data.bankBranch || '',
+          bankUpiId: res.data.bankUpiId || ''
+        };
+        setCompanyBankDetails(freshData);
+        try {
+          localStorage.setItem('yieldiq_bank_details', JSON.stringify(freshData));
+        } catch (_) {}
+      }
+    } catch (e) {
+      console.error('Failed to fetch company deposit bank details:', e);
+    }
+  };
 
   const fetchClientBankDetails = async () => {
     try {
@@ -212,7 +244,49 @@ export default function PaymentRequests() {
     }
     fetchProjects();
     fetchClientBankDetails();
+    fetchCompanyBankDetails();
     Promise.all([fetchTransactions(), fetchWithdrawableBalance()]);
+
+    // ── Real-time Cross-Tab & Cross-Portal Live Sync for Bank Details (No refresh needed) ──
+    let bc = null;
+    if (typeof BroadcastChannel !== 'undefined') {
+      bc = new BroadcastChannel('yieldiq_bank_channel');
+      bc.onmessage = (event) => {
+        if (event.data && event.data.type === 'BANK_UPDATED' && event.data.data) {
+          console.log('[Live Sync] Real-time bank details update received via BroadcastChannel:', event.data.data);
+          setCompanyBankDetails(event.data.data);
+        }
+      };
+    }
+
+    const handleCustomBankUpdate = (e) => {
+      if (e.detail) {
+        console.log('[Live Sync] Real-time bank details update received via CustomEvent:', e.detail);
+        setCompanyBankDetails(e.detail);
+      }
+    };
+
+    const handleStorageChange = (e) => {
+      if (e.key === 'yieldiq_bank_details' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          setCompanyBankDetails(parsed);
+        } catch (_) {}
+      }
+    };
+
+    window.addEventListener('yieldiq_bank_details_updated', handleCustomBankUpdate);
+    window.addEventListener('storage', handleStorageChange);
+
+    // Background polling every 5 seconds for instant multi-device sync
+    const intervalId = setInterval(fetchCompanyBankDetails, 5000);
+
+    return () => {
+      if (bc) bc.close();
+      window.removeEventListener('yieldiq_bank_details_updated', handleCustomBankUpdate);
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(intervalId);
+    };
   }, []);
 
   const handleSubmit = async (e) => {
@@ -705,14 +779,15 @@ export default function PaymentRequests() {
               </div>
             </div>
 
-            {/* Bank Details */}
+            {/* Dynamic Bank Details from Super Admin Settings */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {[
-                { label: 'Account Name', value: 'YIELDIQ' },
-                { label: 'Account No.', value: '7049743035' },
-                { label: 'IFSC Code', value: 'KKBK0001401' },
-                { label: 'Bank', value: 'Kotak Mahindra Bank' },
-                { label: 'Branch', value: 'Lokhandwala Andheri W, Mumbai' },
+                { label: 'Account Name', value: companyBankDetails.bankAccountName || '—' },
+                { label: 'Account No.', value: companyBankDetails.bankAccountNumber || '—' },
+                { label: 'IFSC Code', value: companyBankDetails.bankIfscCode || '—' },
+                { label: 'Bank', value: companyBankDetails.bankName || '—' },
+                { label: 'Branch', value: companyBankDetails.bankBranch || '—' },
+                ...(companyBankDetails.bankUpiId ? [{ label: 'UPI ID', value: companyBankDetails.bankUpiId }] : [])
               ].map((item, i) => (
                 <div key={i} style={{
                   display: 'flex',
