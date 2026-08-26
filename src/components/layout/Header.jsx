@@ -12,7 +12,7 @@ const routeConfig = {
   '/dashboard': { title: 'Dashboard', breadcrumb: 'Overview' },
   '/investment': { title: 'Your Investment', breadcrumb: 'Investments' },
   '/complete-transaction-details': { title: 'Complete Transaction Details', breadcrumb: 'Investments' },
-  '/portfolio': { title: 'Kinetoscope Portfolio', breadcrumb: 'Investments' },
+  '/portfolio': { title: 'YieldIQ Portfolio', breadcrumb: 'Investments' },
   '/projects': { title: 'Project Selection', breadcrumb: 'Investments' },
   '/perks': { title: 'Perks & Recognition', breadcrumb: 'Account' },
   '/payments': { title: 'Payments', breadcrumb: 'Account' },
@@ -324,7 +324,7 @@ export default function Header({ isCollapsed, onMenuClick }) {
                     >
                       <div style={{
                         width: '32px', height: '32px', borderRadius: '50%',
-                        background: n.category === 'danger' ? '#fef2f2' : n.category === 'success' ? '#ecfdf5' : '#eff6ff',
+                        background: n.category === 'danger' ? '#fef2f2' : n.category === 'success' ? '#FFF8E7' : '#eff6ff',
                         color: n.category === 'danger' ? '#ef4444' : n.category === 'success' ? '#10b981' : '#3b82f6',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: '0.875rem', fontWeight: 800, flexShrink: 0

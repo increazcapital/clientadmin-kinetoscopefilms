@@ -108,12 +108,12 @@ export default function FAQPage() {
 
       {/* Hero Banner with Integrated Search */}
       <div style={{
-        background: 'linear-gradient(135deg, var(--color-navy, #061D13) 0%, var(--color-navy-mid, #0B3020) 100%)',
+        background: 'linear-gradient(135deg, var(--color-navy, #0B1F4D) 0%, var(--color-navy-mid, #123A78) 100%)',
         borderRadius: '16px',
         padding: '28px',
         color: '#ffffff',
-        boxShadow: '0 8px 24px rgba(6, 29, 19, 0.2)',
-        border: '1px solid rgba(16, 185, 129, 0.2)',
+        boxShadow: '0 8px 24px rgba(11, 31, 77, 0.2)',
+        border: '1px solid rgba(245, 168, 0, 0.2)',
         marginBottom: '24px'
       }}>
         <div style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
@@ -137,7 +137,7 @@ export default function FAQPage() {
                 width: '100%',
                 padding: '12px 40px 12px 44px',
                 borderRadius: '10px',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
+                border: '1px solid rgba(245, 168, 0, 0.3)',
                 background: 'rgba(255, 255, 255, 0.1)',
                 color: '#ffffff',
                 fontSize: '0.875rem',
@@ -172,9 +172,9 @@ export default function FAQPage() {
                 style={{
                   padding: '7px 14px',
                   borderRadius: '20px',
-                  border: isActive ? '1px solid var(--color-gold, #10B981)' : '1px solid var(--color-border, #C8D8CF)',
-                  background: isActive ? 'var(--color-navy, #061D13)' : 'var(--color-white, #ffffff)',
-                  color: isActive ? '#ffffff' : 'var(--color-text-secondary, #2E3E36)',
+                  border: isActive ? '1px solid var(--color-gold)' : '1px solid var(--color-border, #D0D8E4)',
+                  background: isActive ? 'var(--color-navy, #0B1F4D)' : 'var(--color-white, #ffffff)',
+                  color: isActive ? '#ffffff' : 'var(--color-text-secondary, #1E3A5F)',
                   fontWeight: isActive ? '600' : '500',
                   fontSize: '0.8125rem',
                   cursor: 'pointer',
@@ -219,11 +219,11 @@ export default function FAQPage() {
                 key={faq.id}
                 style={{
                   background: 'var(--color-surface, #ffffff)',
-                  border: isExpanded ? '1.5px solid #10b981' : '1px solid var(--color-border, #e2e8f0)',
+                  border: isExpanded ? '1.5px solid var(--color-gold)' : '1px solid var(--color-border, #e2e8f0)',
                   borderRadius: '12px',
                   overflow: 'hidden',
                   transition: 'all 0.2s ease',
-                  boxShadow: isExpanded ? '0 4px 16px rgba(16, 185, 129, 0.08)' : '0 2px 6px rgba(0, 0, 0, 0.02)'
+                  boxShadow: isExpanded ? '0 4px 16px rgba(245, 168, 0, 0.08)' : '0 2px 6px rgba(0, 0, 0, 0.02)'
                 }}
               >
                 {/* Accordion Header */}
@@ -244,8 +244,8 @@ export default function FAQPage() {
                       width: '32px',
                       height: '32px',
                       borderRadius: '8px',
-                      background: isExpanded ? 'rgba(16, 185, 129, 0.15)' : 'var(--color-surface-elevated, #f1f5f9)',
-                      color: isExpanded ? '#10b981' : '#64748b',
+                      background: isExpanded ? 'rgba(245, 168, 0, 0.15)' : 'var(--color-surface-elevated, #f1f5f9)',
+                      color: isExpanded ? 'var(--color-gold)' : '#64748b',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -260,7 +260,7 @@ export default function FAQPage() {
                       <h4 style={{
                         fontSize: '0.9375rem',
                         fontWeight: '600',
-                        color: isExpanded ? '#10b981' : 'var(--color-text-primary, #0f172a)',
+                        color: isExpanded ? 'var(--color-gold)' : 'var(--color-text-primary, #0f172a)',
                         margin: 0,
                         lineHeight: 1.4
                       }}>
@@ -277,7 +277,7 @@ export default function FAQPage() {
                   <span style={{
                     transition: 'transform 0.25s ease',
                     transform: isExpanded ? 'rotate(180deg)' : 'rotate(0)',
-                    color: isExpanded ? '#10b981' : '#94a3b8',
+                    color: isExpanded ? 'var(--color-gold)' : '#94a3b8',
                     flexShrink: 0
                   }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -322,7 +322,7 @@ export default function FAQPage() {
                             padding: '4px 10px',
                             borderRadius: '6px',
                             border: '1px solid #cbd5e1',
-                            background: helpfulFeedback[faq.id] === 'yes' ? '#10b981' : '#ffffff',
+                            background: helpfulFeedback[faq.id] === 'yes' ? 'var(--color-gold)' : '#ffffff',
                             color: helpfulFeedback[faq.id] === 'yes' ? '#ffffff' : '#475569',
                             fontSize: '0.75rem',
                             fontWeight: '600',

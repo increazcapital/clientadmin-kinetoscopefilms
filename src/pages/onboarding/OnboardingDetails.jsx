@@ -201,7 +201,7 @@ export default function OnboardingDetails() {
           </div>
 
           {selectedRisk && (
-            <div className="kfpl-card animate-fade-in" style={{ background: 'var(--color-gold-light)', borderColor: 'rgba(16,185,129,0.2)' }}>
+            <div className="kfpl-card animate-fade-in" style={{ background: 'var(--color-gold-light)', borderColor: 'rgba(245, 168, 0, 0.2)' }}>
               <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
                 <input type="checkbox" checked={confirmed} onChange={e => setConfirmed(e.target.checked)} style={{ marginTop: '3px', accentColor: 'var(--color-gold)', width: '16px', height: '16px' }} />
                 <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>

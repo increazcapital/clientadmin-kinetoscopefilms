@@ -10,17 +10,15 @@ import { useToast } from '../../components/ui/Toast';
 import { apiRequest } from '../../config/apiHelper';
 
 const formatClientID = (rawId) => {
-  if (!rawId || rawId === '—') return '—';
-  if (rawId.startsWith('KFPL-CL-')) return rawId;
-  const digits = rawId.match(/\d+/);
-  if (digits) {
-    let val = parseInt(digits[0], 10);
-    if (val < 1000) {
-      val = 1000 + val;
-    }
-    return `KFPL-CL-${val}`;
+  if (!rawId || rawId === '—' || rawId === 'undefined' || rawId === 'null') return 'YLDIQ-CL-1001';
+  const str = String(rawId).trim();
+  const m = str.match(/(?:CL[-_ ]*)+(\d+)/i) || str.match(/(\d+)/);
+  if (m && m[1]) {
+    let val = parseInt(m[1], 10);
+    if (val < 1000) val += 1000;
+    return `YLDIQ-CL-${val}`;
   }
-  return 'KFPL-CL-1001';
+  return 'YLDIQ-CL-1001';
 };
 
 export default function CompleteTransactionDetails() {
@@ -181,13 +179,13 @@ export default function CompleteTransactionDetails() {
 
     const rowsHtml = filteredRecords.map((r) => `
       <tr>
-        <td style="border: 1px solid #CFDDD5; padding: 10px; font-weight: 500;">${r.month}</td>
-        <td style="border: 1px solid #CFDDD5; padding: 10px; text-align: right; font-weight: 700; color: #059669;">₹${Number(r.amount).toLocaleString('en-IN')}</td>
-        <td style="border: 1px solid #CFDDD5; padding: 10px;">${r.paymentMode || '—'}<br/><span style="font-family: monospace; font-size: 11px; color: #64748b;">${r.transactionRef || ''}</span></td>
-        <td style="border: 1px solid #CFDDD5; padding: 10px; text-align: center;">
-          <span style="display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; ${['paid','approved'].includes(r.status) ? 'background: #D1FAE5; color: #065F46;' : 'background: #FEF3C7; color: #92400E;'}">${String(r.status).toUpperCase()}</span>
+        <td style="border: 1px solid #D0D8E4; padding: 10px; font-weight: 500;">${r.month}</td>
+        <td style="border: 1px solid #D0D8E4; padding: 10px; text-align: right; font-weight: 700; color: #F5A800;">₹${Number(r.amount).toLocaleString('en-IN')}</td>
+        <td style="border: 1px solid #D0D8E4; padding: 10px;">${r.paymentMode || '—'}<br/><span style="font-family: monospace; font-size: 11px; color: #64748b;">${r.transactionRef || ''}</span></td>
+        <td style="border: 1px solid #D0D8E4; padding: 10px; text-align: center;">
+          <span style="display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; ${['paid','approved'].includes(r.status) ? 'background: #FFF8E7; color: #B45309;' : 'background: #FEF3C7; color: #92400E;'}">${String(r.status).toUpperCase()}</span>
         </td>
-        <td style="border: 1px solid #CFDDD5; padding: 10px; text-align: center;">${r.paidAt ? new Date(r.paidAt).toLocaleDateString('en-IN') : '—'}</td>
+        <td style="border: 1px solid #D0D8E4; padding: 10px; text-align: center;">${r.paidAt ? new Date(r.paidAt).toLocaleDateString('en-IN') : '—'}</td>
       </tr>
     `).join('');
 
@@ -197,23 +195,23 @@ export default function CompleteTransactionDetails() {
         <title>Transaction Statement - ${client.name || 'Client'}</title>
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-          body { font-family: 'Inter', sans-serif; line-height: 1.6; color: #11221A; padding: 40px; margin: 0; }
-          .header { margin-bottom: 24px; border-bottom: 3px solid #10B981; padding-bottom: 14px; display: flex; justify-content: space-between; align-items: flex-end; }
-          .title { font-size: 24px; font-weight: 800; color: #061D13; margin: 0; }
+          body { font-family: 'Inter', sans-serif; line-height: 1.6; color: #0B1F4D; padding: 40px; margin: 0; }
+          .header { margin-bottom: 24px; border-bottom: 3px solid #F5A800; padding-bottom: 14px; display: flex; justify-content: space-between; align-items: flex-end; }
+          .title { font-size: 24px; font-weight: 800; color: #0B1F4D; margin: 0; }
           table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-          th { background-color: #F3F7F5; color: #4B6B5B; font-weight: 700; text-transform: uppercase; font-size: 11px; padding: 10px; border: 1px solid #CFDDD5; text-align: left; }
-          td { border: 1px solid #CFDDD5; padding: 10px; font-size: 12px; }
-          .footer { margin-top: 40px; text-align: center; font-size: 11px; color: #64748b; border-top: 1px dashed #CFDDD5; padding-top: 16px; }
+          th { background-color: #F7F8FA; color: #7A8BA0; font-weight: 700; text-transform: uppercase; font-size: 11px; padding: 10px; border: 1px solid #D0D8E4; text-align: left; }
+          td { border: 1px solid #D0D8E4; padding: 10px; font-size: 12px; }
+          .footer { margin-top: 40px; text-align: center; font-size: 11px; color: #64748b; border-top: 1px dashed #D0D8E4; padding-top: 16px; }
         </style>
       </head>
       <body onload="window.print();">
         <div class="header">
           <div>
             <h1 class="title">Official Transaction Statement</h1>
-            <p style="margin: 4px 0 0; font-size: 12px; color: #4B6B5B;">Kinetoscope Films Production Pvt Ltd — Investor Dashboard</p>
+            <p style="margin: 4px 0 0; font-size: 12px; color: #7A8BA0;">YieldIQ — Investor Dashboard</p>
           </div>
           <div style="text-align: right;">
-            <div style="font-size: 14px; font-weight: 700; color: #061D13;">${client.name || 'Client'}</div>
+            <div style="font-size: 14px; font-weight: 700; color: #0B1F4D;">${client.name || 'Client'}</div>
             <div style="font-size: 12px; color: #64748b;">Code: ${client.clientCode || '—'}</div>
           </div>
         </div>
@@ -232,7 +230,7 @@ export default function CompleteTransactionDetails() {
           </tbody>
         </table>
         <div class="footer">
-          Generated on ${new Date().toLocaleDateString('en-IN')} — Kinetoscope Films Production Pvt Ltd Confidential Statement
+          Generated on ${new Date().toLocaleDateString('en-IN')} — YieldIQ Confidential Statement
         </div>
       </body>
       </html>
@@ -302,12 +300,12 @@ export default function CompleteTransactionDetails() {
         </div>
 
         <div className="kfpl-card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#15803D' }}>
+          <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#FFF8E7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#B45309' }}>
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
           </div>
           <div>
             <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '2px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Net Capital Investment</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#059669' }}>{formatCurrency(netCapitalInvestment)}</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#F5A800' }}>{formatCurrency(netCapitalInvestment)}</div>
           </div>
         </div>
 
@@ -459,7 +457,7 @@ export default function CompleteTransactionDetails() {
                         <span style={{
                           fontSize: '0.68rem',
                           fontWeight: 700,
-                          color: isDeposit ? '#059669' : isRoi ? '#D97706' : '#DC2626',
+                          color: isDeposit ? '#F5A800' : isRoi ? '#D97706' : '#DC2626',
                           letterSpacing: '0.4px',
                           textTransform: 'uppercase'
                         }}>
@@ -473,9 +471,9 @@ export default function CompleteTransactionDetails() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <div style={{
                           width: '34px', height: '34px', borderRadius: '10px',
-                          background: isDeposit ? '#DCFCE7' : isRoi ? '#FEF3C7' : '#FEE2E2',
+                          background: isDeposit ? '#FFF8E7' : isRoi ? '#FEF3C7' : '#FEE2E2',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          color: isDeposit ? '#15803D' : isRoi ? '#B45309' : '#B91C1C',
+                          color: isDeposit ? '#B45309' : isRoi ? '#B45309' : '#B91C1C',
                           flexShrink: 0
                         }}>
                           {isDeposit ? (
@@ -500,7 +498,7 @@ export default function CompleteTransactionDetails() {
                       <span style={{
                         fontSize: '0.95rem',
                         fontWeight: 800,
-                        color: isDeposit || isRoi ? '#059669' : '#DC2626'
+                        color: isDeposit || isRoi ? '#F5A800' : '#DC2626'
                       }}>
                         {isDeposit || isRoi ? '+' : '-'}{formatCurrency(rec.amount)}
                       </span>
@@ -536,11 +534,11 @@ export default function CompleteTransactionDetails() {
                         borderRadius: '20px',
                         fontSize: '0.72rem',
                         fontWeight: 700,
-                        background: isSuccess ? '#DCFCE7' : isPending ? '#FEF3C7' : '#FEE2E2',
-                        color: isSuccess ? '#15803D' : isPending ? '#B45309' : '#B91C1C',
-                        border: `1px solid ${isSuccess ? '#86EFAC' : isPending ? '#FDE68A' : '#FCA5A5'}`
+                        background: isSuccess ? '#FFF8E7' : isPending ? '#FEF3C7' : '#FEE2E2',
+                        color: isSuccess ? '#B45309' : isPending ? '#B45309' : '#B91C1C',
+                        border: `1px solid ${isSuccess ? '#FFE7A3' : isPending ? '#FDE68A' : '#FCA5A5'}`
                       }}>
-                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: isSuccess ? '#16A34A' : isPending ? '#D97706' : '#DC2626' }}></span>
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: isSuccess ? '#D48F00' : isPending ? '#D97706' : '#DC2626' }}></span>
                         {st.toUpperCase()}
                       </span>
                     </td>
@@ -623,7 +621,7 @@ export default function CompleteTransactionDetails() {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', borderBottom: '2px solid #F1F5F9', paddingBottom: '16px' }}>
               <div>
-                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#059669', background: '#ECFDF5', padding: '3px 10px', borderRadius: '20px', border: '1px solid #A7F3D0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#F5A800', background: '#FFF8E7', padding: '3px 10px', borderRadius: '20px', border: '1px solid #FFE7A3', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Official Transaction Receipt
                 </span>
                 <h3 style={{ margin: '8px 0 0 0', fontSize: '1.35rem', fontWeight: 800, color: '#0F172A' }}>{selectedReceipt.month}</h3>
@@ -665,11 +663,11 @@ export default function CompleteTransactionDetails() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #E2E8F0', paddingBottom: '8px' }}>
                 <span style={{ color: '#64748B', fontSize: '0.85rem' }}>Type</span>
-                <span style={{ fontWeight: 700, color: '#059669', fontSize: '0.85rem', textTransform: 'uppercase' }}>{selectedReceipt.type}</span>
+                <span style={{ fontWeight: 700, color: '#F5A800', fontSize: '0.85rem', textTransform: 'uppercase' }}>{selectedReceipt.type}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #E2E8F0', paddingBottom: '8px' }}>
                 <span style={{ color: '#64748B', fontSize: '0.85rem' }}>Total Amount</span>
-                <span style={{ fontWeight: 800, color: '#059669', fontSize: '1.25rem' }}>{formatCurrency(selectedReceipt.amount)}</span>
+                <span style={{ fontWeight: 800, color: '#F5A800', fontSize: '1.25rem' }}>{formatCurrency(selectedReceipt.amount)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #E2E8F0', paddingBottom: '8px' }}>
                 <span style={{ color: '#64748B', fontSize: '0.85rem' }}>Payment Mode</span>
@@ -679,8 +677,8 @@ export default function CompleteTransactionDetails() {
                 <span style={{ color: '#64748B', fontSize: '0.85rem' }}>Status</span>
                 <span style={{
                   fontWeight: 700,
-                  color: ['paid', 'approved', 'completed'].includes(String(selectedReceipt.status).toLowerCase()) ? '#15803D' : '#B45309',
-                  background: ['paid', 'approved', 'completed'].includes(String(selectedReceipt.status).toLowerCase()) ? '#DCFCE7' : '#FEF3C7',
+                  color: ['paid', 'approved', 'completed'].includes(String(selectedReceipt.status).toLowerCase()) ? '#B45309' : '#B45309',
+                  background: ['paid', 'approved', 'completed'].includes(String(selectedReceipt.status).toLowerCase()) ? '#FFF8E7' : '#FEF3C7',
                   padding: '2px 10px',
                   borderRadius: '12px',
                   fontSize: '0.78rem'

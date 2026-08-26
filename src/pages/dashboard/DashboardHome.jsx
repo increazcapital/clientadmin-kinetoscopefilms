@@ -20,16 +20,15 @@ import MissingDocsReuploadCard from '../../components/common/MissingDocsReupload
 
 
 const formatAgentID = (rawId) => {
-  if (!rawId || rawId === '—') return '—';
+  if (!rawId || rawId === '—' || rawId === 'undefined' || rawId === 'null') return 'YLDIQ-AG-1001';
   const str = String(rawId).trim();
-  if (str.toUpperCase().startsWith('KFPL-AG-')) return str.toUpperCase();
-  const digits = str.match(/\d+/);
-  if (digits) {
-    let val = parseInt(digits[0], 10);
+  const m = str.match(/(?:AG|AGT)[-_ ]*(\d+)/i) || str.match(/(\d+)/);
+  if (m && m[1]) {
+    let val = parseInt(m[1], 10);
     if (val < 1000) val += 1000;
-    return `KFPL-AG-${val}`;
+    return `YLDIQ-AG-${val}`;
   }
-  return 'KFPL-AG-1001';
+  return 'YLDIQ-AG-1001';
 };
 
 export default function DashboardHome() {
@@ -535,8 +534,8 @@ export default function DashboardHome() {
   }, []);
 
   const SEGMENT_COLORS = {
-    'Film Making': '#10B981', Distribution: '#1565C0', Music: '#7C3AED',
-    'Trading & Syndication': '#F59E0B', 'Content IP Bank': '#0F766E', 'Film Exhibition': '#0891B2',
+    'Film Making': '#F5A800', Distribution: '#1565C0', Music: '#7C3AED',
+    'Trading & Syndication': '#F59E0B', 'Content IP Bank': '#123A78', 'Film Exhibition': '#0891B2',
   };
 
   // Removed mock statusHistory initialization to keep client updates clean and real.
@@ -616,7 +615,7 @@ export default function DashboardHome() {
   // Quick Action Config
   const quickActionItems = [
     { label: 'Raise Query', subtitle: 'Service request', route: '/service-requests/new', color: '#7B1FA2', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg> },
-    { label: 'Add Funds', subtitle: 'Invest in slots', route: '/projects', color: '#10B981', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></svg> },
+    { label: 'Add Funds', subtitle: 'Invest in slots', route: '/projects', color: '#F5A800', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></svg> },
     { label: 'Request Payout', subtitle: 'Withdraw request', route: '/payments', color: '#C62828', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg> },
     { label: 'View Portfolio', subtitle: 'Active portfolio', route: '/portfolio', color: '#1565C0', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></svg> },
     { label: 'Support Details', subtitle: 'Contact desk', route: '/profile?tab=support', color: '#0E7490', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg> },
@@ -688,7 +687,7 @@ export default function DashboardHome() {
                 KYC Verification Pending
               </h4>
               <p style={{ margin: 0, fontSize: '0.8125rem', color: '#92400E' }}>
-                Your KYC documents have been submitted and are currently awaiting review & approval by Kinetoscope Films Team.
+                Your KYC documents have been submitted and are currently awaiting review & approval by YieldIQ Team.
               </p>
             </div>
           </div>
@@ -795,7 +794,7 @@ export default function DashboardHome() {
                 }}
               >
                 {statusHistory.map((update) => {
-                  const accent = SEGMENT_COLORS[update.segment] || '#10B981';
+                  const accent = SEGMENT_COLORS[update.segment] || '#F5A800';
 
                   const cardUpdates = clientHistoryLogs.filter(h => {
                     if (update.type === 'segment') {
@@ -915,8 +914,8 @@ export default function DashboardHome() {
                             <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', flexShrink: 0 }}>
                               <span style={{
                                 fontSize: '0.65rem', fontWeight: 700,
-                                color: '#10b981', background: '#10b98115',
-                                padding: '2px 8px', borderRadius: '4px', border: '1px solid #10b98125'
+                                color: '#F5A800', background: 'rgba(245, 168, 0, 0.12)',
+                                padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(245, 168, 0, 0.25)'
                               }}>{update.status}</span>
                             </div>
                           </div>
@@ -1354,7 +1353,7 @@ export default function DashboardHome() {
           <div className="kfpl-chart-legend">
             {segmentAllocation.map((seg, i) => (
               <div className="kfpl-legend-item" key={seg.segment}>
-                <span className="kfpl-legend-dot" style={{ background: ['#10B981', '#1565C0', '#2E7D32', '#E65100', '#7B1FA2', '#00838F'][i % 6] }} />
+                <span className="kfpl-legend-dot" style={{ background: ['#F5A800', '#123A78', '#7C3AED', '#F59E0B', '#0B1F4D', '#0891B2'][i % 6] }} />
                 <span>{seg.segment}</span>
                 <span className="kfpl-legend-value">{seg.value}%</span>
               </div>
@@ -1372,7 +1371,7 @@ export default function DashboardHome() {
             <span className="kfpl-badge kfpl-badge--gold-tier">Paid</span>
           </div>
           <div className="kfpl-chart-body">
-            <LineChart data={lineChartData} height={220} color="#10B981" />
+            <LineChart data={lineChartData} height={220} color="#F5A800" />
           </div>
         </div>
       </div>
@@ -1517,7 +1516,7 @@ export default function DashboardHome() {
                   justifyContent: 'center',
                   fontSize: '1.75rem',
                   fontWeight: '800',
-                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)'
+                  boxShadow: '0 4px 12px rgba(245, 168, 0, 0.2)'
                 }}>
                   {(client.agentName || 'Agent').trim().split(/\s+/).map(n => n[0] || '').join('').toUpperCase() || 'AG'}
                 </div>
@@ -1633,7 +1632,7 @@ export default function DashboardHome() {
           {selectedUpdate && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span className="kfpl-badge" style={{ background: `${SEGMENT_COLORS[selectedUpdate.segment] || '#10B981'}15`, color: SEGMENT_COLORS[selectedUpdate.segment] || '#10B981', border: `1px solid ${SEGMENT_COLORS[selectedUpdate.segment] || '#10B981'}40` }}>
+                <span className="kfpl-badge" style={{ background: `${SEGMENT_COLORS[selectedUpdate.segment] || '#F5A800'}15`, color: SEGMENT_COLORS[selectedUpdate.segment] || '#F5A800', border: `1px solid ${SEGMENT_COLORS[selectedUpdate.segment] || '#F5A800'}40` }}>
                   {selectedUpdate.segment}
                 </span>
                 <span className="text-xs text-muted" style={{ fontWeight: 600 }}>{selectedUpdate.date}</span>
@@ -1649,10 +1648,10 @@ export default function DashboardHome() {
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600, marginBottom: '6px' }}>
                   <span className="text-muted">Milestone Completion</span>
-                  <span style={{ color: SEGMENT_COLORS[selectedUpdate.segment] || '#10B981' }}>{selectedUpdate.progress}%</span>
+                  <span style={{ color: SEGMENT_COLORS[selectedUpdate.segment] || '#F5A800' }}>{selectedUpdate.progress}%</span>
                 </div>
                 <div className="kfpl-progress" style={{ height: '8px', margin: 0 }}>
-                  <div className="kfpl-progress-fill" style={{ width: `${selectedUpdate.progress}%`, background: SEGMENT_COLORS[selectedUpdate.segment] || '#10B981' }}></div>
+                  <div className="kfpl-progress-fill" style={{ width: `${selectedUpdate.progress}%`, background: SEGMENT_COLORS[selectedUpdate.segment] || '#F5A800' }}></div>
                 </div>
               </div>
 
@@ -1761,7 +1760,7 @@ export default function DashboardHome() {
                   return matchesSearch && matchesSegment;
                 })
                 .map(log => {
-                  const accent = SEGMENT_COLORS[log.segment] || '#10B981';
+                  const accent = SEGMENT_COLORS[log.segment] || '#F5A800';
                   return (
                     <div key={log.id} style={{
                       border: '1px solid var(--color-border-light)',

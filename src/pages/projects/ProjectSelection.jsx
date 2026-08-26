@@ -6,7 +6,7 @@ import { formatCurrency } from '../../utils/formatters';
 
 /* ── Segment color map ─────────────────────── */
 const segmentColors = {
-  'Film Making':       { bg: 'linear-gradient(135deg, #059669 0%, #10B981 50%, #34D399 100%)', tag: '#059669', tagBg: '#ECFDF5', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>, minInvestment: 500000 },
+  'Film Making':       { bg: 'linear-gradient(135deg, #0B1F4D 0%, #123A78 50%, #F5A800 100%)', tag: '#F5A800', tagBg: '#FFF8E7', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>, minInvestment: 500000 },
   'Music':             { bg: 'linear-gradient(135deg, #7C3AED 0%, #8B5CF6 50%, #A78BFA 100%)', tag: '#7C3AED', tagBg: '#F5F3FF', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>, minInvestment: 200000 },
   'Distribution':      { bg: 'linear-gradient(135deg, #2563EB 0%, #3B82F6 50%, #60A5FA 100%)', tag: '#2563EB', tagBg: '#EFF6FF', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>, minInvestment: 1000000 },
   'Content IP Bank':   { bg: 'linear-gradient(135deg, #D97706 0%, #F59E0B 50%, #FBBF24 100%)', tag: '#D97706', tagBg: '#FFFBEB', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>, minInvestment: 300000 },
@@ -52,6 +52,11 @@ const getPerkTier = (val) => {
 };
 
 export default function ProjectSelection() {
+  const [expandedCards, setExpandedCards] = useState({});
+  const toggleCardExpand = (id, e) => {
+    if (e) e.stopPropagation();
+    setExpandedCards(prev => ({ ...prev, [id]: !prev[id] }));
+  };
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [applyModal, setApplyModal] = useState(null);
@@ -365,7 +370,7 @@ export default function ProjectSelection() {
               <div
                 className="kfpl-portfolio-card-media"
                 style={{
-                  backgroundImage: opp.bannerImg ? `linear-gradient(rgba(6, 29, 19, 0.5), rgba(6, 29, 19, 0.8)), url(${opp.bannerImg})` : undefined,
+                  backgroundImage: opp.bannerImg ? `url(${opp.bannerImg})` : undefined,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
                 }}
@@ -389,7 +394,20 @@ export default function ProjectSelection() {
                 </div>
 
                 <h2>{opp.name}</h2>
-                <p>{summary}</p>
+                <div className="kfpl-portfolio-card-desc-wrap">
+                  <p className={`kfpl-portfolio-card-desc ${expandedCards[opp.id] ? 'expanded' : 'collapsed'}`}>
+                    {summary}
+                  </p>
+                  {summary && summary.length > 90 && (
+                    <button
+                      type="button"
+                      className="kfpl-accordion-toggle"
+                      onClick={(e) => toggleCardExpand(opp.id, e)}
+                    >
+                      {expandedCards[opp.id] ? '▲ Show Less' : '▼ Read More & Details'}
+                    </button>
+                  )}
+                </div>
 
                 {/* Metrics */}
                 <div className="kfpl-portfolio-metrics">
@@ -418,8 +436,8 @@ export default function ProjectSelection() {
 
                 {/* Latest Status Update Note */}
                 {opp.update && (
-                  <div style={{ marginTop: '12px', padding: '10px 12px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.25)', borderRadius: '8px', textAlign: 'left' }}>
-                    <div style={{ fontSize: '0.6875rem', fontWeight: 800, color: 'var(--color-success, #10B981)', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '3px' }}>
+                  <div style={{ marginTop: '12px', padding: '10px 12px', background: 'rgba(245, 168, 0, 0.08)', border: '1px solid rgba(245, 168, 0, 0.25)', borderRadius: '8px', textAlign: 'left' }}>
+                    <div style={{ fontSize: '0.6875rem', fontWeight: 800, color: '#F5A800', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '3px' }}>
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}>
                         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
                         <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
@@ -443,16 +461,16 @@ export default function ProjectSelection() {
                         justifyContent: 'center',
                         gap: '8px',
                         padding: '10px',
-                        background: '#ECFDF5',
-                        color: '#065F46',
-                        border: '1.5px solid #10B981',
+                        background: '#FFF8E7',
+                        color: '#B45309',
+                        border: '1.5px solid #F5A800',
                         borderRadius: '8px',
                         fontWeight: 700,
                         fontSize: '0.85rem',
                         cursor: 'default'
                       }}
                     >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F5A800" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                       Active Investment: ₹{opp.investedAmount.toLocaleString('en-IN')}
                     </button>
                   ) : opp.isPending ? (
@@ -507,14 +525,14 @@ export default function ProjectSelection() {
 
       {/* ── Apply Modal using React Portal ─────────────────────── */}
       {applyModal && createPortal(
-        <div className="kfpl-modal-overlay" onClick={() => setApplyModal(null)} style={{ backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', background: 'rgba(6, 29, 19, 0.45)', zIndex: 9999 }}>
-          <div className="kfpl-ps-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '580px', width: '100%', overflow: 'hidden', borderRadius: '16px', background: '#fff', boxShadow: '0 24px 64px rgba(6, 29, 19, 0.15)' }}>
+        <div className="kfpl-modal-overlay" onClick={() => setApplyModal(null)} style={{ backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', background: 'rgba(11, 31, 77, 0.45)', zIndex: 9999 }}>
+          <div className="kfpl-ps-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '580px', width: '100%', overflow: 'hidden', borderRadius: '16px', background: '#fff', boxShadow: '0 24px 64px rgba(11, 31, 77, 0.15)' }}>
             {/* Modal Top Banner (Cover Image) */}
             <div
               className="kfpl-ps-modal-banner"
               style={{
                 backgroundImage: applyModal.bannerImg
-                  ? `linear-gradient(rgba(6, 29, 19, 0.2), rgba(6, 29, 19, 0.85)), url(${applyModal.bannerImg})`
+                  ? `linear-gradient(rgba(11, 31, 77, 0.2), rgba(11, 31, 77, 0.85)), url(${applyModal.bannerImg})`
                   : modalSeg?.bg,
                 backgroundSize: 'cover',
                 backgroundPosition: 'left center',
@@ -589,7 +607,7 @@ export default function ProjectSelection() {
               {/* Payment Deposit Form Fields */}
               <div style={{ marginBottom: '18px', background: '#F8FAF9', padding: '16px', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
                 <h4 style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-navy)', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F5A800" strokeWidth="2.5"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
                   Payment & Deposit Details
                 </h4>
 
@@ -608,7 +626,7 @@ export default function ProjectSelection() {
                       onChange={(e) => setInvestAmount(e.target.value)}
                       placeholder={`Min ₹${applyModal.minInvestment.toLocaleString('en-IN')}`}
                     />
-                    <span style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 600, marginTop: '3px', display: 'block' }}>
+                    <span style={{ fontSize: '0.7rem', color: '#F5A800', fontWeight: 600, marginTop: '3px', display: 'block' }}>
                       Min: ₹{applyModal.minInvestment.toLocaleString('en-IN')} • Max: ₹{(applyModal.targetFunding || 25000000).toLocaleString('en-IN')}
                     </span>
                   </div>
@@ -658,12 +676,12 @@ export default function ProjectSelection() {
                       justifyContent: 'center',
                       gap: '8px',
                       padding: '12px 14px',
-                      background: proofFile ? 'rgba(16, 185, 129, 0.08)' : '#fff',
-                      border: proofFile ? '1.5px solid #10B981' : '1px dashed var(--color-border)',
+                      background: proofFile ? 'rgba(245, 168, 0, 0.08)' : '#fff',
+                      border: proofFile ? '1.5px solid #F5A800' : '1px dashed var(--color-border)',
                       borderRadius: '8px',
                       cursor: 'pointer',
                       fontSize: '0.85rem',
-                      color: proofFile ? '#047857' : 'var(--color-text-secondary)',
+                      color: proofFile ? '#D48F00' : 'var(--color-text-secondary)',
                       fontWeight: 600
                     }}
                   >
@@ -716,7 +734,7 @@ export default function ProjectSelection() {
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ width: '12px', height: '12px' }}><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
                 <span className="kfpl-ps-modal-checkbox-text" style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', lineHeight: 1.4, margin: 0 }}>
-                  I agree to the Kinetoscope <strong>Terms of Service</strong>, <strong>Privacy Policy</strong>, and the <strong>Investment Agreement</strong>.
+                  I agree to the YieldIQ <strong>Terms of Service</strong>, <strong>Privacy Policy</strong>, and the <strong>Investment Agreement</strong>.
                 </span>
               </label>
             </div>
@@ -733,7 +751,7 @@ export default function ProjectSelection() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  background: (!proofFile || !ackRisk || !agreeTerms || submitting) ? 'var(--color-border)' : '#10B981',
+                  background: (!proofFile || !ackRisk || !agreeTerms || submitting) ? 'var(--color-border)' : '#F5A800',
                   color: '#ffffff',
                   fontWeight: 700,
                   borderRadius: '8px',

@@ -27,39 +27,27 @@ const formatDateDMY = (dateStr) => {
 };
 
 const formatClientID = (rawId) => {
-  if (!rawId || rawId === '—') return '—';
+  if (!rawId || rawId === '—' || rawId === 'undefined' || rawId === 'null') return 'YLDIQ-CL-1001';
   const str = String(rawId).trim();
-  if (/^[0-9a-fA-F]{24}$/.test(str)) {
-    return 'KFPL-CL-1001';
+  const m = str.match(/(?:CL[-_ ]*)+(\d+)/i) || str.match(/(\d+)/);
+  if (m && m[1]) {
+    let val = parseInt(m[1], 10);
+    if (val < 1000) val += 1000;
+    return `YLDIQ-CL-${val}`;
   }
-  if (/^KFPL-CL-\d+$/i.test(str)) {
-    return str.toUpperCase();
-  }
-  const digitsMatch = str.match(/\d+/);
-  if (digitsMatch) {
-    let val = parseInt(digitsMatch[0], 10);
-    if (val < 1000) val = 1000 + val;
-    return `KFPL-CL-${val}`;
-  }
-  return 'KFPL-CL-1001';
+  return 'YLDIQ-CL-1001';
 };
 
 const formatAgentID = (rawId) => {
-  if (!rawId || rawId === '—' || rawId === '-') return 'KFPL-AG-1002';
+  if (!rawId || rawId === '—' || rawId === 'undefined' || rawId === 'null') return 'YLDIQ-AG-1001';
   const str = String(rawId).trim();
-  if (/^[0-9a-fA-F]{24}$/.test(str)) {
-    return 'KFPL-AG-1002';
+  const m = str.match(/(?:AG|AGT)[-_ ]*(\d+)/i) || str.match(/(\d+)/);
+  if (m && m[1]) {
+    let val = parseInt(m[1], 10);
+    if (val < 1000) val += 1000;
+    return `YLDIQ-AG-${val}`;
   }
-  if (/^KFPL-AG-\d+$/i.test(str)) {
-    return str.toUpperCase();
-  }
-  const digitsMatch = str.match(/\d+/);
-  if (digitsMatch) {
-    let val = parseInt(digitsMatch[0], 10);
-    if (val < 1000) val = 1000 + val;
-    return `KFPL-AG-${val}`;
-  }
-  return 'KFPL-AG-1002';
+  return 'YLDIQ-AG-1001';
 };
 
 export default function Profile() {
@@ -578,28 +566,28 @@ export default function Profile() {
               display: 'flex',
               alignItems: 'center',
               gap: '24px',
-              background: 'linear-gradient(135deg, #061D13 0%, #0B3020 100%)',
+              background: 'linear-gradient(135deg, #0B1F4D 0%, #123A78 100%)',
               color: '#FFFFFF',
               padding: '24px 28px',
               borderRadius: '16px',
-              boxShadow: '0 8px 32px rgba(6, 29, 19, 0.15)',
+              boxShadow: '0 8px 32px rgba(11, 31, 77, 0.15)',
               position: 'relative',
               overflow: 'hidden'
             }}>
               <div style={{ position: 'relative', flexShrink: 0 }}>
                 <div style={{
-                  width: '90px',
-                  height: '90px',
+                  width: '84px',
+                  height: '84px',
                   borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                  background: 'linear-gradient(135deg, #F5A800 0%, #D48F00 100%)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '2rem',
                   fontWeight: '800',
                   color: '#FFFFFF',
-                  boxShadow: '0 6px 20px rgba(16, 185, 129, 0.3)',
-                  border: '3px solid rgba(255, 255, 255, 0.2)',
+                  boxShadow: '0 8px 24px rgba(245, 168, 0, 0.35)',
+                  border: '3px solid rgba(255, 255, 255, 0.25)',
                   overflow: 'hidden'
                 }}>
                   {client.profilePic ? (
@@ -618,14 +606,14 @@ export default function Profile() {
                     width: '32px',
                     height: '32px',
                     borderRadius: '50%',
-                    background: '#10B981',
+                    background: '#F5A800',
                     color: '#FFFFFF',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
                     boxShadow: '0 4px 10px rgba(0,0,0,0.4)',
-                    border: '2px solid #061D13',
+                    border: '2px solid #0B1F4D',
                     zIndex: 10,
                     transition: 'transform 0.2s ease, background 0.2s ease'
                   }}
@@ -654,7 +642,7 @@ export default function Profile() {
                       justifyContent: 'center',
                       cursor: 'pointer',
                       boxShadow: '0 4px 10px rgba(0,0,0,0.4)',
-                      border: '2px solid #061D13',
+                      border: '2px solid #0B1F4D',
                       zIndex: 10,
                       transition: 'transform 0.2s ease, background 0.2s ease'
                     }}
@@ -674,16 +662,16 @@ export default function Profile() {
                 />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#10B981', fontWeight: 700 }}>Client Account</span>
+                <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#F5A800', fontWeight: 700 }}>Client Account</span>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '2px 0 4px', color: '#FFFFFF' }}>{client.name}</h2>
                 <div style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>ID: {client.clientId}</div>
                 <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-                  <span className="kfpl-badge kfpl-badge--active">{client.status}</span>
-                  <span className="kfpl-badge" style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10B981', border: '1px solid rgba(16, 185, 129, 0.4)' }}>{(client.category || 'SILVER').toUpperCase()} TIER</span>
+                  <span className="kfpl-badge" style={{ background: '#FFF8E7', color: '#B45309', border: '1px solid #FFE7A3', fontWeight: 700 }}>{client.status || 'ACTIVE'}</span>
+                  <span className="kfpl-badge" style={{ background: 'rgba(245, 168, 0, 0.2)', color: '#FFC83D', border: '1px solid rgba(245, 168, 0, 0.4)', fontWeight: 700 }}>{(client.category || 'SILVER').toUpperCase()} TIER</span>
                   {Boolean(client.agreementDocument && String(client.agreementDocument).trim() !== '' && client.agreementDocument !== 'null') &&
                    Boolean(client.agreementDocumentVerified || client.agreementVerified) &&
                    String(client.kycStatus || client.kyc || '').toUpperCase() === 'VERIFIED' ? (
-                    <span className="kfpl-badge" style={{ background: 'rgba(16, 185, 129, 0.25)', color: '#34D399', border: '1px solid rgba(52, 211, 153, 0.5)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <span className="kfpl-badge" style={{ background: 'rgba(245, 168, 0, 0.25)', color: '#FFC83D', border: '1px solid rgba(255, 200, 61, 0.5)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 11 12 14 22 4"/></svg>
                       KYC VERIFIED
                     </span>
@@ -1012,14 +1000,14 @@ export default function Profile() {
 
               {/* Phone Support Card */}
               <div className="kfpl-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', background: 'var(--color-surface, #ffffff)', borderRadius: '16px', border: '1px solid var(--color-border)', boxShadow: '0 4px 16px rgba(0,0,0,0.04)' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(245, 168, 0, 0.12)', color: '#F5A800', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
                   <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                 </div>
                 <h3 style={{ fontSize: '1.05rem', fontWeight: '700', color: 'var(--color-text-primary)', margin: '0 0 6px 0' }}>Phone Support</h3>
                 <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', margin: '0 0 16px 0' }}>
                   {supportSettings.clientSupportPhone}
                 </p>
-                <a href={`tel:${supportSettings.clientSupportPhone.replace(/\s/g, '')}`} className="kfpl-btn kfpl-btn--primary kfpl-btn--sm" style={{ width: '100%', justifyContent: 'center', background: '#10b981', borderColor: '#10b981', fontWeight: '600' }}>
+                <a href={`tel:${supportSettings.clientSupportPhone.replace(/\s/g, '')}`} className="kfpl-btn kfpl-btn--primary kfpl-btn--sm" style={{ width: '100%', justifyContent: 'center', background: '#F5A800', borderColor: '#F5A800', fontWeight: '600' }}>
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 6 }}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Call Support
                 </a>
               </div>
@@ -1055,7 +1043,7 @@ export default function Profile() {
                     justifyContent: 'center',
                     fontSize: '2rem',
                     fontWeight: '800',
-                    boxShadow: '0 4px 16px rgba(16, 185, 129, 0.25)',
+                    boxShadow: '0 4px 16px rgba(245, 168, 0, 0.25)',
                     marginBottom: '16px'
                   }}>
                     {client.agentName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
@@ -1118,7 +1106,7 @@ export default function Profile() {
                     <span className="kfpl-badge kfpl-badge--ghost" style={{ fontSize: '0.625rem', marginBottom: '8px' }}>Direct Support</span>
                     <h4 style={{ fontSize: '1.125rem', fontWeight: '800', color: 'var(--color-text-primary)' }}>Direct Admin Client</h4>
                     <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', marginTop: '4px' }}>
-                      No agent assigned. Contact Kinetoscope Super Admin support team directly.
+                      No agent assigned. Contact YieldIQ Super Admin support team directly.
                     </p>
                   </div>
 

@@ -253,12 +253,12 @@ export default function ServiceRequestDetail() {
 
           {/* Admin Remarks Card */}
           {(req.adminRemarks || req.adminNote || req.remarks) && (
-            <div className="kfpl-card kfpl-sr-admin-remarks-card" style={{ padding: '20px 24px', borderRadius: '12px', borderLeft: '4px solid #10B981', background: '#ECFDF5', borderTop: '1px solid rgba(16, 185, 129, 0.2)', borderRight: '1px solid rgba(16, 185, 129, 0.2)', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+            <div className="kfpl-card kfpl-sr-admin-remarks-card" style={{ padding: '20px 24px', borderRadius: '12px', borderLeft: '4px solid #F5A800', background: '#FFF8E7', borderTop: '1px solid rgba(245, 168, 0, 0.2)', borderRight: '1px solid rgba(245, 168, 0, 0.2)', borderBottom: '1px solid rgba(245, 168, 0, 0.2)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                <h4 style={{ fontSize: '0.78rem', fontWeight: 700, color: '#047857', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Official Administrator Response / Remarks</h4>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F5A800" strokeWidth="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <h4 style={{ fontSize: '0.78rem', fontWeight: 700, color: '#D48F00', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Official Administrator Response / Remarks</h4>
               </div>
-              <p style={{ fontSize: '0.925rem', color: '#065F46', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-wrap', fontWeight: 600 }}>
+              <p style={{ fontSize: '0.925rem', color: '#B45309', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-wrap', fontWeight: 600 }}>
                 {req.adminRemarks || req.adminNote || req.remarks}
               </p>
             </div>
@@ -278,19 +278,19 @@ export default function ServiceRequestDetail() {
               top: '8px', 
               bottom: '8px', 
               width: '2px', 
-              background: 'linear-gradient(to bottom, #10B981, #F59E0B, #cbd5e1)', 
+              background: 'linear-gradient(to bottom, #F5A800, #FFC83D, #D0D8E4)', 
               borderRadius: '1px' 
             }} />
             
             {displayTimeline.map((item, i) => {
-              let dotColor = '#10B981'; // Green for raised
-              let shadowColor = 'rgba(16, 185, 129, 0.2)';
+              let dotColor = '#F5A800'; // Green for raised
+              let shadowColor = 'rgba(245, 168, 0, 0.2)';
               if (item.type === 'IN PROGRESS') {
                 dotColor = '#F59E0B'; // Orange/Gold
                 shadowColor = 'rgba(245, 158, 11, 0.2)';
               } else if (item.type === 'RESOLVED' || item.type === 'CLOSED') {
-                dotColor = '#10B981';
-                shadowColor = 'rgba(16, 185, 129, 0.2)';
+                dotColor = '#F5A800';
+                shadowColor = 'rgba(245, 168, 0, 0.2)';
               }
               
               return (

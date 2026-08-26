@@ -45,7 +45,7 @@
   width: var(--sidebar-width);
   height: 100vh;
   background: linear-gradient(180deg, #FFFFFF 0%, #FBFDFC 52%, #F5FAF7 100%);
-  box-shadow: 4px 0 24px rgba(6, 29, 19, 0.06);
+  box-shadow: 4px 0 24px rgba(11, 31, 77, 0.06);
   z-index: var(--z-sidebar);
   display: flex;
   flex-direction: column;
@@ -73,12 +73,12 @@
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  background: linear-gradient(135deg, var(--color-gold) 0%, #10B981 50%, var(--color-gold-dark) 100%);
+  background: linear-gradient(135deg, var(--color-gold) 0%, #F5A800 50%, var(--color-gold-dark) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.18);
+  box-shadow: 0 6px 16px rgba(245, 168, 0, 0.18);
 }
 
 .kfpl-sidebar-logo-icon span {
@@ -125,21 +125,38 @@
   overflow: hidden;
   width: 100%;
   position: relative;
-  margin: 1px 0;
+  margin: 1px 0 2px;
+  display: flex;
 }
 
 .kfpl-sidebar-marquee-track {
-  display: inline-flex;
+  display: flex;
+  width: max-content;
   white-space: nowrap;
-  animation: kfpl-sidebar-scroll 10s linear infinite;
+  animation: kfpl-sidebar-scroll 12s linear infinite;
+  will-change: transform;
 }
 
-.kfpl-sidebar-marquee-track span {
-  font-size: 0.75rem;
+.kfpl-marquee-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 8px;
+  flex-shrink: 0;
+}
+
+.kfpl-marquee-group span {
+  font-size: 0.95rem;
   font-weight: 800;
-  color: #0f172a;
-  letter-spacing: 0.5px;
+  color: var(--color-text-primary, #0B1F4D);
+  letter-spacing: 0.6px;
   text-transform: uppercase;
+}
+
+.kfpl-marquee-dot {
+  color: #F5A800 !important;
+  font-size: 1.1rem !important;
+  line-height: 1;
 }
 
 @keyframes kfpl-sidebar-scroll {
@@ -200,7 +217,7 @@
   padding: 9px 18px;
   margin: 1px 8px;
   border-radius: 8px;
-  color: #3E5048;
+  color: var(--color-text-secondary);
   font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
@@ -213,12 +230,12 @@
 }
 
 .kfpl-sidebar-item:hover {
-  background: #F1F7F4;
+  background: var(--color-surface);
   color: var(--color-text-primary);
 }
 
 .kfpl-sidebar-item.active {
-  background: linear-gradient(90deg, rgba(16, 185, 129, 0.13) 0%, rgba(236, 253, 245, 0.82) 100%);
+  background: var(--color-gold-light);
   color: var(--color-gold-dark);
   font-weight: 600;
 }
@@ -477,7 +494,7 @@
   color: var(--color-gold);
   font-weight: 700;
   font-size: 0.8125rem;
-  border: 2px solid rgba(16, 185, 129, 0.2);
+  border: 2px solid rgba(245, 168, 0, 0.2);
 }
 
 .kfpl-header-profile-info {
@@ -654,7 +671,7 @@
 
 .kfpl-support-fab-btn:hover {
   transform: scale(1.08);
-  box-shadow: 0 6px 24px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 6px 24px rgba(245, 168, 0, 0.4);
 }
 
 .kfpl-support-fab-btn svg {

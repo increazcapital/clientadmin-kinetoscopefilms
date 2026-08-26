@@ -360,9 +360,9 @@ export default function PaymentRequests() {
             const hasDividend = withdrawableData.dividendTotal > 0;
             return (
               <div style={{
-                background: 'var(--color-gold-light, #ECFDF5)',
+                background: 'var(--color-gold-light, #FFF8E7)',
                 borderRadius: 'var(--radius-lg, 12px)',
-                border: '1px solid var(--color-border-light, #E2ECE7)',
+                border: '1px solid var(--color-border-light, #E4E9F1)',
                 padding: '18px 20px',
                 marginBottom: '16px',
                 position: 'relative',
@@ -371,16 +371,16 @@ export default function PaymentRequests() {
               }}>
                 <div style={{
                   position: 'absolute', top: 0, left: 0, right: 0, height: '3px',
-                  background: 'linear-gradient(90deg, var(--color-gold-dark, #059669), var(--color-gold, #10B981))',
+                  background: 'linear-gradient(90deg, var(--color-gold-dark, #F5A800), var(--color-gold))',
                   borderRadius: '12px 12px 0 0'
                 }} />
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{
                       width: '38px', height: '38px', borderRadius: '10px',
-                      background: 'var(--color-gold-glow, rgba(16, 185, 129, 0.12))',
+                      background: 'var(--color-gold-glow, rgba(245, 168, 0, 0.12))',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: 'var(--color-gold-dark, #059669)', flexShrink: 0
+                      color: 'var(--color-gold-dark, #F5A800)', flexShrink: 0
                     }}>
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/>
@@ -389,8 +389,8 @@ export default function PaymentRequests() {
                       </svg>
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted, #6D7E75)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', fontFamily: "'Inter', sans-serif" }}>Available Withdrawable Balance</div>
-                      <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--color-navy, #061D13)', marginTop: '2px', fontFamily: "'Inter', sans-serif" }}>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted, #7A8BA0)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', fontFamily: "'Inter', sans-serif" }}>Available Withdrawable Balance</div>
+                      <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--color-navy, #0B1F4D)', marginTop: '2px', fontFamily: "'Inter', sans-serif" }}>
                         {formatAmount(availableBalance)}
                       </div>
                     </div>
@@ -401,8 +401,8 @@ export default function PaymentRequests() {
                       <span style={{
                         display: 'inline-flex', alignItems: 'center', gap: '4px',
                         padding: '4px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 700,
-                        background: 'var(--color-success-bg, rgba(16, 185, 129, 0.1))', color: 'var(--color-gold-dark, #059669)',
-                        border: '1px solid rgba(16, 185, 129, 0.25)', fontFamily: "'Inter', sans-serif"
+                        background: 'var(--color-success-bg, rgba(245, 168, 0, 0.12))', color: 'var(--color-gold-dark, #F5A800)',
+                        border: '1px solid rgba(245, 168, 0, 0.25)', fontFamily: "'Inter', sans-serif"
                       }}>
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
                         ROI — {formatAmount(withdrawableData.roiTotal)}
@@ -423,8 +423,8 @@ export default function PaymentRequests() {
                       <span style={{
                         display: 'inline-flex', alignItems: 'center', gap: '4px',
                         padding: '4px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 700,
-                        background: 'var(--color-surface, #F3F7F5)', color: 'var(--color-text-muted, #6D7E75)',
-                        border: '1px solid var(--color-border-light, #E2ECE7)', fontFamily: "'Inter', sans-serif"
+                        background: 'var(--color-surface, #F7F8FA)', color: 'var(--color-text-muted, #7A8BA0)',
+                        border: '1px solid var(--color-border-light, #E4E9F1)', fontFamily: "'Inter', sans-serif"
                       }}>
                         No income received yet
                       </span>
@@ -432,7 +432,7 @@ export default function PaymentRequests() {
                   </div>
                 </div>
                 {withdrawableData.approvedWithdrawals > 0 && (
-                  <div style={{ marginTop: '10px', fontSize: '0.72rem', color: 'var(--color-text-muted, #6D7E75)', textAlign: 'right', fontFamily: "'Inter', sans-serif" }}>
+                  <div style={{ marginTop: '10px', fontSize: '0.72rem', color: 'var(--color-text-muted, #7A8BA0)', textAlign: 'right', fontFamily: "'Inter', sans-serif" }}>
                     Already withdrawn: <strong style={{ color: 'var(--color-danger, #EF4444)' }}>−{formatAmount(withdrawableData.approvedWithdrawals)}</strong>
                   </div>
                 )}
@@ -474,7 +474,7 @@ export default function PaymentRequests() {
                       Recipient Bank Account Details
                     </span>
                   </div>
-                  <span style={{ fontSize: '0.7rem', color: '#047857', background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
+                  <span style={{ fontSize: '0.7rem', color: '#D48F00', background: '#FFF8E7', border: '1px solid #FFE7A3', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
                     ⚡ Auto-fetched from Profile (Editable)
                   </span>
                 </div>
@@ -666,18 +666,18 @@ export default function PaymentRequests() {
           <div style={{
             background: 'var(--color-white, #FFFFFF)',
             borderRadius: 'var(--radius-lg, 12px)',
-            border: '1px solid var(--color-border, #C8D8CF)',
+            border: '1px solid var(--color-border, #D0D8E4)',
             padding: '24px',
             position: 'relative',
             overflow: 'hidden',
             fontFamily: "'Inter', sans-serif",
-            boxShadow: '0 2px 12px rgba(6, 29, 19, 0.06)'
+            boxShadow: '0 2px 12px rgba(11, 31, 77, 0.06)'
           }}>
             {/* Decorative accent */}
             <div style={{
               position: 'absolute',
               top: 0, left: 0, right: 0, height: '4px',
-              background: 'linear-gradient(90deg, var(--color-navy, #061D13), var(--color-navy-light, #11442F), var(--color-gold-dark, #059669))',
+              background: 'linear-gradient(90deg, var(--color-navy, #0B1F4D), var(--color-navy-light, #1A4D8F), var(--color-gold-dark, #F5A800))',
               borderRadius: '12px 12px 0 0'
             }} />
 
@@ -687,11 +687,11 @@ export default function PaymentRequests() {
                 width: '40px',
                 height: '40px',
                 borderRadius: '10px',
-                background: 'var(--color-gold-glow, rgba(16, 185, 129, 0.12))',
+                background: 'var(--color-gold-glow, rgba(245, 168, 0, 0.12))',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--color-gold-dark, #059669)',
+                color: 'var(--color-gold-dark, #F5A800)',
                 flexShrink: 0
               }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -700,15 +700,15 @@ export default function PaymentRequests() {
                 </svg>
               </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--color-navy, #061D13)', fontFamily: "'Inter', sans-serif" }}>Bank Details for Money Deposit</h3>
-                <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--color-text-muted, #6D7E75)', fontFamily: "'Inter', sans-serif" }}>Transfer funds to the below account</p>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--color-navy, #0B1F4D)', fontFamily: "'Inter', sans-serif" }}>Bank Details for Money Deposit</h3>
+                <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--color-text-muted, #7A8BA0)', fontFamily: "'Inter', sans-serif" }}>Transfer funds to the below account</p>
               </div>
             </div>
 
             {/* Bank Details */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {[
-                { label: 'Account Name', value: 'KINETOSCOPE FILMS PVT LTD' },
+                { label: 'Account Name', value: 'YIELDIQ' },
                 { label: 'Account No.', value: '7049743035' },
                 { label: 'IFSC Code', value: 'KKBK0001401' },
                 { label: 'Bank', value: 'Kotak Mahindra Bank' },
@@ -719,16 +719,16 @@ export default function PaymentRequests() {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   padding: '10px 14px',
-                  background: 'var(--color-surface, #F3F7F5)',
+                  background: 'var(--color-surface, #F7F8FA)',
                   borderRadius: 'var(--radius-md, 8px)',
-                  border: '1px solid var(--color-border-light, #E2ECE7)',
+                  border: '1px solid var(--color-border-light, #E4E9F1)',
                   gap: '12px'
                 }}>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted, #6D7E75)', fontWeight: 600, whiteSpace: 'nowrap', fontFamily: "'Inter', sans-serif" }}>{item.label}</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted, #7A8BA0)', fontWeight: 600, whiteSpace: 'nowrap', fontFamily: "'Inter', sans-serif" }}>{item.label}</span>
                   <span style={{
                     fontSize: '0.85rem',
                     fontWeight: 700,
-                    color: 'var(--color-navy, #061D13)',
+                    color: 'var(--color-navy, #0B1F4D)',
                     textAlign: 'right',
                     fontFamily: "'Inter', sans-serif",
                     letterSpacing: (item.label === 'Account No.' || item.label === 'IFSC Code') ? '0.5px' : 'normal',
@@ -739,7 +739,7 @@ export default function PaymentRequests() {
             </div>
 
             {/* Disclaimer */}
-            <p style={{ margin: '14px 0 0', fontSize: '0.72rem', color: 'var(--color-text-muted, #6D7E75)', lineHeight: 1.5, textAlign: 'center', fontFamily: "'Inter', sans-serif" }}>
+            <p style={{ margin: '14px 0 0', fontSize: '0.72rem', color: 'var(--color-text-muted, #7A8BA0)', lineHeight: 1.5, textAlign: 'center', fontFamily: "'Inter', sans-serif" }}>
               After transferring, please submit a deposit request with the UTR / reference number as proof.
             </p>
           </div>
@@ -763,7 +763,7 @@ export default function PaymentRequests() {
       <div className="kfpl-card" style={{ marginTop: '28px', borderRadius: '16px', border: '1px solid var(--color-border)', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', overflow: 'hidden', background: '#ffffff' }}>
         <div style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface-elevated, #F8FAFC)', flexWrap: 'wrap', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.1)', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(245, 168, 0, 0.12)', color: '#F5A800', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
             </div>
             <div>
@@ -779,7 +779,7 @@ export default function PaymentRequests() {
             <span className="kfpl-badge" style={{ background: '#E0E7FF', color: '#3730A3', fontWeight: '700', padding: '6px 14px', borderRadius: '20px', fontSize: '0.78rem' }}>
               Total: {requestsList.length}
             </span>
-            <span className="kfpl-badge" style={{ background: '#D1FAE5', color: '#065F46', fontWeight: '700', padding: '6px 14px', borderRadius: '20px', fontSize: '0.78rem' }}>
+            <span className="kfpl-badge" style={{ background: '#FFF8E7', color: '#B45309', fontWeight: '700', padding: '6px 14px', borderRadius: '20px', fontSize: '0.78rem' }}>
               Deposits: +{formatAmount(requestsList.filter(r => r.type === 'Deposit' && String(r.status).toLowerCase() === 'approved').reduce((s, r) => s + r.amount, 0))}
             </span>
             <span className="kfpl-badge" style={{ background: '#FEE2E2', color: '#991B1B', fontWeight: '700', padding: '6px 14px', borderRadius: '20px', fontSize: '0.78rem' }}>
@@ -816,8 +816,8 @@ export default function PaymentRequests() {
                   const isApproved = statusNorm === 'approved' || statusNorm === 'paid' || statusNorm === 'completed';
                   const isPending = statusNorm === 'pending';
 
-                  const badgeBg = isApproved ? '#D1FAE5' : isPending ? '#FEF3C7' : '#FEE2E2';
-                  const badgeColor = isApproved ? '#065F46' : isPending ? '#92400E' : '#991B1B';
+                  const badgeBg = isApproved ? '#FFF8E7' : isPending ? '#FEF3C7' : '#FEE2E2';
+                  const badgeColor = isApproved ? '#B45309' : isPending ? '#92400E' : '#991B1B';
                   const statusLabel = isApproved ? '✓ APPROVED' : isPending ? '⏳ PENDING' : '✕ REJECTED';
 
                   const dateFormatted = req.date
@@ -841,8 +841,8 @@ export default function PaymentRequests() {
                           borderRadius: '20px',
                           fontSize: '0.78rem',
                           fontWeight: '800',
-                          background: isDeposit ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                          color: isDeposit ? '#059669' : '#DC2626'
+                          background: isDeposit ? 'rgba(245, 168, 0, 0.12)' : 'rgba(239, 68, 68, 0.1)',
+                          color: isDeposit ? '#F5A800' : '#DC2626'
                         }}>
                           {isDeposit ? '↓ DEPOSIT' : '↑ WITHDRAWAL'}
                         </span>
@@ -856,7 +856,7 @@ export default function PaymentRequests() {
                         <div style={{ fontWeight: '700', color: 'var(--color-navy, #0f172a)' }}>{req.mode || 'Bank Transfer'}</div>
                         <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>{noteStr}</div>
                       </td>
-                      <td style={{ padding: '16px 20px', textAlign: 'right', fontWeight: '800', fontSize: '0.95rem', color: isDeposit ? 'var(--color-primary-green, #059669)' : '#DC2626' }}>
+                      <td style={{ padding: '16px 20px', textAlign: 'right', fontWeight: '800', fontSize: '0.95rem', color: isDeposit ? 'var(--color-primary-green, #F5A800)' : '#DC2626' }}>
                         {isDeposit ? '+' : '-'}{formatAmount(req.amount)}
                       </td>
                       <td style={{ padding: '16px 20px', textAlign: 'center' }}>

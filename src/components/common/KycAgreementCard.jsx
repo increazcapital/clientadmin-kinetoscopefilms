@@ -63,8 +63,8 @@ export default function KycAgreementCard({
     return (
       <div
         style={{
-          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.08) 100%)',
-          border: '1px solid rgba(16, 185, 129, 0.35)',
+          background: 'linear-gradient(135deg, rgba(245, 168, 0, 0.12) 0%, rgba(245, 168, 0, 0.08) 100%)',
+          border: '1px solid rgba(245, 168, 0, 0.35)',
           borderRadius: '12px',
           padding: '18px 24px',
           marginBottom: '24px',
@@ -73,7 +73,7 @@ export default function KycAgreementCard({
           justifyContent: 'space-between',
           gap: '16px',
           flexWrap: 'wrap',
-          boxShadow: '0 4px 15px rgba(16, 185, 129, 0.08)',
+          boxShadow: '0 4px 15px rgba(245, 168, 0, 0.08)',
           position: 'relative'
         }}
       >
@@ -83,7 +83,7 @@ export default function KycAgreementCard({
               width: '42px',
               height: '42px',
               borderRadius: '50%',
-              background: '#10B981',
+              background: '#F5A800',
               color: '#ffffff',
               display: 'flex',
               alignItems: 'center',
@@ -91,17 +91,17 @@ export default function KycAgreementCard({
               fontSize: '1.25rem',
               fontWeight: 700,
               flexShrink: 0,
-              boxShadow: '0 2px 8px rgba(16,185,129,0.3)',
+              boxShadow: '0 2px 8px rgba(245, 168, 0, 0.3)',
             }}
           >
             ✓
           </div>
           <div>
-            <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 700, color: '#065F46' }}>
+            <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 700, color: '#B45309' }}>
               Congratulations! Official Agreement Verified & Approved 🎉
             </h4>
-            <p style={{ margin: '3px 0 0', fontSize: '0.82rem', color: '#047857', lineHeight: 1.45 }}>
-              Your signed agreement and KYC documents have been successfully verified by Kinetoscope Films Team. You can view or download your official contract anytime in your <strong>My Profile</strong> page.
+            <p style={{ margin: '3px 0 0', fontSize: '0.82rem', color: '#D48F00', lineHeight: 1.45 }}>
+              Your signed agreement and KYC documents have been successfully verified by YieldIQ Team. You can view or download your official contract anytime in your <strong>My Profile</strong> page.
             </p>
           </div>
         </div>
@@ -123,7 +123,7 @@ export default function KycAgreementCard({
             style={{
               background: 'rgba(6, 95, 70, 0.1)',
               border: 'none',
-              color: '#065F46',
+              color: '#B45309',
               fontSize: '1.1rem',
               fontWeight: 700,
               cursor: 'pointer',
@@ -216,8 +216,8 @@ export default function KycAgreementCard({
               width: '44px',
               height: '44px',
               borderRadius: '10px',
-              background: 'rgba(16, 185, 129, 0.1)',
-              color: 'var(--color-success, #10B981)',
+              background: 'rgba(245, 168, 0, 0.12)',
+              color: '#F5A800',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -242,8 +242,8 @@ export default function KycAgreementCard({
                     borderRadius: '20px',
                     fontSize: '0.72rem',
                     fontWeight: 700,
-                    background: isVerified ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
-                    color: isVerified ? '#059669' : '#D97706',
+                    background: isVerified ? 'rgba(245, 168, 0, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                    color: isVerified ? '#F5A800' : '#D97706',
                     border: `1px solid ${isVerified ? '#10B981' : '#F59E0B'}`,
                   }}
                 >
@@ -360,7 +360,7 @@ export default function KycAgreementCard({
                 {clientName ? `${clientName.replace(/\s+/g, '_')}_Signed_Agreement` : 'Signed_Client_Agreement'}
               </div>
               <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted, #64748b)' }}>
-                Document uploaded for Kinetoscope Films Team verification • Cloud Secured
+                Document uploaded for YieldIQ Team verification • Cloud Secured
               </div>
             </div>
           </div>

@@ -451,7 +451,7 @@ export default function MediaDetail() {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                 <span>Investor Relations Advisory Notice</span>
               </div>
-              <p>{article.advisory || "The information contained in this report is intended solely for registered partners and qualified investors of Kinetoscope Films Production Pvt Ltd. Performance returns and projections are subject to standard entertainment industry risks. Please contact your dedicated account manager for custom portfolio modifications."}</p>
+              <p>{article.advisory || "The information contained in this report is intended solely for registered partners and qualified investors of YieldIQ. Performance returns and projections are subject to standard investment risks. Please contact your dedicated account manager for custom portfolio modifications."}</p>
             </div>
 
             {/* Tags Row */}
@@ -459,7 +459,7 @@ export default function MediaDetail() {
               <span className="kfpl-pub-tags-title">Filed Under:</span>
               <div className="kfpl-pub-tags-container">
                 <span className="kfpl-pub-tag-chip">{article.category}</span>
-                <span className="kfpl-pub-tag-chip">Kinetoscope Ventures</span>
+                <span className="kfpl-pub-tag-chip">YieldIQ Insights</span>
                 <span className="kfpl-pub-tag-chip">Entertainment Tech</span>
                 <span className="kfpl-pub-tag-chip">ROI Statistics</span>
               </div>
@@ -469,7 +469,7 @@ export default function MediaDetail() {
           {/* Bottom Premium Subscription CTA */}
           <div className="kfpl-pub-bottom-subscription">
             <div className="kfpl-pub-sub-text">
-              <h3>Stay Updated with Kinetoscope Insights</h3>
+              <h3>Stay Updated with YieldIQ Insights</h3>
               <p>Receive premium investor updates, quarterly fiscal summaries, and entertainment production pipeline announcements directly in your portal feed.</p>
             </div>
             <form className="kfpl-pub-sub-form" onSubmit={handleSubscribeSubmit}>

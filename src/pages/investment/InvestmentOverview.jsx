@@ -9,7 +9,7 @@ import { getSWRCache, setSWRCache } from '../../utils/swrHelper';
 import KpiCard from '../../components/ui/KpiCard';
 
 
-const CHART_COLORS = ['#10B981', '#2563EB', '#F59E0B', '#7C3AED', '#EC4899', '#06B6D4'];
+const CHART_COLORS = ['#F5A800', '#2563EB', '#F59E0B', '#7C3AED', '#EC4899', '#06B6D4'];
 
 function getPieSlicePath(cx, cy, r, startPercent, percent) {
   if (percent >= 99.999) {
@@ -72,12 +72,12 @@ function downloadClientROISinglePDF(roi, client, investments) {
     const monthlyROI = Math.round((inv.amount * inv.roiAllocated) / 100);
     return `
       <tr>
-        <td style="border: 1px solid #CFDDD5; padding: 10px; font-weight: 500;">${inv.segment}</td>
-        <td style="border: 1px solid #CFDDD5; padding: 10px; text-align: center;">${new Date(inv.date).toLocaleDateString('en-IN')}</td>
-        <td style="border: 1px solid #CFDDD5; padding: 10px; text-align: center;">${inv.contractPeriod}</td>
-        <td style="border: 1px solid #CFDDD5; padding: 10px; text-align: right; font-weight: 600;">₹${inv.amount.toLocaleString('en-IN')}</td>
-        <td style="border: 1px solid #CFDDD5; padding: 10px; text-align: right;">${inv.roiAllocated}%</td>
-        <td style="border: 1px solid #CFDDD5; padding: 10px; text-align: right; font-weight: bold; color: #0F766E;">₹${monthlyROI.toLocaleString('en-IN')}</td>
+        <td style="border: 1px solid #D0D8E4; padding: 10px; font-weight: 500;">${inv.segment}</td>
+        <td style="border: 1px solid #D0D8E4; padding: 10px; text-align: center;">${new Date(inv.date).toLocaleDateString('en-IN')}</td>
+        <td style="border: 1px solid #D0D8E4; padding: 10px; text-align: center;">${inv.contractPeriod}</td>
+        <td style="border: 1px solid #D0D8E4; padding: 10px; text-align: right; font-weight: 600;">₹${inv.amount.toLocaleString('en-IN')}</td>
+        <td style="border: 1px solid #D0D8E4; padding: 10px; text-align: right;">${inv.roiAllocated}%</td>
+        <td style="border: 1px solid #D0D8E4; padding: 10px; text-align: right; font-weight: bold; color: #123A78;">₹${monthlyROI.toLocaleString('en-IN')}</td>
       </tr>
     `;
   }).join('');
@@ -89,19 +89,19 @@ function downloadClientROISinglePDF(roi, client, investments) {
       <title>ROI Payout Statement - ${roi.month} - ${client.name}</title>
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; line-height: 1.6; color: #11221A; background-color: #FFFFFF; padding: 40px; margin: 0; }
-        .header { margin-bottom: 30px; border-bottom: 3px solid #0F766E; padding-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-end; }
-        .title { font-size: 28px; font-weight: 800; color: #061D13; margin: 0; text-transform: uppercase; letter-spacing: -0.5px; }
-        .meta-info { margin-bottom: 30px; background-color: #F3F7F5; border: 1px solid #CFDDD5; border-radius: 12px; padding: 20px; }
+        body { font-family: 'Inter', sans-serif; line-height: 1.6; color: #0B1F4D; background-color: #FFFFFF; padding: 40px; margin: 0; }
+        .header { margin-bottom: 30px; border-bottom: 3px solid #123A78; padding-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .title { font-size: 28px; font-weight: 800; color: #0B1F4D; margin: 0; text-transform: uppercase; letter-spacing: -0.5px; }
+        .meta-info { margin-bottom: 30px; background-color: #F7F8FA; border: 1px solid #D0D8E4; border-radius: 12px; padding: 20px; }
         .meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-        .meta-item { display: flex; justify-content: space-between; border-bottom: 1px solid #E2ECE7; padding-bottom: 6px; font-size: 14px; }
-        .meta-label { font-weight: 600; color: #6D7E75; }
-        .meta-val { font-weight: 700; color: #11221A; }
-        .section-title { font-size: 18px; font-weight: 700; color: #061D13; margin-top: 40px; margin-bottom: 14px; border-bottom: 1.5px solid #CFDDD5; padding-bottom: 6px; }
+        .meta-item { display: flex; justify-content: space-between; border-bottom: 1px solid #E4E9F1; padding-bottom: 6px; font-size: 14px; }
+        .meta-label { font-weight: 600; color: #7A8BA0; }
+        .meta-val { font-weight: 700; color: #0B1F4D; }
+        .section-title { font-size: 18px; font-weight: 700; color: #0B1F4D; margin-top: 40px; margin-bottom: 14px; border-bottom: 1.5px solid #D0D8E4; padding-bottom: 6px; }
         .table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
-        .table th { background-color: #E5ECE8; border: 1px solid #CFDDD5; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; font-weight: 800; color: #2E3E36; letter-spacing: 0.5px; }
-        .table td { border: 1px solid #CFDDD5; padding: 10px 12px; color: #11221A; }
-        .total-row { background-color: #F3F7F5; font-weight: bold; }
+        .table th { background-color: #EEF0F4; border: 1px solid #D0D8E4; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; font-weight: 800; color: #1E3A5F; letter-spacing: 0.5px; }
+        .table td { border: 1px solid #D0D8E4; padding: 10px 12px; color: #0B1F4D; }
+        .total-row { background-color: #F7F8FA; font-weight: bold; }
         @media print {
           body { padding: 0; }
           .print-btn-bar { display: none !important; }
@@ -110,18 +110,18 @@ function downloadClientROISinglePDF(roi, client, investments) {
     </head>
     <body>
       <div class="print-btn-bar" style="display: flex; justify-content: flex-end; margin-bottom: 20px; gap: 10px;">
-        <button onclick="window.print();" style="background: #0F766E; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; box-shadow: 0 4px 12px rgba(15, 118, 110, 0.2);">Print / Save PDF</button>
-        <button onclick="window.close();" style="background: #e2ece7; color: #2e3e36; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px;">Close Window</button>
+        <button onclick="window.print();" style="background: #123A78; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; box-shadow: 0 4px 12px rgba(18, 58, 120, 0.2);">Print / Save PDF</button>
+        <button onclick="window.close();" style="background: #E4E9F1; color: #1E3A5F; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px;">Close Window</button>
       </div>
 
       <div class="header">
         <div>
           <div class="title">ROI Payout Statement</div>
-          <div style="font-size: 12px; color: #6D7E75; margin-top: 4px; font-weight: 500;">KINETOSCOPE CAPITAL PARTNERS LTD</div>
+          <div style="font-size: 12px; color: #7A8BA0; margin-top: 4px; font-weight: 500;">YIELDIQ</div>
         </div>
         <div style="text-align: right;">
-          <div style="font-size: 13px; font-weight: 600; color: #2E3E36;">Date Generated:</div>
-          <div style="font-size: 14px; font-weight: 700; color: #11221A;">${new Date().toLocaleDateString('en-GB')}</div>
+          <div style="font-size: 13px; font-weight: 600; color: #1E3A5F;">Date Generated:</div>
+          <div style="font-size: 14px; font-weight: 700; color: #0B1F4D;">${new Date().toLocaleDateString('en-GB')}</div>
         </div>
       </div>
       
@@ -145,15 +145,15 @@ function downloadClientROISinglePDF(roi, client, investments) {
           </div>
           <div class="meta-item">
              <span class="meta-label">Status:</span>
-             <span class="meta-val" style="color: ${['Paid', 'Approved'].includes(roi.status) ? '#059669' : '#D97706'};">${roi.status.toUpperCase()}</span>
+             <span class="meta-val" style="color: ${['Paid', 'Approved'].includes(roi.status) ? '#F5A800' : '#D97706'};">${roi.status.toUpperCase()}</span>
           </div>
           <div class="meta-item">
             <span class="meta-label">Expected Amount:</span>
             <span class="meta-val">₹${roi.expected.toLocaleString('en-IN')}</span>
           </div>
-          <div class="meta-item" style="grid-column: span 2; border-bottom: none; margin-top: 8px; padding-top: 8px; border-top: 1px dashed #CFDDD5;">
-            <span class="meta-label" style="font-size: 16px; color: #061D13;">Total ROI Received:</span>
-            <span class="meta-val" style="font-size: 20px; color: #059669;">₹${roi.received.toLocaleString('en-IN')}</span>
+          <div class="meta-item" style="grid-column: span 2; border-bottom: none; margin-top: 8px; padding-top: 8px; border-top: 1px dashed #D0D8E4;">
+            <span class="meta-label" style="font-size: 16px; color: #0B1F4D;">Total ROI Received:</span>
+            <span class="meta-val" style="font-size: 20px; color: #F5A800;">₹${roi.received.toLocaleString('en-IN')}</span>
           </div>
         </div>
       </div>
@@ -222,11 +222,11 @@ function downloadAllClientROIPDF(roiList, client) {
   const rowsHtml = roiList.map(roi => {
     return `
       <tr>
-        <td style="border: 1px solid #CFDDD5; padding: 10px; font-weight: 500;">${roi.month}</td>
-        <td style="border: 1px solid #CFDDD5; padding: 10px; text-align: right;">₹${roi.expected.toLocaleString('en-IN')}</td>
-        <td style="border: 1px solid #CFDDD5; padding: 10px; text-align: right; font-weight: bold; color: ${roi.received > 0 ? '#059669' : '#11221A'};">₹${roi.received.toLocaleString('en-IN')}</td>
-        <td style="border: 1px solid #CFDDD5; padding: 10px; text-align: center;">${new Date(roi.date).toLocaleDateString('en-IN')}</td>
-        <td style="border: 1px solid #CFDDD5; padding: 10px; text-align: center; color: ${['Paid', 'Approved'].includes(roi.status) ? '#059669' : '#D97706'}; font-weight: 600;">${roi.status}</td>
+        <td style="border: 1px solid #D0D8E4; padding: 10px; font-weight: 500;">${roi.month}</td>
+        <td style="border: 1px solid #D0D8E4; padding: 10px; text-align: right;">₹${roi.expected.toLocaleString('en-IN')}</td>
+        <td style="border: 1px solid #D0D8E4; padding: 10px; text-align: right; font-weight: bold; color: ${roi.received > 0 ? '#F5A800' : '#0B1F4D'};">₹${roi.received.toLocaleString('en-IN')}</td>
+        <td style="border: 1px solid #D0D8E4; padding: 10px; text-align: center;">${new Date(roi.date).toLocaleDateString('en-IN')}</td>
+        <td style="border: 1px solid #D0D8E4; padding: 10px; text-align: center; color: ${['Paid', 'Approved'].includes(roi.status) ? '#F5A800' : '#D97706'}; font-weight: 600;">${roi.status}</td>
       </tr>
     `;
   }).join('');
@@ -237,19 +237,19 @@ function downloadAllClientROIPDF(roiList, client) {
       <title>ROI Statement History - ${client.name}</title>
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; line-height: 1.6; color: #11221A; background-color: #FFFFFF; padding: 40px; margin: 0; }
-        .header { margin-bottom: 30px; border-bottom: 3px solid #0F766E; padding-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-end; }
-        .title { font-size: 28px; font-weight: 800; color: #061D13; margin: 0; text-transform: uppercase; letter-spacing: -0.5px; }
-        .meta-info { margin-bottom: 30px; background-color: #F3F7F5; border: 1px solid #CFDDD5; border-radius: 12px; padding: 20px; }
+        body { font-family: 'Inter', sans-serif; line-height: 1.6; color: #0B1F4D; background-color: #FFFFFF; padding: 40px; margin: 0; }
+        .header { margin-bottom: 30px; border-bottom: 3px solid #123A78; padding-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .title { font-size: 28px; font-weight: 800; color: #0B1F4D; margin: 0; text-transform: uppercase; letter-spacing: -0.5px; }
+        .meta-info { margin-bottom: 30px; background-color: #F7F8FA; border: 1px solid #D0D8E4; border-radius: 12px; padding: 20px; }
         .meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-        .meta-item { display: flex; justify-content: space-between; border-bottom: 1px solid #E2ECE7; padding-bottom: 6px; font-size: 14px; }
-        .meta-label { font-weight: 600; color: #6D7E75; }
-        .meta-val { font-weight: 700; color: #11221A; }
-        .section-title { font-size: 18px; font-weight: 700; color: #061D13; margin-top: 40px; margin-bottom: 14px; border-bottom: 1.5px solid #CFDDD5; padding-bottom: 6px; }
+        .meta-item { display: flex; justify-content: space-between; border-bottom: 1px solid #E4E9F1; padding-bottom: 6px; font-size: 14px; }
+        .meta-label { font-weight: 600; color: #7A8BA0; }
+        .meta-val { font-weight: 700; color: #0B1F4D; }
+        .section-title { font-size: 18px; font-weight: 700; color: #0B1F4D; margin-top: 40px; margin-bottom: 14px; border-bottom: 1.5px solid #D0D8E4; padding-bottom: 6px; }
         .table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
-        .table th { background-color: #E5ECE8; border: 1px solid #CFDDD5; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; font-weight: 800; color: #2E3E36; letter-spacing: 0.5px; }
-        .table td { border: 1px solid #CFDDD5; padding: 10px 12px; color: #11221A; }
-        .total-row { background-color: #F3F7F5; font-weight: bold; }
+        .table th { background-color: #EEF0F4; border: 1px solid #D0D8E4; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; font-weight: 800; color: #1E3A5F; letter-spacing: 0.5px; }
+        .table td { border: 1px solid #D0D8E4; padding: 10px 12px; color: #0B1F4D; }
+        .total-row { background-color: #F7F8FA; font-weight: bold; }
         @media print {
           body { padding: 0; }
           .print-btn-bar { display: none !important; }
@@ -258,18 +258,18 @@ function downloadAllClientROIPDF(roiList, client) {
     </head>
     <body>
       <div class="print-btn-bar" style="display: flex; justify-content: flex-end; margin-bottom: 20px; gap: 10px;">
-        <button onclick="window.print();" style="background: #0F766E; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; box-shadow: 0 4px 12px rgba(15, 118, 110, 0.2);">Print / Save PDF</button>
-        <button onclick="window.close();" style="background: #e2ece7; color: #2e3e36; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px;">Close Window</button>
+        <button onclick="window.print();" style="background: #123A78; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; box-shadow: 0 4px 12px rgba(18, 58, 120, 0.2);">Print / Save PDF</button>
+        <button onclick="window.close();" style="background: #E4E9F1; color: #1E3A5F; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px;">Close Window</button>
       </div>
 
       <div class="header">
         <div>
           <div class="title">ROI Statement History</div>
-          <div style="font-size: 12px; color: #6D7E75; margin-top: 4px; font-weight: 500;">KINETOSCOPE CAPITAL PARTNERS LTD</div>
+          <div style="font-size: 12px; color: #7A8BA0; margin-top: 4px; font-weight: 500;">YIELDIQ</div>
         </div>
         <div style="text-align: right;">
-          <div style="font-size: 13px; font-weight: 600; color: #2E3E36;">Date Generated:</div>
-          <div style="font-size: 14px; font-weight: 700; color: #11221A;">${new Date().toLocaleDateString('en-GB')}</div>
+          <div style="font-size: 13px; font-weight: 600; color: #1E3A5F;">Date Generated:</div>
+          <div style="font-size: 14px; font-weight: 700; color: #0B1F4D;">${new Date().toLocaleDateString('en-GB')}</div>
         </div>
       </div>
       
@@ -289,7 +289,7 @@ function downloadAllClientROIPDF(roiList, client) {
           </div>
           <div class="meta-item">
             <span class="meta-label">Total Received ROI:</span>
-            <span class="meta-val" style="color: #059669;">₹${totalReceived.toLocaleString('en-IN')}</span>
+            <span class="meta-val" style="color: #F5A800;">₹${totalReceived.toLocaleString('en-IN')}</span>
           </div>
         </div>
       </div>
@@ -310,7 +310,7 @@ function downloadAllClientROIPDF(roiList, client) {
           <tr class="total-row">
             <td style="text-align: left; font-weight: 800; font-size: 14px; padding: 12px;">Total Summary</td>
             <td style="text-align: right; font-weight: 800; font-size: 14px; padding: 12px;">₹${totalExpected.toLocaleString('en-IN')}</td>
-            <td style="text-align: right; font-weight: 800; color: #059669; font-size: 14px; padding: 12px;">₹${totalReceived.toLocaleString('en-IN')}</td>
+            <td style="text-align: right; font-weight: 800; color: #F5A800; font-size: 14px; padding: 12px;">₹${totalReceived.toLocaleString('en-IN')}</td>
             <td colspan="2"></td>
           </tr>
         </tbody>
@@ -769,7 +769,7 @@ export default function InvestmentOverview() {
   });
   const conicGradientStyle = gradientStops.length > 0 
     ? `conic-gradient(${gradientStops.join(', ')})`
-    : 'conic-gradient(#10B981 0deg 360deg)';
+    : 'conic-gradient(#F5A800 0deg 360deg)';
 
   const filteredROI = roiHistory.filter(roi => {
     if (roiFilter !== 'All' && roi.status !== roiFilter) return false;
@@ -1060,7 +1060,7 @@ export default function InvestmentOverview() {
                   fontSize: '0.8rem',
                   zIndex: 99999,
                   pointerEvents: 'none',
-                  boxShadow: '0 8px 24px rgba(6, 29, 19, 0.3)',
+                  boxShadow: '0 8px 24px rgba(11, 31, 77, 0.3)',
                   backdropFilter: 'blur(8px)',
                 }}
               >
@@ -1077,7 +1077,7 @@ export default function InvestmentOverview() {
                 <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem', marginBottom: '4px' }}>
                   Share: <strong>{hoveredSegment.percent.toFixed(1)}%</strong>
                 </div>
-                <div style={{ fontWeight: 800, color: '#10B981', fontSize: '0.85rem' }}>
+                <div style={{ fontWeight: 800, color: '#F5A800', fontSize: '0.85rem' }}>
                   {formatAmount(hoveredSegment.amount)}
                 </div>
               </div>
@@ -1152,7 +1152,7 @@ export default function InvestmentOverview() {
                 className="kfpl-segment-allocation-item-card"
                 style={{
                   borderColor: hoveredSegment && hoveredSegment.id === segment.id ? segment.color : 'rgba(226, 236, 231, 0.9)',
-                  boxShadow: hoveredSegment && hoveredSegment.id === segment.id ? `0 12px 28px rgba(6, 29, 19, 0.08)` : '0 4px 20px rgba(6, 29, 19, 0.02)',
+                  boxShadow: hoveredSegment && hoveredSegment.id === segment.id ? `0 12px 28px rgba(11, 31, 77, 0.08)` : '0 4px 20px rgba(11, 31, 77, 0.02)',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                 }}
                 onMouseEnter={() => setHoveredSegment(segment)}

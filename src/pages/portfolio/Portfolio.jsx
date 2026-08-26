@@ -11,11 +11,11 @@ import { getSWRCache, setSWRCache } from '../../utils/swrHelper';
 import { formatCurrency } from '../../utils/formatters';
 
 const SEGMENT_COLORS = {
-  'Film Making': '#10B981',
+  'Film Making': '#F5A800',
   Music: '#7C3AED',
   Distribution: '#2563EB',
   'Trading & Syndication': '#F59E0B',
-  'Content IP Bank': '#0F766E',
+  'Content IP Bank': '#123A78',
   'Film Exhibition': '#0891B2',
 };
 
@@ -43,6 +43,11 @@ function parseCroreValue(value) {
 }
 
 export default function Portfolio() {
+  const [expandedCards, setExpandedCards] = useState({});
+  const toggleCardExpand = (id, e) => {
+    if (e) e.stopPropagation();
+    setExpandedCards(prev => ({ ...prev, [id]: !prev[id] }));
+  };
   const [activeTab, setActiveTab] = useState('All');
   const [drawerProject, setDrawerProject] = useState(null);
   const [projects, setProjects] = useState([]);
@@ -237,7 +242,7 @@ export default function Portfolio() {
         health: project.health || 'On Track',
         update: project.update || '',
         allocation: project.allocation || '',
-        accent: SEGMENT_COLORS[project.segment] || '#10B981',
+        accent: SEGMENT_COLORS[project.segment] || '#F5A800',
         valueLabel: (project.value && project.value !== '₹0.0 Cr' && project.value !== '₹0 Cr')
           ? cleanValue(project.value)
           : formatCurrency(project.targetFunding || 0),
@@ -283,7 +288,7 @@ export default function Portfolio() {
   const completedProjects = enrichedProjects.filter(project => project.milestone >= 100).length;
 
   const summaryCards = [
-    { label: 'Portfolio Value', value: formattedPortfolioValue, meta: 'Across active Kinetoscope assets' },
+    { label: 'Portfolio Value', value: formattedPortfolioValue, meta: 'Across active YieldIQ assets' },
     { label: 'Live Projects', value: enrichedProjects.length, meta: `${activeProjects} currently in motion` },
     { label: 'Avg. Milestone', value: `${averageProgress}%`, meta: 'Weighted by active project count' },
     { label: 'Completed', value: completedProjects, meta: 'Released or fully delivered' },
@@ -308,7 +313,7 @@ export default function Portfolio() {
 
         <div className="kfpl-drawer-body kfpl-portfolio-drawer-body" style={{ '--portfolio-accent': drawerProject.accent }}>
           <div className="kfpl-portfolio-drawer-visual" style={{
-            backgroundImage: drawerProject.bannerImg ? `linear-gradient(rgba(6, 29, 19, 0.5), rgba(6, 29, 19, 0.8)), url(${drawerProject.bannerImg})` : undefined,
+            backgroundImage: drawerProject.bannerImg ? `url(${drawerProject.bannerImg})` : undefined,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             minHeight: '250px',
@@ -333,7 +338,7 @@ export default function Portfolio() {
             </div>
             <div>
               <span>Funded Amount</span>
-              <strong style={{ color: '#10B981' }}>{formatCurrency(drawerProject.fundedAmount || 0)}</strong>
+              <strong style={{ color: '#F5A800' }}>{formatCurrency(drawerProject.fundedAmount || 0)}</strong>
             </div>
             <div>
               <span>Available Slots</span>
@@ -509,7 +514,7 @@ export default function Portfolio() {
       <section className="kfpl-portfolio-hero">
         <div className="kfpl-portfolio-hero-copy">
           <span className="kfpl-portfolio-eyebrow">Investor portfolio</span>
-          <h1 className="kfpl-page-title">Kinetoscope Portfolio</h1>
+          <h1 className="kfpl-page-title">YieldIQ Portfolio</h1>
           <p className="kfpl-page-subtitle">
             Explore project health, segment exposure, milestone progress, and current operational updates.
           </p>
@@ -573,7 +578,7 @@ export default function Portfolio() {
               onClick={() => setDrawerProject(project)}
             >
               <div className="kfpl-portfolio-card-media" style={{
-                backgroundImage: project.bannerImg ? `linear-gradient(rgba(6, 29, 19, 0.5), rgba(6, 29, 19, 0.8)), url(${project.bannerImg})` : undefined,
+                backgroundImage: project.bannerImg ? `url(${project.bannerImg})` : undefined,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
               }}>
@@ -595,7 +600,20 @@ export default function Portfolio() {
                 </div>
 
                 <h2>{project.name}</h2>
-                <p>{project.summary}</p>
+                <div className="kfpl-portfolio-card-desc-wrap">
+                    <p className={`kfpl-portfolio-card-desc ${expandedCards[project.id] ? 'expanded' : 'collapsed'}`}>
+                      {project.summary}
+                    </p>
+                    {project.summary && project.summary.length > 90 && (
+                      <button
+                        type="button"
+                        className="kfpl-accordion-toggle"
+                        onClick={(e) => toggleCardExpand(project.id, e)}
+                      >
+                        {expandedCards[project.id] ? '▲ Show Less' : '▼ Read More & Details'}
+                      </button>
+                    )}
+                  </div>
 
                 <div className="kfpl-portfolio-metrics">
                   <div>
@@ -621,8 +639,8 @@ export default function Portfolio() {
                 </div>
 
                 {project.update && (
-                  <div style={{ marginTop: '12px', padding: '10px 12px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.25)', borderRadius: '8px', textAlign: 'left' }}>
-                    <div style={{ fontSize: '0.6875rem', fontWeight: 800, color: 'var(--color-success, #10B981)', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '3px' }}>
+                  <div style={{ marginTop: '12px', padding: '10px 12px', background: 'rgba(245, 168, 0, 0.08)', border: '1px solid rgba(245, 168, 0, 0.25)', borderRadius: '8px', textAlign: 'left' }}>
+                    <div style={{ fontSize: '0.6875rem', fontWeight: 800, color: '#F5A800', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '3px' }}>
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}>
                         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
                         <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />

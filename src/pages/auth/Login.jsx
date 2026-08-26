@@ -11,6 +11,35 @@ import { useToast } from '../../components/ui/Toast';
 import { WORLD_COUNTRY_CODES } from '../../data/countryCodes';
 
 export default function Login() {
+  const [branding, setBranding] = useState(() => {
+    try {
+      const c = localStorage.getItem('yieldiq_branding');
+      if (c) return JSON.parse(c);
+    } catch(e) {}
+    return { companyName: 'YieldIQ', tagline: '', logoUrl: '/logokfpl.jpeg' };
+  });
+  useEffect(() => {
+    fetch(getApiUrl('/api/system-settings/branding'))
+      .then(r => r.json())
+      .then(d => {
+        if (d?.data) {
+          setBranding(d.data);
+          try {
+            localStorage.setItem('yieldiq_branding', JSON.stringify(d.data));
+          } catch(e) {}
+          if (d.data.faviconUrl) {
+            let link = document.querySelector("link[rel*='icon']");
+            if (!link) {
+              link = document.createElement('link');
+              link.rel = 'icon';
+              document.head.appendChild(link);
+            }
+            link.href = d.data.faviconUrl;
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
   const navigate = useNavigate();
   const toastHelper = useToast();
   const addToast = typeof toastHelper === 'function' ? toastHelper : (toastHelper.addToast || (() => {}));
@@ -24,7 +53,7 @@ export default function Login() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('blocked') === 'true' || params.get('reason')) {
-      const reason = params.get('reason') || 'Your account has been deactivated or put on hold. Please contact info@kinetoscopefilms.com for assistance.';
+      const reason = params.get('reason') || 'Your account has been deactivated or put on hold. Please contact support@yieldiq.com for assistance.';;
       setBlockedReason(reason);
     }
   }, []);
@@ -347,7 +376,7 @@ export default function Login() {
             email: regForm.email
           }
         }));
-        addToast('Account created successfully! Welcome to Kinetoscope.', 'success', 'Account Created');
+        addToast('Account created successfully! Welcome to YieldIQ.', 'success', 'Account Created');
         window.location.href = '/dashboard';
       } else {
         const errorMsg = resData.message || resData.error || 'Registration failed. Please check your inputs.';
@@ -370,7 +399,7 @@ export default function Login() {
       try { list = JSON.parse(stored); } catch (e) { console.error(e); }
     }
     const nextId = list.length > 0 ? Math.max(...list.map(i => i.id || 0)) + 1 : 1;
-    const rawClientCode = backendCode || `KFPL-CL-${1000 + nextId}`;
+    const rawClientCode = backendCode || `YLDIQ-CL-${1000 + nextId}`;
     let clientCode = rawClientCode;
     if (rawClientCode) {
       const str = String(rawClientCode).trim();
@@ -381,7 +410,7 @@ export default function Login() {
         if (digitsMatch) {
           let val = parseInt(digitsMatch[0], 10);
           if (val < 1000) val = 1000 + val;
-          clientCode = `KFPL-CL-${val}`;
+          clientCode = `YLDIQ-CL-${val}`;
         }
       }
     }
@@ -432,10 +461,10 @@ export default function Login() {
       <div className="kfpl-login-wallpaper">
         <div className="kfpl-login-brand">
           <div style={{ background: '#ffffff', padding: '6px', width: '68px', height: '68px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(0,0,0,0.2)', marginBottom: '16px' }}>
-            <img src="/logokfpl.jpeg" alt="KFPL Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '10px', display: 'block' }} />
+            <img src={branding.logoUrl || "/logokfpl.jpeg"} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '10px', display: 'block' }} />
           </div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#ffffff', margin: 0, lineHeight: 1.15 }}>Kinetoscope Films Pvt Ltd</h1>
-          <p style={{ fontSize: '12px', color: 'rgba(240, 253, 244, 0.9)', letterSpacing: '1.5px', textTransform: 'uppercase', marginTop: '6px', marginBottom: '12px', fontWeight: '700' }}>A Global Media Fund</p>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#ffffff', margin: 0, lineHeight: 1.15 }}>{branding.companyName || 'YieldIQ'}</h1>
+          {branding?.tagline ? <p style={{ fontSize: '12px', color: 'rgba(255, 248, 231, 0.9)', letterSpacing: '1.5px', textTransform: 'uppercase', marginTop: '6px', marginBottom: '12px', fontWeight: '700' }}>{branding.tagline}</p> : null}
           <p>Portfolio investing at your fingertips. Track assets, manage transactions, and claim exclusive tier rewards.</p>
         </div>
       </div>
@@ -445,8 +474,8 @@ export default function Login() {
         <div className="kfpl-login-card animate-scale-in">
           {/* Logo */}
           <div className="kfpl-login-logo" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '24px' }}>
-            <div style={{ background: '#ffffff', padding: '6px', width: '56px', height: '56px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 20px rgba(16, 185, 129, 0.18)', border: '1px solid #e2e8f0', marginBottom: '12px' }}>
-              <img src="/logokfpl.jpeg" alt="KFPL Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '8px', display: 'block' }} />
+            <div style={{ background: '#ffffff', padding: '6px', width: '56px', height: '56px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 20px rgba(245, 168, 0, 0.18)', border: '1px solid #e2e8f0', marginBottom: '12px' }}>
+              <img src={branding.logoUrl || "/logokfpl.jpeg"} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '8px', display: 'block' }} />
             </div>
             <h1 className="kfpl-login-title">Investor Dashboard</h1>
             <p className="kfpl-login-subtitle">Access your media production portfolio</p>
@@ -821,7 +850,7 @@ export default function Login() {
                     marginTop: '20px', 
                     background: (checkedAgreement && checkedPrivacy && checkedTnc) ? 'linear-gradient(135deg, var(--color-gold) 0%, var(--color-gold-dark) 100%)' : '#e2e8f0', 
                     color: (checkedAgreement && checkedPrivacy && checkedTnc) ? '#ffffff' : '#94a3b8',
-                    boxShadow: (checkedAgreement && checkedPrivacy && checkedTnc) ? '0 4px 20px rgba(16, 185, 129, 0.2)' : 'none',
+                    boxShadow: (checkedAgreement && checkedPrivacy && checkedTnc) ? '0 4px 20px rgba(245, 168, 0, 0.2)' : 'none',
                     cursor: (checkedAgreement && checkedPrivacy && checkedTnc) ? 'pointer' : 'not-allowed'
                   }} 
                   disabled={loading || !checkedAgreement || !checkedPrivacy || !checkedTnc}
@@ -846,9 +875,9 @@ export default function Login() {
                   We sent a verification code to your email.<br />Please enter the 6-digit code below.
                 </p>
                 <div style={{
-                  background: 'rgba(16, 185, 129, 0.12)',
-                  border: '1px solid rgba(16, 185, 129, 0.35)',
-                  color: '#10b981',
+                  background: 'rgba(245, 168, 0, 0.12)',
+                  border: '1px solid rgba(245, 168, 0, 0.35)',
+                  color: '#F5A800',
                   padding: '10px 14px',
                   borderRadius: '8px',
                   fontSize: '0.85rem',
@@ -907,7 +936,7 @@ export default function Login() {
           )}
 
           <div className="kfpl-login-footer">
-            © 2026 Kinetoscope Films Pvt Ltd. All rights reserved.
+            © 2026 YieldIQ. All rights reserved.
           </div>
         </div>
       </div>
@@ -935,7 +964,7 @@ export default function Login() {
                 {agreementStep === 'tnc' && '3. Terms & Conditions'}
               </h3>
               {!isSingleDocRead && (
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-gold, #10b981)', background: 'rgba(16, 185, 129, 0.1)', padding: '6px 14px', borderRadius: '100px', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-gold)', background: 'rgba(245, 168, 0, 0.12)', padding: '6px 14px', borderRadius: '100px', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   {agreementStep === 'agreement' && 'Step 1 of 3'}
                   {agreementStep === 'privacy' && 'Step 2 of 3'}
                   {agreementStep === 'tnc' && 'Step 3 of 3'}
@@ -1140,7 +1169,7 @@ export default function Login() {
                   marginBottom: '24px', scrollbarWidth: 'thin'
                 }}
               >
-                <h4 style={{ textAlign: 'center', fontWeight: 800, marginBottom: '4px', color: '#0f172a' }}>KINETOSCOPE PRIVACY POLICY</h4>
+                <h4 style={{ textAlign: 'center', fontWeight: 800, marginBottom: '4px', color: '#0f172a' }}>YIELDIQ PRIVACY POLICY</h4>
                 <p style={{ textAlign: 'center', fontSize: '0.75rem', fontWeight: 600, color: '#64748b', marginBottom: '20px' }}>Last Updated: July 13, 2026</p>
                 
                 <h5 style={{ fontWeight: 700, marginTop: '16px', marginBottom: '6px', color: '#1e293b' }}>1. INFORMATION WE COLLECT</h5>
@@ -1159,7 +1188,7 @@ export default function Login() {
                 <p style={{ margin: '0 0 10px' }}>We retain your personal data only for as long as is necessary to fulfill the legal and contractual business tasks outlined in our media financing programs, or as required by regulatory compliance norms.</p>
 
                 <h5 style={{ fontWeight: 700, marginTop: '16px', marginBottom: '6px', color: '#1e293b' }}>6. PRIVACY INQUIRIES</h5>
-                <p style={{ margin: '0 0 10px' }}>If you have any questions or require updates regarding your data rights or storage, please reach out to the administrator panel at support@kinetoscope.com.</p>
+                <p style={{ margin: '0 0 10px' }}>If you have any questions or require updates regarding your data rights or storage, please reach out to the administrator panel at support@yieldiq.com.</p>
               </div>
             )}
 
@@ -1175,11 +1204,11 @@ export default function Login() {
                   marginBottom: '24px', scrollbarWidth: 'thin'
                 }}
               >
-                <h4 style={{ textAlign: 'center', fontWeight: 800, marginBottom: '4px', color: '#0f172a' }}>KINETOSCOPE TERMS OF SERVICE</h4>
+                <h4 style={{ textAlign: 'center', fontWeight: 800, marginBottom: '4px', color: '#0f172a' }}>YIELDIQ TERMS OF SERVICE</h4>
                 <p style={{ textAlign: 'center', fontSize: '0.75rem', fontWeight: 600, color: '#64748b', marginBottom: '20px' }}>Last Updated: July 13, 2026</p>
                 
                 <h5 style={{ fontWeight: 700, marginTop: '16px', marginBottom: '6px', color: '#1e293b' }}>1. ACCEPTANCE OF CONDITIONS</h5>
-                <p style={{ margin: '0 0 10px' }}>By logging into the Kinetoscope client portal or creating an account, you unconditionally acknowledge and agree to stay bound by these Terms of Service, all applicable laws of India, and all relevant project agreements.</p>
+                <p style={{ margin: '0 0 10px' }}>By logging into the YieldIQ client portal or creating an account, you unconditionally acknowledge and agree to stay bound by these Terms of Service, all applicable laws of India, and all relevant project agreements.</p>
                 
                 <h5 style={{ fontWeight: 700, marginTop: '16px', marginBottom: '6px', color: '#1e293b' }}>2. ACCOUNT REGISTRATION & ELIGIBILITY</h5>
                 <p style={{ margin: '0 0 10px' }}>You must be at least 18 years of age and possess the legal capacity under Indian law to enter into binding agreements. You represent that all details submitted during onboarding are authentic, accurate, and complete.</p>
@@ -1188,13 +1217,13 @@ export default function Login() {
                 <p style={{ margin: '0 0 10px' }}>You are solely responsible for maintaining the confidentiality of your credentials (username, password, 2FA settings) and for any actions executed through your dashboard.</p>
 
                 <h5 style={{ fontWeight: 700, marginTop: '16px', marginBottom: '6px', color: '#1e293b' }}>4. PLATFORM ROLE & INHERENT RISKS</h5>
-                <p style={{ margin: '0 0 10px' }}>Kinetoscope acts as an interactive client management console for media financing programs. The platform does not serve as a registered financial advisory, bank, or mutual fund. All participations contain business variables linked to production schedules, which are outlined in the core agreement.</p>
+                <p style={{ margin: '0 0 10px' }}>YieldIQ acts as an interactive client management console for media financing programs. The platform does not serve as a registered financial advisory, bank, or mutual fund. All participations contain business variables linked to production schedules, which are outlined in the core agreement.</p>
 
                 <h5 style={{ fontWeight: 700, marginTop: '16px', marginBottom: '6px', color: '#1e293b' }}>5. ACCESS LIMITATIONS</h5>
                 <p style={{ margin: '0 0 10px' }}>We reserve the right, without liability or prior warning, to block access to your client dashboard in the event of suspected fraud, identity misrepresentation, compliance breach, or violation of these terms.</p>
 
                 <h5 style={{ fontWeight: 700, marginTop: '16px', marginBottom: '6px', color: '#1e293b' }}>6. AMENDMENTS TO TERMS</h5>
-                <p style={{ margin: '0 0 10px' }}>Kinetoscope reserves the right to modify these terms. We will notify active clients of material changes via email or direct portal notifications.</p>
+                <p style={{ margin: '0 0 10px' }}>YieldIQ reserves the right to modify these terms. We will notify active clients of material changes via email or direct portal notifications.</p>
               </div>
             )}
 
@@ -1202,7 +1231,7 @@ export default function Login() {
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 
                 (agreementStep === 'agreement' && hasReadAgreement) || 
                 (agreementStep === 'privacy' && hasReadPrivacy) || 
-                (agreementStep === 'tnc' && hasReadTnc) ? 'var(--color-gold, #10b981)' : '#ef4444' 
+                (agreementStep === 'tnc' && hasReadTnc) ? 'var(--color-gold)' : '#ef4444' 
               }}>
                 {agreementStep === 'agreement' && (hasReadAgreement ? '✓ Scroll Complete' : '⚠ Scroll to the bottom')}
                 {agreementStep === 'privacy' && (hasReadPrivacy ? '✓ Scroll Complete' : '⚠ Scroll to the bottom')}
@@ -1234,7 +1263,7 @@ export default function Login() {
                       background: hasReadAgreement ? 'linear-gradient(135deg, var(--color-gold) 0%, var(--color-gold-dark) 100%)' : '#e2e8f0',
                       color: hasReadAgreement ? '#fff' : '#94a3b8',
                       cursor: hasReadAgreement ? 'pointer' : 'not-allowed',
-                      boxShadow: hasReadAgreement ? '0 4px 12px rgba(16, 185, 129, 0.2)' : 'none'
+                      boxShadow: hasReadAgreement ? '0 4px 12px rgba(245, 168, 0, 0.2)' : 'none'
                     }}
                     disabled={!hasReadAgreement}
                     onClick={() => {
@@ -1255,7 +1284,7 @@ export default function Login() {
                       background: hasReadPrivacy ? 'linear-gradient(135deg, var(--color-gold) 0%, var(--color-gold-dark) 100%)' : '#e2e8f0',
                       color: hasReadPrivacy ? '#fff' : '#94a3b8',
                       cursor: hasReadPrivacy ? 'pointer' : 'not-allowed',
-                      boxShadow: hasReadPrivacy ? '0 4px 12px rgba(16, 185, 129, 0.2)' : 'none'
+                      boxShadow: hasReadPrivacy ? '0 4px 12px rgba(245, 168, 0, 0.2)' : 'none'
                     }}
                     disabled={!hasReadPrivacy}
                     onClick={() => {
@@ -1276,7 +1305,7 @@ export default function Login() {
                       background: hasReadTnc ? 'linear-gradient(135deg, var(--color-gold) 0%, var(--color-gold-dark) 100%)' : '#e2e8f0',
                       color: hasReadTnc ? '#fff' : '#94a3b8',
                       cursor: hasReadTnc ? 'pointer' : 'not-allowed',
-                      boxShadow: hasReadTnc ? '0 4px 12px rgba(16, 185, 129, 0.2)' : 'none'
+                      boxShadow: hasReadTnc ? '0 4px 12px rgba(245, 168, 0, 0.2)' : 'none'
                     }}
                     disabled={!hasReadTnc || loading}
                     onClick={() => {
@@ -1320,7 +1349,7 @@ export default function Login() {
                         (isSingleDocRead === 'agreement' && hasReadAgreement) ||
                         (isSingleDocRead === 'privacy' && hasReadPrivacy) ||
                         (isSingleDocRead === 'tnc' && hasReadTnc)
-                      ) ? '0 4px 12px rgba(16, 185, 129, 0.2)' : 'none'
+                      ) ? '0 4px 12px rgba(245, 168, 0, 0.2)' : 'none'
                     }}
                     disabled={!(
                       (isSingleDocRead === 'agreement' && hasReadAgreement) ||

@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import { formatCurrency } from '../../utils/formatters';
 
-const SEGMENT_COLORS = ['#10B981', '#1565C0', '#F59E0B', '#7C3AED', '#0891B2', '#EC4899'];
+const SEGMENT_COLORS = ['#F5A800', '#1565C0', '#F59E0B', '#7C3AED', '#0891B2', '#EC4899'];
 
 export default function DonutChart({ data, size = 220, defaultLabel = 'Segments', defaultValue, totalInvestment = 0 }) {
   const [hoveredIndex, setHoveredIndex] = useState(null);
@@ -136,7 +136,7 @@ export default function DonutChart({ data, size = 220, defaultLabel = 'Segments'
             {activeSeg.amount > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '14px' }}>
                 <span style={{ color: '#94A3B8', fontWeight: 500 }}>Investment:</span>
-                <span style={{ fontWeight: 800, color: '#10B981' }}>{formatCurrency(activeSeg.amount)}</span>
+                <span style={{ fontWeight: 800, color: '#F5A800' }}>{formatCurrency(activeSeg.amount)}</span>
               </div>
             )}
             {activeSeg.roiPercentage && (

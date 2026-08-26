@@ -71,7 +71,7 @@ export default function MissingDocsReuploadCard({ client, loading = false, onDoc
       }
 
       const updatedUrl = res?.data?.url || res?.data?.agreementDocument || res?.data?.[docKey] || 'uploaded';
-      addToast(`${file.name} uploaded successfully! Kinetoscope Films Team will review it shortly.`, 'success', 'Upload Successful');
+      addToast(`${file.name} uploaded successfully! YieldIQ Team will review it shortly.`, 'success', 'Upload Successful');
       onDocUploaded?.(docKey, updatedUrl);
     } catch (err) {
       console.error('Failed to upload document:', err);
@@ -320,7 +320,7 @@ export default function MissingDocsReuploadCard({ client, loading = false, onDoc
               Action Required: Missing KYC Document(s) Re-upload
             </h4>
             <p style={{ margin: '3px 0 0', fontSize: '0.84rem', color: '#B91C1C', lineHeight: 1.45, fontWeight: 500 }}>
-              The <strong>Kinetoscope Films Team</strong> requires you to re-upload the following document(s) to verify your account:
+              The <strong>YieldIQ Team</strong> requires you to re-upload the following document(s) to verify your account:
             </p>
           </div>
         </div>

@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import { formatCurrency } from '../../utils/formatters';
 
-export default function LineChart({ data, height = 220, color = '#10B981' }) {
+export default function LineChart({ data, height = 220, color = '#F5A800' }) {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 

@@ -4,8 +4,27 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/jpeg" href="/logokfpl.jpeg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Kinetoscope Films Production Pvt Ltd — Investor Dashboard. Your personalised investment dashboard. A Global Media Fund." />
-    <title>Kinetoscope Films Production Pvt Ltd — Investor Dashboard</title>
+    <meta name="description" content="YieldIQ — Investor Dashboard. Your personalised investment dashboard." />
+    <title>YieldIQ — Investor Dashboard</title>
+    <script>
+      (function() {
+        try {
+          var b = localStorage.getItem('yieldiq_branding');
+          if (b) {
+            var parsed = JSON.parse(b);
+            if (parsed && parsed.faviconUrl) {
+              var link = document.querySelector("link[rel*='icon']");
+              if (!link) {
+                link = document.createElement('link');
+                link.rel = 'icon';
+                document.head.appendChild(link);
+              }
+              link.href = parsed.faviconUrl;
+            }
+          }
+        } catch(e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -582,7 +582,7 @@
 
   .kfpl-pub-bottom-subscription {
     background: linear-gradient(135deg, var(--color-navy-mid) 0%, var(--color-navy) 100%) !important;
-    border: 1px solid rgba(16, 185, 129, 0.1) !important;
+    border: 1px solid rgba(245, 168, 0, 0.12) !important;
     border-radius: 16px !important;
     padding: 24px 20px !important;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;

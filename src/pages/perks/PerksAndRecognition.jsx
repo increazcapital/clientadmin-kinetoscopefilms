@@ -86,7 +86,7 @@ const renderFormattedDescription = (desc) => {
         const cleanText = line.replace(/^[•\-\*\d+\.]+\s*/, '');
         return (
           <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', marginTop: '3px', paddingLeft: '4px' }}>
-            <span style={{ color: '#10B981', fontWeight: 'bold', fontSize: '0.8rem', lineHeight: '1.3' }}>✓</span>
+            <span style={{ color: '#F5A800', fontWeight: 'bold', fontSize: '0.8rem', lineHeight: '1.3' }}>✓</span>
             <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.8rem', lineHeight: 1.35 }}>{cleanText}</span>
           </div>
         );
@@ -128,10 +128,10 @@ const getHistoryTypeDetails = (type) => {
     case 'join':
     default:
       return {
-        bg: '#ECFDF5',
-        border: '#10B981',
-        color: '#047857',
-        badgeBg: '#F0FDF4',
+        bg: '#FFF8E7',
+        border: '#F5A800',
+        color: '#D48F00',
+        badgeBg: '#FFF8E7',
         label: 'Onboarded',
         icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
       };
@@ -365,9 +365,9 @@ export default function PerksAndRecognition() {
                   <div
                     style={{
                       marginTop: '2px',
-                      background: '#ECFDF5',
-                      border: '1.5px solid #10B981',
-                      color: '#10B981',
+                      background: '#FFF8E7',
+                      border: '1.5px solid #F5A800',
+                      color: '#F5A800',
                       width: '26px',
                       height: '26px',
                       borderRadius: '50%',
