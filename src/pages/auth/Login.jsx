@@ -10,7 +10,7 @@ import { safeSetLocalStorage } from '../../config/apiHelper';
 import { useToast } from '../../components/ui/Toast';
 import { WORLD_COUNTRY_CODES } from '../../data/countryCodes';
 
-export default function Login() {
+export default function Login({ defaultTab }) {
   const [branding, setBranding] = useState(() => {
     try {
       const c = localStorage.getItem('yieldiq_branding');
@@ -44,8 +44,8 @@ export default function Login() {
   const toastHelper = useToast();
   const addToast = typeof toastHelper === 'function' ? toastHelper : (toastHelper.addToast || (() => {}));
 
-  const [step, setStep] = useState('credentials'); // 'credentials' | 'otp' | 'register'
-  const [activeTab, setActiveTab] = useState('login'); // 'login' | 'register'
+  const [step, setStep] = useState(defaultTab === 'register' ? 'register' : 'credentials'); // 'credentials' | 'otp' | 'register'
+  const [activeTab, setActiveTab] = useState(defaultTab === 'register' ? 'register' : 'login'); // 'login' | 'register'
 
   // Blocked account reason banner from URL params
   const [blockedReason, setBlockedReason] = useState('');
@@ -83,6 +83,59 @@ export default function Login() {
   const [checkedAgreement, setCheckedAgreement] = useState(false);
   const [checkedPrivacy, setCheckedPrivacy] = useState(false);
   const [checkedTnc, setCheckedTnc] = useState(false);
+
+  // Referral states
+  const [referralCode, setReferralCode] = useState('');
+  const [verifiedAgent, setVerifiedAgent] = useState(null);
+  const [referralVerifying, setReferralVerifying] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const refCode = params.get('ref') || params.get('referral');
+    if (refCode) {
+      const codeUpper = refCode.trim().toUpperCase();
+      setReferralCode(codeUpper);
+      setActiveTab('register');
+      setStep('register');
+      setCheckedAgreement(true);
+      setCheckedPrivacy(true);
+      setCheckedTnc(true);
+
+      setReferralVerifying(true);
+      fetch(getApiUrl(`/api/client/auth/referral/${encodeURIComponent(codeUpper)}`))
+        .then(r => r.json())
+        .then(res => {
+          const agentInfo = res?.data || res?.agent;
+          if (res?.success && agentInfo) {
+            setVerifiedAgent(agentInfo);
+          }
+        })
+        .catch(err => console.error('Failed to verify referral code', err))
+        .finally(() => setReferralVerifying(false));
+    }
+  }, []);
+
+  const verifyCode = async (codeToVerify) => {
+    if (!codeToVerify || codeToVerify.trim().length < 4) {
+      setVerifiedAgent(null);
+      return;
+    }
+    setReferralVerifying(true);
+    try {
+      const res = await fetch(getApiUrl(`/api/client/auth/referral/${encodeURIComponent(codeToVerify.trim().toUpperCase())}`));
+      const data = await res.json();
+      const agentInfo = data?.data || data?.agent;
+      if (data?.success && agentInfo) {
+        setVerifiedAgent(agentInfo);
+      } else {
+        setVerifiedAgent(null);
+      }
+    } catch (e) {
+      setVerifiedAgent(null);
+    } finally {
+      setReferralVerifying(false);
+    }
+  };
 
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false);
@@ -344,6 +397,9 @@ export default function Login() {
       formData.append('password', regForm.password);
       formData.append('portalPassword', regForm.password);
       formData.append('is2FAEnabled', 'false');
+      if (referralCode) {
+        formData.append('referralCode', referralCode.trim().toUpperCase());
+      }
 
       // Append files
       if (panFile) formData.append('panDocument', panFile);
@@ -601,6 +657,67 @@ export default function Login() {
 
               <form className="kfpl-login-form" onSubmit={handleRegisterSubmit}>
                 <div className="kfpl-login-register-scroll">
+                  {/* Referral / Partner Info */}
+                  {verifiedAgent ? (
+                    <div style={{
+                      background: 'linear-gradient(135deg, rgba(245, 168, 0, 0.12) 0%, rgba(11, 31, 77, 0.05) 100%)',
+                      border: '1.5px solid #F5A800',
+                      borderRadius: '12px',
+                      padding: '12px 14px',
+                      marginBottom: '16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px'
+                    }}>
+                      <div style={{
+                        width: '34px',
+                        height: '34px',
+                        borderRadius: '50%',
+                        background: '#F5A800',
+                        color: '#0B1F4D',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: '800',
+                        fontSize: '15px',
+                        flexShrink: 0
+                      }}>
+                        ✓
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: '700' }}>
+                          Referred by Partner
+                        </div>
+                        <div style={{ fontSize: '14px', fontWeight: '700', color: '#0B1F4D', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {verifiedAgent.name} <span style={{ fontSize: '12px', color: '#b45309', fontWeight: '600' }}>({verifiedAgent.agentCode})</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="kfpl-login-input-group" style={{ marginBottom: '14px' }}>
+                      <label className="kfpl-login-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>Partner / Referral Code (Optional)</span>
+                        {referralVerifying && <span style={{ color: '#F5A800', fontSize: '11px', fontWeight: '600' }}>Verifying...</span>}
+                      </label>
+                      <input
+                        type="text"
+                        name="referralCode"
+                        className="kfpl-login-input"
+                        placeholder="Enter Agent Code (if any)"
+                        value={referralCode}
+                        onChange={(e) => {
+                          const val = e.target.value.toUpperCase();
+                          setReferralCode(val);
+                          if (val.length >= 6) {
+                            verifyCode(val);
+                          } else {
+                            setVerifiedAgent(null);
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
+
                   {/* Basic Info */}
                   <div className="kfpl-login-section-label">Basic Information</div>
                   <div className="kfpl-login-input-group">

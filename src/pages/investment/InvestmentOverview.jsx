@@ -662,6 +662,17 @@ export default function InvestmentOverview() {
       }
     };
     loadDashboardData();
+
+    const handleUpdate = () => {
+      loadDashboardData();
+    };
+    window.addEventListener('yieldiq_data_updated', handleUpdate);
+    window.addEventListener('kfpl_approval_event', handleUpdate);
+
+    return () => {
+      window.removeEventListener('yieldiq_data_updated', handleUpdate);
+      window.removeEventListener('kfpl_approval_event', handleUpdate);
+    };
   }, []);
 
   const uniqueSegments = Array.from(new Set(investments.map(i => i.segment)));

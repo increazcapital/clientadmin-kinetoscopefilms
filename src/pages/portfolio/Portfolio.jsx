@@ -218,6 +218,17 @@ export default function Portfolio() {
       }
     };
     fetchProjects();
+
+    const handleUpdate = () => {
+      fetchProjects();
+    };
+    window.addEventListener('yieldiq_data_updated', handleUpdate);
+    window.addEventListener('kfpl_approval_event', handleUpdate);
+
+    return () => {
+      window.removeEventListener('yieldiq_data_updated', handleUpdate);
+      window.removeEventListener('kfpl_approval_event', handleUpdate);
+    };
   }, []);
 
   useEffect(() => {

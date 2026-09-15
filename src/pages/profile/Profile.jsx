@@ -214,6 +214,17 @@ export default function Profile() {
     };
 
     loadProfile();
+
+    const handleUpdate = () => {
+      loadProfile();
+    };
+    window.addEventListener('yieldiq_data_updated', handleUpdate);
+    window.addEventListener('kfpl_approval_event', handleUpdate);
+
+    return () => {
+      window.removeEventListener('yieldiq_data_updated', handleUpdate);
+      window.removeEventListener('kfpl_approval_event', handleUpdate);
+    };
   }, []);
 
   const compressImage = (file, maxSide = 300, quality = 0.8) => {

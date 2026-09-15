@@ -297,7 +297,9 @@ export default function DashboardHome() {
             .filter(t => String(t.type || '').toLowerCase() === 'deposit' && String(t.status || '').toLowerCase() === 'approved')
             .reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
-          const finalTotalInvested = Math.max(Number(backendTotal) || 0, approvedDepositsSum, Number(rawClient?.totalInvestment || 0));
+          const finalTotalInvested = (rawClient?.totalInvestment !== undefined && rawClient?.totalInvestment !== null && Number(rawClient.totalInvestment) > 0)
+            ? Number(rawClient.totalInvestment)
+            : (Number(backendTotal) > 0 ? Number(backendTotal) : approvedDepositsSum);
 
           // Calculate ROI received and withdrawal totals from transactions
           const roiPayoutsList = (root.roiHistory || root.recentPayouts || []);
@@ -524,12 +526,14 @@ export default function DashboardHome() {
 
     window.addEventListener('storage', handleApprovalEvent);
     window.addEventListener('kfpl_approval_event', handleApprovalEvent);
+    window.addEventListener('yieldiq_data_updated', handleApprovalEvent);
 
     const pollInterval = setInterval(loadClientDashboardData, 8000);
     return () => {
       clearInterval(pollInterval);
       window.removeEventListener('storage', handleApprovalEvent);
       window.removeEventListener('kfpl_approval_event', handleApprovalEvent);
+      window.removeEventListener('yieldiq_data_updated', handleApprovalEvent);
     };
   }, []);
 

@@ -3,8 +3,10 @@
    Description: Client portal root component with routing
    ============================================================ */
 
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastProvider } from './components/ui/Toast';
+import { initRealtimeSync } from './utils/realtimeSync';
 
 // Layout
 import MainLayout from './components/layout/MainLayout';
@@ -39,12 +41,17 @@ function ProtectedRoute({ children }) {
 }
 
 export default function App() {
+  useEffect(() => {
+    initRealtimeSync();
+  }, []);
+
   return (
     <BrowserRouter>
       <ToastProvider>
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Login defaultTab="register" />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* Protected Routes (MainLayout wraps all) */}
