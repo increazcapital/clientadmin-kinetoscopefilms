@@ -81,7 +81,7 @@ export default function CompleteTransactionDetails() {
                 ? r.referenceNumber
                 : ((r.refId && r.refId !== '—' && r.refId !== '-')
                   ? r.refId
-                  : (r._id ? `ROI-${String(r._id).slice(-8).toUpperCase()}` : `ROI${100000 + idx}`))));
+                  : '—')));
 
           return {
             id: r._id || r.id || `payout_${idx}`,
@@ -90,7 +90,7 @@ export default function CompleteTransactionDetails() {
             amount: Number(r.amount || r.received || 0),
             status: (r.status || 'paid').toLowerCase(),
             paidAt: r.paidAt || r.date || r.processedDate,
-            paymentMode: r.paymentMode || 'Bank Transfer',
+            paymentMode: (r.paymentMode && r.paymentMode !== '—') ? r.paymentMode : '—',
             transactionRef: realRef,
             category: 'roi'
           };
@@ -262,7 +262,7 @@ export default function CompleteTransactionDetails() {
   const netCapitalInvestment = Math.max(0, totalDeposits - totalCapitalWithdrawals);
   const totalRoiPaid = records.filter(r => r.category === 'roi' && ['paid', 'approved'].includes(r.status)).reduce((sum, r) => sum + (r.amount || 0), 0);
   const totalWithdrawals = records.filter(r => r.category === 'withdrawal' && ['approved', 'completed', 'paid'].includes(r.status)).reduce((sum, r) => sum + (r.amount || 0), 0);
-  const totalRoiReceived = Math.max(0, totalRoiPaid - totalWithdrawals);
+  const totalRoiReceived = totalRoiPaid;
 
   const depositCount = records.filter(r => r.category === 'deposit').length;
   const withdrawalCount = records.filter(r => r.category === 'withdrawal').length;
@@ -506,21 +506,26 @@ export default function CompleteTransactionDetails() {
 
                     {/* 4. Payment Mode */}
                     <td>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                        <span style={{
-                          display: 'inline-block',
-                          padding: '2px 8px',
-                          borderRadius: '6px',
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                          background: '#F8FAFC',
-                          border: '1px solid #E2E8F0',
-                          color: '#334155',
-                          width: 'fit-content'
-                        }}>
-                          {rec.paymentMode || 'Bank Transfer'}
-                        </span>
-                        <span style={{ fontSize: '0.68rem', color: '#64748B' }}>Verified Payment</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                        {rec.paymentMode && rec.paymentMode !== '—' ? (
+                          <>
+                            <span style={{
+                              padding: '2px 8px',
+                              borderRadius: '6px',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              background: '#F8FAFC',
+                              border: '1px solid #E2E8F0',
+                              color: '#334155',
+                              width: 'fit-content'
+                            }}>
+                              {rec.paymentMode}
+                            </span>
+                            <span style={{ fontSize: '0.68rem', color: '#64748B' }}>Verified Payment</span>
+                          </>
+                        ) : (
+                          <span style={{ color: '#94A3B8', fontSize: '0.85rem' }}>—</span>
+                        )}
                       </div>
                     </td>
 
@@ -625,7 +630,7 @@ export default function CompleteTransactionDetails() {
                   Official Transaction Receipt
                 </span>
                 <h3 style={{ margin: '8px 0 0 0', fontSize: '1.35rem', fontWeight: 800, color: '#0F172A' }}>{selectedReceipt.month}</h3>
-                <div style={{ fontSize: '0.8rem', color: '#64748B', marginTop: '3px' }}>Ref Number: <strong className="font-mono" style={{ color: '#334155' }}>{selectedReceipt.transactionRef}</strong></div>
+                <div style={{ fontSize: '0.8rem', color: '#64748B', marginTop: '3px' }}>Ref Number: <strong className="font-mono" style={{ color: '#334155' }}>{selectedReceipt.transactionRef || '—'}</strong></div>
               </div>
               <button
                 onClick={() => setSelectedReceipt(null)}
@@ -671,7 +676,7 @@ export default function CompleteTransactionDetails() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #E2E8F0', paddingBottom: '8px' }}>
                 <span style={{ color: '#64748B', fontSize: '0.85rem' }}>Payment Mode</span>
-                <span style={{ fontWeight: 700, color: '#334155', fontSize: '0.85rem' }}>{selectedReceipt.paymentMode || 'Bank Transfer'}</span>
+                <span style={{ fontWeight: 700, color: '#334155', fontSize: '0.85rem' }}>{selectedReceipt.paymentMode || '—'}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #E2E8F0', paddingBottom: '8px' }}>
                 <span style={{ color: '#64748B', fontSize: '0.85rem' }}>Status</span>

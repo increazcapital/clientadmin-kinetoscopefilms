@@ -154,12 +154,13 @@ export default function DashboardHome() {
     const loadClientDashboardData = async () => {
       try {
         // Parallelized concurrent API queries
-        const [dashRes, projectsRes, historyRes, advisorRes, txRes] = await Promise.all([
+        const [dashRes, projectsRes, historyRes, advisorRes, txRes, payoutsRes] = await Promise.all([
           apiRequest('/api/client/dashboard').catch(() => null),
           apiRequest('/api/client/projects').catch(() => null),
           apiRequest('/api/client/projects/updates/history').catch(() => null),
           apiRequest('/api/client/wealth-advisor').catch(() => null),
-          apiRequest('/api/client/transactions?limit=1000').catch(() => null)
+          apiRequest('/api/client/transactions?limit=1000').catch(() => null),
+          apiRequest('/api/client/payouts?limit=1000').catch(() => null)
         ]);
 
         let updatedClient = null;
@@ -301,12 +302,25 @@ export default function DashboardHome() {
             ? Number(rawClient.totalInvestment)
             : (Number(backendTotal) > 0 ? Number(backendTotal) : approvedDepositsSum);
 
-          // Calculate ROI received and withdrawal totals from transactions
-          const roiPayoutsList = (root.roiHistory || root.recentPayouts || []);
+          // Calculate ROI received and withdrawal totals from transactions and payouts
+          const dashRoiList = (root.roiHistory || root.recentPayouts || []);
+          const directRoiList = payoutsRes ? (Array.isArray(payoutsRes) ? payoutsRes : (payoutsRes.payouts || payoutsRes.data?.payouts || (Array.isArray(payoutsRes.data) ? payoutsRes.data : []))) : [];
+          const roiPayoutsList = [...dashRoiList, ...directRoiList];
+
           const uniqueRoiPaidMap = new Map();
           roiPayoutsList.forEach(r => {
-            if (['paid', 'approved'].includes(String(r.status || '').toLowerCase())) {
-              const key = r.period || r.month || r._id || r.id;
+            if (['paid', 'approved', 'completed'].includes(String(r.status || '').toLowerCase())) {
+              const rawDate = r.date || r.paidAt || r.processedDate || r.payoutDate || r.createdAt;
+              let m = r.period || r.month || r.payoutMonth;
+              if (!m || m === '—') {
+                if (rawDate) {
+                  const d = new Date(rawDate);
+                  if (!isNaN(d.getTime())) {
+                    m = d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+                  }
+                }
+              }
+              const key = m ? m.toLowerCase().replace(/[\s\-_]/g, '') : String(r._id || r.id);
               if (!uniqueRoiPaidMap.has(key)) {
                 uniqueRoiPaidMap.set(key, Number(r.amount || r.received || 0));
               }
@@ -318,13 +332,16 @@ export default function DashboardHome() {
             .filter(t => String(t.type || '').toLowerCase() === 'withdrawal' && ['approved', 'paid', 'credited', 'completed'].includes(String(t.status || '').toLowerCase()))
             .reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
+          const backendRoiReceivedVal = Number(root.roiReceived || root.stats?.roiReceived || 0);
+          const effectiveRoiPaid = roiPaidTotal > 0 ? roiPaidTotal : backendRoiReceivedVal;
+
           updatedStats = {
             totalInvested: finalTotalInvested,
             monthlyROI: monthlyRoiVal || root.expectedMonthlyRoi || root.stats?.monthlyROI || 0,
             roiRate: finalRoiRate ?? root.roiRate ?? root.roiAverage ?? root.stats?.roiRate ?? 0,
             perkTier: rawClient.tier || root.stats?.perkTier || 'Silver',
             nextROIDate: root.nextRoiDate || root.stats?.nextROIDate || '—',
-            roiReceived: Math.max(0, roiPaidTotal - approvedWithdrawals),
+            roiReceived: Math.max(0, effectiveRoiPaid - approvedWithdrawals),
             totalWithdrawn: approvedWithdrawals,
           };
           setStats(updatedStats);
@@ -364,13 +381,34 @@ export default function DashboardHome() {
             updatedInvestments = expandedInv;
             setInvestments(updatedInvestments);
           }
-          const rawHistory = root.roiHistory || root.recentPayouts || [];
+          const combinedRawHistory = [...(root.roiHistory || root.recentPayouts || []), ...directRoiList];
+          const seenHistoryKeys = new Set();
+          const rawHistory = [];
+          for (const item of combinedRawHistory) {
+            if (!item) continue;
+            const rawDate = item.date || item.paidAt || item.processedDate || item.payoutDate || item.createdAt;
+            let m = item.month || item.payoutMonth || item.period;
+            if (!m || m === '—') {
+              if (rawDate) {
+                const d = new Date(rawDate);
+                if (!isNaN(d.getTime())) {
+                  m = d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+                }
+              }
+            }
+            const key = m ? m.toLowerCase().replace(/[\s\-_]/g, '') : String(item._id || item.id);
+            if (!seenHistoryKeys.has(key)) {
+              seenHistoryKeys.add(key);
+              rawHistory.push({ ...item, derivedMonth: m });
+            }
+          }
+
           if (Array.isArray(rawHistory) && rawHistory.length > 0) {
             updatedRoiHistory = rawHistory.map((r, idx) => {
               const amt = Number(r.amount || r.received || r.expected || 0);
-              const isPaidOrApproved = ['paid', 'approved'].includes(String(r.status || '').toLowerCase());
+              const isPaidOrApproved = ['paid', 'approved', 'completed'].includes(String(r.status || '').toLowerCase());
               const rawDate = r.date || r.paidAt || r.processedDate || r.payoutDate || r.createdAt;
-              let derivedMonth = r.month || r.payoutMonth || r.period;
+              let derivedMonth = r.derivedMonth || r.month || r.payoutMonth || r.period;
               if (!derivedMonth || derivedMonth === '—') {
                 if (rawDate) {
                   const d = new Date(rawDate);
@@ -406,7 +444,7 @@ export default function DashboardHome() {
           const isKycVerified = isAgreementVerified && ['VERIFIED', 'APPROVED'].includes(String(rawClient.kycStatus || rawClient.kyc || '').toUpperCase());
 
           const hasInvestments = updatedInvestments.length > 0 || (root.totalInvestment > 0);
-          const hasReceivedRoi = updatedRoiHistory.length > 0;
+          const hasReceivedRoi = updatedRoiHistory.length > 0 || effectiveRoiPaid > 0;
 
           updatedJourney = {
             accountCreated: true,

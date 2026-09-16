@@ -332,6 +332,7 @@ export default function InvestmentOverview() {
   const [client, setClient] = useState({});
   const [investments, setInvestments] = useState([]);
   const [roiHistory, setRoiHistory] = useState([]);
+  const [dashboardData, setDashboardData] = useState(null);
 
   const [roiFilter, setRoiFilter] = useState('All');
   const [calcPrincipal, setCalcPrincipal] = useState('');
@@ -358,6 +359,7 @@ export default function InvestmentOverview() {
         if (parsed.approvedDepositsTotal) setApprovedDepositsTotal(parsed.approvedDepositsTotal);
         if (parsed.approvedWithdrawalsTotal !== undefined) setApprovedWithdrawalsTotal(parsed.approvedWithdrawalsTotal);
         if (parsed.client) setClient(parsed.client);
+        if (parsed.dashboardData) setDashboardData(parsed.dashboardData);
       }
     } catch (e) {
       console.warn('Failed to parse investment overview cache:', e);
@@ -366,13 +368,14 @@ export default function InvestmentOverview() {
     const loadDashboardData = async () => {
       try {
         // Fetch all data concurrently!
-        const [invRes, dashRes, divListRes, statsRes, projectsRes, txRes] = await Promise.all([
+        const [invRes, dashRes, divListRes, statsRes, projectsRes, txRes, payoutsRes] = await Promise.all([
           apiRequest('/api/client/investments').catch(() => null),
           apiRequest('/api/client/dashboard').catch(() => null),
           apiRequest('/api/client/dividends').catch(() => null),
           apiRequest('/api/client/stats').catch(() => null),
           apiRequest('/api/client/projects').catch(() => null),
-          apiRequest('/api/client/transactions?limit=1000').catch(() => null)
+          apiRequest('/api/client/transactions?limit=1000').catch(() => null),
+          apiRequest('/api/client/payouts?limit=1000').catch(() => null)
         ]);
 
         let activeInvestments = [];
@@ -507,49 +510,69 @@ export default function InvestmentOverview() {
           }
         }
 
-        // Use only real dashboard data — no mock fallback
-        const targetDashRes = dashRes || null;
+        // Combine real dashboard data and payouts API data
+        const rootDash = (dashRes && (dashRes.data || dashRes)) || {};
+        setDashboardData(rootDash);
 
-        if (targetDashRes) {
-          const rootDash = targetDashRes.data || targetDashRes;
-          const rawHistory = rootDash.roiHistory || rootDash.recentPayouts || [];
-          if (Array.isArray(rawHistory) && rawHistory.length > 0) {
-            freshRoiHistory = rawHistory.map((r, idx) => {
-              const amt = Number(r.amount || r.received || r.expected || 0);
-              const isPaidOrApproved = ['paid', 'approved', 'completed'].includes(String(r.status || '').toLowerCase());
-              const isWd = r.isWithdrawal || /withdrawal/i.test(String(r.type || r.commissionType || r.category || r.payoutDetail || ''));
-              const rawDate = r.date || r.paidAt || r.processedDate || r.payoutDate || r.createdAt;
-              let derivedMonth = r.month || r.payoutMonth || r.period;
-              if (!derivedMonth || derivedMonth === '—') {
-                if (rawDate) {
-                  const d = new Date(rawDate);
-                  if (!isNaN(d.getTime())) {
-                    derivedMonth = d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
-                  }
+        const dashPayouts = Array.isArray(rootDash.roiHistory) ? rootDash.roiHistory : (Array.isArray(rootDash.recentPayouts) ? rootDash.recentPayouts : []);
+        const directPayouts = payoutsRes ? (Array.isArray(payoutsRes) ? payoutsRes : (payoutsRes.payouts || payoutsRes.data?.payouts || (Array.isArray(payoutsRes.data) ? payoutsRes.data : []))) : [];
+        const rawHistory = [...dashPayouts, ...directPayouts];
+
+        if (rawHistory.length > 0) {
+          const seenKeys = new Set();
+          const dedupedRaw = [];
+          for (const item of rawHistory) {
+            if (!item) continue;
+            const rawDate = item.date || item.paidAt || item.processedDate || item.payoutDate || item.createdAt;
+            let m = item.month || item.payoutMonth || item.period;
+            if (!m || m === '—') {
+              if (rawDate) {
+                const d = new Date(rawDate);
+                if (!isNaN(d.getTime())) {
+                  m = d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
                 }
               }
-              if (!derivedMonth || derivedMonth === '—') {
-                derivedMonth = new Date().toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
-              }
-
-              return {
-                _id: r._id || r.id || `roi_${idx}`,
-                month: derivedMonth,
-                payoutMonth: derivedMonth,
-                date: rawDate || new Date().toISOString(),
-                expected: r.expected || amt,
-                received: isPaidOrApproved ? (r.received || amt) : 0,
-                amount: amt,
-                status: isPaidOrApproved ? (String(r.status).toLowerCase() === 'paid' ? 'Paid' : 'Approved') : (r.status || 'Approved'),
-                processedDate: r.processedDate || r.paidAt || '—',
-                isWithdrawal: isWd,
-                type: r.type || r.commissionType || (isWd ? 'Withdrawal' : 'ROI')
-              };
-            });
+            }
+            const key = m ? m.toLowerCase().replace(/[\s\-_]/g, '') : String(item._id || item.id);
+            if (!seenKeys.has(key)) {
+              seenKeys.add(key);
+              dedupedRaw.push({ ...item, derivedMonth: m });
+            }
           }
-        }
 
-        // No mock ROI history — new clients with no payouts show empty list
+          freshRoiHistory = dedupedRaw.map((r, idx) => {
+            const amt = Number(r.amount || r.received || r.expected || 0);
+            const isPaidOrApproved = ['paid', 'approved', 'completed'].includes(String(r.status || '').toLowerCase());
+            const isWd = r.isWithdrawal || /withdrawal/i.test(String(r.type || r.commissionType || r.category || r.payoutDetail || ''));
+            const rawDate = r.date || r.paidAt || r.processedDate || r.payoutDate || r.createdAt;
+            let derivedMonth = r.derivedMonth || r.month || r.payoutMonth || r.period;
+            if (!derivedMonth || derivedMonth === '—') {
+              if (rawDate) {
+                const d = new Date(rawDate);
+                if (!isNaN(d.getTime())) {
+                  derivedMonth = d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+                }
+              }
+            }
+            if (!derivedMonth || derivedMonth === '—') {
+              derivedMonth = new Date().toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+            }
+
+            return {
+              _id: r._id || r.id || `roi_${idx}`,
+              month: derivedMonth,
+              payoutMonth: derivedMonth,
+              date: rawDate || new Date().toISOString(),
+              expected: r.expected || amt,
+              received: isPaidOrApproved ? (r.received || amt) : 0,
+              amount: amt,
+              status: isPaidOrApproved ? (String(r.status).toLowerCase() === 'paid' ? 'Paid' : 'Approved') : (r.status || 'Approved'),
+              processedDate: r.processedDate || r.paidAt || '—',
+              isWithdrawal: isWd,
+              type: r.type || r.commissionType || (isWd ? 'Withdrawal' : 'ROI')
+            };
+          });
+        }
 
         setRoiHistory(freshRoiHistory);
 
@@ -601,7 +624,7 @@ export default function InvestmentOverview() {
             .filter(t => String(t.type || '').toLowerCase() === 'withdrawal' && ['approved', 'paid', 'completed'].includes(String(t.status || '').toLowerCase()))
             .reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
-          const roiWithdrawalsTotal = freshRoiHistory.reduce((sum, r) => sum + (['paid', 'approved'].includes((r.status || '').toLowerCase()) ? Number(r.amount || 0) : 0), 0);
+          const roiWithdrawalsTotal = 0; // ROI received is no longer counted as a direct withdrawal. True withdrawals go through the Transaction table.
 
           dividendWithdrawalsTotal = txList
             .filter(t => {
@@ -654,7 +677,8 @@ export default function InvestmentOverview() {
           totalDividends: freshTotalDividends,
           approvedDepositsTotal: finalTotalInvested,
           approvedWithdrawalsTotal: approvedWithdrawalsTotal,
-          client: updatedClient
+          client: updatedClient,
+          dashboardData: rootDash
         });
 
       } catch (err) {
@@ -720,13 +744,16 @@ export default function InvestmentOverview() {
       return isPaid && !isWd;
     })
     .reduce((sum, roi) => sum + Number(roi.received || roi.amount || 0), 0);
-  const receivedROI = Math.max(0, grossReceivedROI - approvedWithdrawalsTotal);
-  const paidMonths = roiHistory.filter(roi => {
+  const backendRoiVal = Number(dashboardData?.roiReceived || dashboardData?.stats?.roiReceived || client?.roiReceived || 0);
+  const effectiveGrossROI = grossReceivedROI > 0 ? grossReceivedROI : backendRoiVal;
+  const receivedROI = Math.max(0, effectiveGrossROI - approvedWithdrawalsTotal);
+  const computedPaidMonths = roiHistory.filter(roi => {
     const st = String(roi.status || '').toLowerCase();
     const isPaid = ['paid', 'approved', 'completed'].includes(st);
     const isWd = roi.isWithdrawal || /withdrawal/i.test(String(roi.type || roi.commissionType || roi.category || roi.payoutDetail || ''));
     return isPaid && !isWd;
   }).length;
+  const paidMonths = computedPaidMonths > 0 ? computedPaidMonths : (receivedROI > 0 ? 1 : 0);
 
   const contractMonths = investments.length > 0
     ? Math.max(...investments.map(inv => inv.durationMonths || inv.tenureMonths || inv.lockinMonths || 18))
