@@ -533,7 +533,8 @@ export default function InvestmentOverview() {
                 }
               }
             }
-            const key = m ? m.toLowerCase().replace(/[\s\-_]/g, '') : String(item._id || item.id);
+            const isWd = item.isWithdrawal || /withdrawal/i.test(String(item.type || item.commissionType || item.category || item.payoutDetail || ''));
+            const key = m ? `${isWd ? 'wd' : 'roi'}_${m.toLowerCase().replace(/[\s\-_]/g, '')}` : String(item._id || item.id);
             if (!seenKeys.has(key)) {
               seenKeys.add(key);
               dedupedRaw.push({ ...item, derivedMonth: m });
@@ -610,7 +611,7 @@ export default function InvestmentOverview() {
         freshTotalDividends = freshClientDividends.reduce((sum, d) => sum + Number(d.amount || 0), 0);
 
         let approvedDepositsTotal = 0;
-        let approvedWithdrawalsTotal = 0;
+        let capitalWithdrawalsTotal = 0;
         let dividendWithdrawalsTotal = 0;
         if (txRes) {
           const rootTx = txRes.data || txRes;
@@ -620,11 +621,9 @@ export default function InvestmentOverview() {
           approvedDepositsTotal = txList
             .filter(t => String(t.type || '').toLowerCase() === 'deposit' && ['approved', 'paid', 'completed'].includes(String(t.status || '').toLowerCase()))
             .reduce((sum, t) => sum + Number(t.amount || 0), 0);
-          approvedWithdrawalsTotal = txList
-            .filter(t => String(t.type || '').toLowerCase() === 'withdrawal' && ['approved', 'paid', 'completed'].includes(String(t.status || '').toLowerCase()))
+          capitalWithdrawalsTotal = txList
+            .filter(t => String(t.type || '').toLowerCase() === 'withdrawal' && t.withdrawalType === 'capital' && ['approved', 'paid', 'completed'].includes(String(t.status || '').toLowerCase()))
             .reduce((sum, t) => sum + Number(t.amount || 0), 0);
-
-          const roiWithdrawalsTotal = 0; // ROI received is no longer counted as a direct withdrawal. True withdrawals go through the Transaction table.
 
           dividendWithdrawalsTotal = txList
             .filter(t => {
@@ -633,11 +632,31 @@ export default function InvestmentOverview() {
               if (!isApp) return false;
               const isDivType = t.withdrawalType === 'dividend' || String(t.description || t.remarks || t.referenceNumber || t.month || '').toLowerCase().includes('div');
               const isDivAmountMatch = freshTotalDividends > 0 && Number(t.amount || 0) === freshTotalDividends && t.withdrawalType !== 'roi';
-              const isOtherWD = (approvedWithdrawalsTotal > roiWithdrawalsTotal) && Number(t.amount || 0) !== 770;
-              return isDivType || isDivAmountMatch || isOtherWD;
+              return isDivType || isDivAmountMatch;
             })
             .reduce((sum, t) => sum + Number(t.amount || 0), 0);
         }
+
+        // Total Withdrawals strictly from manual payout records (rootDash.totalWithdrawn or manual Payout entries)
+        const backendWithdrawn = Number(rootDash.totalWithdrawn !== undefined ? rootDash.totalWithdrawn : (rootDash.stats?.totalWithdrawn !== undefined ? rootDash.stats.totalWithdrawn : 0));
+
+        let manualWithdrawn = 0;
+        if (directPayouts && directPayouts.length > 0) {
+          const mMonthMap = new Map();
+          directPayouts.filter(r => r.isWithdrawal || String(r.category || '').toUpperCase() === 'WITHDRAWAL' || /withdrawal/i.test(r.type || r.commissionType || '')).forEach(w => {
+            const d = w.payoutDate ? new Date(w.payoutDate) : new Date(w.date || w.paidAt || w.createdAt);
+            const monthKey = !isNaN(d.getTime())
+              ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+              : (w.month || w.period || 'current');
+            if (!mMonthMap.has(monthKey)) {
+              mMonthMap.set(monthKey, Number(w.amount || w.received || 0));
+            } else {
+              mMonthMap.set(monthKey, Math.max(mMonthMap.get(monthKey), Number(w.amount || w.received || 0)));
+            }
+          });
+          manualWithdrawn = Array.from(mMonthMap.values()).reduce((sum, amt) => sum + amt, 0);
+        }
+        const approvedWithdrawalsTotal = backendWithdrawn > 0 ? backendWithdrawn : manualWithdrawn;
 
         const netDividendsAvailable = Math.max(0, freshTotalDividends - dividendWithdrawalsTotal);
         setTotalDividends(netDividendsAvailable);
@@ -645,8 +664,8 @@ export default function InvestmentOverview() {
         setApprovedWithdrawalsTotal(approvedWithdrawalsTotal);
 
         const segmentTotal = activeInvestments.reduce((sum, inv) => sum + (inv.amount || 0), 0);
-        const netCapital = Math.max(0, approvedDepositsTotal - approvedWithdrawalsTotal);
-        const isFullCapitalWithdrawn = approvedWithdrawalsTotal >= approvedDepositsTotal && approvedDepositsTotal > 0;
+        const netCapital = Math.max(0, approvedDepositsTotal - capitalWithdrawalsTotal);
+        const isFullCapitalWithdrawn = capitalWithdrawalsTotal >= approvedDepositsTotal && approvedDepositsTotal > 0;
         const finalTotalInvested = isFullCapitalWithdrawn ? 0 : Math.max(segmentTotal, netCapital);
 
         const unallocatedDiff = finalTotalInvested - segmentTotal;

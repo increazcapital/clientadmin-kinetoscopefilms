@@ -39,14 +39,28 @@ export default function CompleteTransactionDetails() {
           apiRequest('/api/client/dividends?limit=1000').catch(() => null)
         ]);
 
-        const rawTx = (txRes?.data?.transactions || (Array.isArray(txRes) ? txRes : [])).filter(t => t.type !== 'withdrawal');
+        const allTx = (txRes?.data?.transactions || (Array.isArray(txRes) ? txRes : []));
         const rawPayouts = Array.isArray(payoutsRes) ? payoutsRes : (payoutsRes?.data?.payouts || payoutsRes?.payouts || (Array.isArray(payoutsRes?.data) ? payoutsRes.data : []));
         const rawDividends = Array.isArray(dividendsRes) ? dividendsRes : (dividendsRes?.data?.allotments || dividendsRes?.allotments || (Array.isArray(dividendsRes?.data) ? dividendsRes.data : []));
+
+        // Deduplicate withdrawal transactions that already have a matching manual payout record
+        const rawTx = allTx.filter(t => {
+          if (String(t.type || '').toLowerCase() !== 'withdrawal') return true;
+          const isLinked = rawPayouts.some(p => {
+            const isWd = p.isWithdrawal === true || String(p.category || '').toUpperCase() === 'WITHDRAWAL' || /withdrawal/i.test(p.commissionType || '');
+            if (!isWd) return false;
+            return (p.linkedTransactionId && String(p.linkedTransactionId) === String(t._id)) ||
+                   (t.payoutRecordId && String(t.payoutRecordId) === String(p._id));
+          });
+          return !isLinked;
+        });
 
         // Map deposit & withdrawal transactions
         const mappedTx = rawTx.map((t, idx) => {
           const isDeposit = String(t.type).toLowerCase() === 'deposit';
+          const isWithdrawal = String(t.type).toLowerCase() === 'withdrawal';
           const isDivWithdrawal = t.withdrawalType === 'dividend' || String(t.description || t.remarks || '').toLowerCase().includes('dividend');
+          const isCapitalWithdrawal = t.withdrawalType === 'capital' || /capital/i.test(String(t.description || t.remarks || ''));
           const realRef = (t.referenceNumber && t.referenceNumber !== '—' && t.referenceNumber !== '-')
             ? t.referenceNumber
             : ((t.transactionRefId && t.transactionRefId !== '—' && t.transactionRefId !== '-')
@@ -57,21 +71,26 @@ export default function CompleteTransactionDetails() {
                   ? t.utrNumber
                   : (t._id ? `REF-${String(t._id).slice(-8).toUpperCase()}` : `TXN${100000 + idx}`))));
 
+          let monthLabel = 'Capital Deposit';
+          if (isWithdrawal) {
+            monthLabel = isDivWithdrawal ? 'Dividend Bonus Withdrawal' : (isCapitalWithdrawal ? 'Capital Account Withdrawal' : 'ROI Dividend Withdrawal');
+          }
+
           return {
             id: t._id || t.id || `tx_${idx}`,
-            month: isDeposit ? 'Capital Deposit' : (isDivWithdrawal ? 'Dividend Bonus Withdrawal' : 'Capital Withdrawal'),
-            type: t.type ? t.type.toUpperCase() : 'DEPOSIT',
+            month: monthLabel,
+            type: isDeposit ? 'DEPOSIT' : 'WITHDRAWAL',
             amount: Number(t.amount || 0),
             status: (t.status || 'pending').toLowerCase(),
             paidAt: t.actionAt || t.updatedAt || t.createdAt,
             paymentMode: t.paymentMethod || 'Bank Transfer',
             transactionRef: realRef,
             category: isDeposit ? 'deposit' : 'withdrawal',
-            withdrawalType: t.withdrawalType
+            withdrawalType: t.withdrawalType || (isCapitalWithdrawal ? 'capital' : 'roi')
           };
         });
 
-        // Map ROI payouts
+        // Map ROI payouts & manual withdrawal payouts as separate entries
         const mappedPayouts = rawPayouts.map((r, idx) => {
           const realRef = (r.transactionRefId && r.transactionRefId !== '—' && r.transactionRefId !== '-')
             ? r.transactionRefId
@@ -84,16 +103,23 @@ export default function CompleteTransactionDetails() {
                   : '—')));
 
           const isWithdrawalRecord = r.isWithdrawal === true || String(r.category || '').toUpperCase() === 'WITHDRAWAL' || String(r.commissionType || '').toLowerCase().includes('withdrawal') || String(r.recipientType || '').toLowerCase().includes('withdrawal');
+          
+          let monthDisplay = r.month || r.period || r.payoutMonth || 'ROI Payout';
+          if (isWithdrawalRecord) {
+            monthDisplay = (r.period && r.period !== '—') ? r.period : 'ROI Dividend Withdrawal';
+          }
+
           return {
             id: r._id || r.id || `payout_${idx}`,
-            month: isWithdrawalRecord ? 'Capital Withdrawal' : (r.month || r.period || r.payoutMonth || 'ROI Payout'),
+            month: monthDisplay,
             type: isWithdrawalRecord ? 'WITHDRAWAL' : 'ROI RETURN',
             amount: Number(r.amount || r.received || 0),
             status: (r.status || 'paid').toLowerCase(),
             paidAt: r.paidAt || r.date || r.processedDate,
             paymentMode: (r.paymentMode && r.paymentMode !== '—') ? r.paymentMode : '—',
             transactionRef: realRef,
-            category: isWithdrawalRecord ? 'withdrawal' : 'roi'
+            category: isWithdrawalRecord ? 'withdrawal' : 'roi',
+            withdrawalType: isWithdrawalRecord ? 'roi' : undefined
           };
         });
 

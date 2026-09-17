@@ -305,7 +305,7 @@ export default function DashboardHome() {
           // Calculate ROI received and withdrawal totals from transactions and payouts
           const dashRoiList = (root.roiHistory || root.recentPayouts || []);
           const directRoiList = payoutsRes ? (Array.isArray(payoutsRes) ? payoutsRes : (payoutsRes.payouts || payoutsRes.data?.payouts || (Array.isArray(payoutsRes.data) ? payoutsRes.data : []))) : [];
-          const roiPayoutsList = [...dashRoiList, ...directRoiList];
+          const roiPayoutsList = [...dashRoiList, ...directRoiList].filter(r => !r.isWithdrawal && String(r.category || '').toUpperCase() !== 'WITHDRAWAL' && !/withdrawal/i.test(r.type || r.commissionType || ''));
 
           const uniqueRoiPaidMap = new Map();
           roiPayoutsList.forEach(r => {
@@ -328,9 +328,25 @@ export default function DashboardHome() {
           });
           const roiPaidTotal = Array.from(uniqueRoiPaidMap.values()).reduce((sum, val) => sum + val, 0);
 
-          const approvedWithdrawals = transactionsList
-            .filter(t => String(t.type || '').toLowerCase() === 'withdrawal' && ['approved', 'paid', 'credited', 'completed'].includes(String(t.status || '').toLowerCase()))
-            .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+          let manualWithdrawn = 0;
+          const allDirectPayouts = payoutsRes ? (Array.isArray(payoutsRes) ? payoutsRes : (payoutsRes.payouts || payoutsRes.data?.payouts || (Array.isArray(payoutsRes.data) ? payoutsRes.data : []))) : [];
+          if (allDirectPayouts && allDirectPayouts.length > 0) {
+            const mMonthMap = new Map();
+            allDirectPayouts.filter(r => r.isWithdrawal || String(r.category || '').toUpperCase() === 'WITHDRAWAL' || /withdrawal/i.test(r.type || r.commissionType || '')).forEach(w => {
+              const d = w.payoutDate ? new Date(w.payoutDate) : new Date(w.date || w.paidAt || w.createdAt);
+              const monthKey = !isNaN(d.getTime())
+                ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+                : (w.month || w.period || 'current');
+              if (!mMonthMap.has(monthKey)) {
+                mMonthMap.set(monthKey, Number(w.amount || w.received || 0));
+              } else {
+                mMonthMap.set(monthKey, Math.max(mMonthMap.get(monthKey), Number(w.amount || w.received || 0)));
+              }
+            });
+            manualWithdrawn = Array.from(mMonthMap.values()).reduce((sum, amt) => sum + amt, 0);
+          }
+          const backendWithdrawn = Number(root.totalWithdrawn !== undefined ? root.totalWithdrawn : (root.stats?.totalWithdrawn !== undefined ? root.stats.totalWithdrawn : 0));
+          const approvedWithdrawals = backendWithdrawn > 0 ? backendWithdrawn : manualWithdrawn;
 
           const backendRoiReceivedVal = Number(root.roiReceived || root.stats?.roiReceived || 0);
           const effectiveRoiPaid = roiPaidTotal > 0 ? roiPaidTotal : backendRoiReceivedVal;

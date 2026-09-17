@@ -121,16 +121,17 @@ export default function PaymentRequests() {
 
   const fetchWithdrawableBalance = async () => {
     try {
-      const [payoutsRes, dividendsRes, txRes] = await Promise.all([
+      const [payoutsRes, dividendsRes, txRes, dashRes] = await Promise.all([
         apiRequest('/api/client/payouts?limit=1000').catch(() => null),
         apiRequest('/api/client/dividends?limit=1000').catch(() => null),
-        apiRequest('/api/client/transactions?limit=1000').catch(() => null)
+        apiRequest('/api/client/transactions?limit=1000').catch(() => null),
+        apiRequest('/api/client/dashboard').catch(() => null)
       ]);
 
-      // Parse ROI payouts — only paid/approved
+      // Parse ROI payouts — only paid/approved and NOT withdrawals
       const rawPayouts = Array.isArray(payoutsRes) ? payoutsRes : (payoutsRes?.data?.payouts || payoutsRes?.payouts || (Array.isArray(payoutsRes?.data) ? payoutsRes.data : []));
       const roiTotal = rawPayouts
-        .filter(r => ['paid', 'approved'].includes((r.status || 'paid').toLowerCase()))
+        .filter(r => !r.isWithdrawal && String(r.category || '').toUpperCase() !== 'WITHDRAWAL' && !/withdrawal/i.test(r.type || r.commissionType || '') && ['paid', 'approved'].includes((r.status || 'paid').toLowerCase()))
         .reduce((sum, r) => sum + Number(r.amount || r.received || 0), 0);
 
       // Parse Dividend allotments
@@ -138,11 +139,27 @@ export default function PaymentRequests() {
       const dividendTotal = rawDividends
         .reduce((sum, d) => sum + Number(d.allottedAmount || d.amount || 0), 0);
 
-      // Parse approved withdrawals
-      const rawTx = txRes?.data?.transactions || (Array.isArray(txRes) ? txRes : []);
-      const approvedWithdrawals = rawTx
-        .filter(t => String(t.type).toLowerCase() === 'withdrawal' && ['approved', 'completed', 'paid'].includes((t.status || '').toLowerCase()))
-        .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+      // Parse approved withdrawals strictly from manual payout records (dashboardData or manual Payout entries)
+      const rootDash = dashRes?.data || dashRes || {};
+      const backendWithdrawn = Number(rootDash.totalWithdrawn !== undefined ? rootDash.totalWithdrawn : (rootDash.stats?.totalWithdrawn !== undefined ? rootDash.stats.totalWithdrawn : 0));
+
+      let manualWithdrawn = 0;
+      if (rawPayouts && rawPayouts.length > 0) {
+        const mMonthMap = new Map();
+        rawPayouts.filter(r => r.isWithdrawal || String(r.category || '').toUpperCase() === 'WITHDRAWAL' || /withdrawal/i.test(r.type || r.commissionType || '')).forEach(w => {
+          const d = w.payoutDate ? new Date(w.payoutDate) : new Date(w.date || w.paidAt || w.createdAt);
+          const monthKey = !isNaN(d.getTime())
+            ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+            : (w.month || w.period || 'current');
+          if (!mMonthMap.has(monthKey)) {
+            mMonthMap.set(monthKey, Number(w.amount || w.received || 0));
+          } else {
+            mMonthMap.set(monthKey, Math.max(mMonthMap.get(monthKey), Number(w.amount || w.received || 0)));
+          }
+        });
+        manualWithdrawn = Array.from(mMonthMap.values()).reduce((sum, amt) => sum + amt, 0);
+      }
+      const approvedWithdrawals = backendWithdrawn > 0 ? backendWithdrawn : manualWithdrawn;
 
       setWithdrawableData({ roiTotal, dividendTotal, approvedWithdrawals });
     } catch (e) {
