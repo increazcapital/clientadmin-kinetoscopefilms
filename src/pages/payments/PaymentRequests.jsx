@@ -9,16 +9,16 @@ import { apiRequest } from '../../config/apiHelper';
 
 /* ── SVG Icons ─────────────────────── */
 const DepositIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20"/><path d="M17 7l-5-5-5 5"/><rect x="3" y="14" width="18" height="8" rx="2"/></svg>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20" /><path d="M17 7l-5-5-5 5" /><rect x="3" y="14" width="18" height="8" rx="2" /></svg>
 );
 const WithdrawIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22V2"/><path d="M7 17l5 5 5-5"/><rect x="3" y="2" width="18" height="8" rx="2"/></svg>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22V2" /><path d="M7 17l5 5 5-5" /><rect x="3" y="2" width="18" height="8" rx="2" /></svg>
 );
 const SendIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" /></svg>
 );
 const CreditCardIcon = () => (
-  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" /><line x1="1" y1="10" x2="23" y2="10" /></svg>
 );
 
 export default function PaymentRequests() {
@@ -34,7 +34,7 @@ export default function PaymentRequests() {
   // Withdrawable balance state (ROI + Dividend received minus approved withdrawals)
   const [withdrawableData, setWithdrawableData] = useState({ roiTotal: 0, dividendTotal: 0, approvedWithdrawals: 0 });
 
-// Company deposit bank details state (dynamically fetched from Super Admin settings)
+  // Company deposit bank details state (dynamically fetched from Super Admin settings)
   const [companyBankDetails, setCompanyBankDetails] = useState({
     bankAccountName: '',
     bankAccountNumber: '',
@@ -55,7 +55,7 @@ export default function PaymentRequests() {
 
   const formatAmount = (num) => `₹${Number(num).toLocaleString('en-IN')}`;
 
-const fetchCompanyBankDetails = async () => {
+  const fetchCompanyBankDetails = async () => {
     try {
       const res = await apiRequest('/api/system-settings/bank-details');
       if (res?.data) {
@@ -70,7 +70,7 @@ const fetchCompanyBankDetails = async () => {
         setCompanyBankDetails(freshData);
         try {
           localStorage.setItem('yieldiq_bank_details', JSON.stringify(freshData));
-        } catch (_) {}
+        } catch (_) { }
       }
     } catch (e) {
       console.error('Failed to fetch company deposit bank details:', e);
@@ -105,7 +105,7 @@ const fetchCompanyBankDetails = async () => {
             upiId: p.upiId || ''
           });
         }
-      } catch (_) {}
+      } catch (_) { }
     }
   };
 
@@ -225,7 +225,7 @@ const fetchCompanyBankDetails = async () => {
         const c = parsed.client || parsed.user || {};
         return c.id || c._id || 'default';
       }
-    } catch (e) {}
+    } catch (e) { }
     return 'default';
   };
 
@@ -271,7 +271,7 @@ const fetchCompanyBankDetails = async () => {
         try {
           const parsed = JSON.parse(e.newValue);
           setCompanyBankDetails(parsed);
-        } catch (_) {}
+        } catch (_) { }
       }
     };
 
@@ -382,7 +382,7 @@ const fetchCompanyBankDetails = async () => {
       <div className="kfpl-pay-kpis">
         <div className="kfpl-pay-kpi">
           <div className="kfpl-pay-kpi-icon kfpl-pay-kpi-icon--deposit">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5" /><path d="M5 12l7-7 7 7" /></svg>
           </div>
           <div>
             <span className="kfpl-pay-kpi-label">Total Deposits</span>
@@ -391,7 +391,7 @@ const fetchCompanyBankDetails = async () => {
         </div>
         <div className="kfpl-pay-kpi">
           <div className="kfpl-pay-kpi-icon kfpl-pay-kpi-icon--withdraw">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14" /><path d="M19 12l-7 7-7-7" /></svg>
           </div>
           <div>
             <span className="kfpl-pay-kpi-label">Total Withdrawals</span>
@@ -400,7 +400,7 @@ const fetchCompanyBankDetails = async () => {
         </div>
         <div className="kfpl-pay-kpi">
           <div className="kfpl-pay-kpi-icon kfpl-pay-kpi-icon--pending">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
           </div>
           <div>
             <span className="kfpl-pay-kpi-label">Pending</span>
@@ -457,9 +457,9 @@ const fetchCompanyBankDetails = async () => {
                       color: 'var(--color-gold-dark, #F5A800)', flexShrink: 0
                     }}>
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/>
-                        <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/>
-                        <path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z"/>
+                        <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
+                        <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
+                        <path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z" />
                       </svg>
                     </div>
                     <div>
@@ -478,7 +478,7 @@ const fetchCompanyBankDetails = async () => {
                         background: 'var(--color-success-bg, rgba(245, 168, 0, 0.12))', color: 'var(--color-gold-dark, #F5A800)',
                         border: '1px solid rgba(245, 168, 0, 0.25)', fontFamily: "'Inter', sans-serif"
                       }}>
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
                         ROI — {formatAmount(withdrawableData.roiTotal)}
                       </span>
                     )}
@@ -489,7 +489,7 @@ const fetchCompanyBankDetails = async () => {
                         background: 'var(--color-info-bg, rgba(59, 130, 246, 0.1))', color: 'var(--color-info, #3B82F6)',
                         border: '1px solid rgba(59, 130, 246, 0.25)', fontFamily: "'Inter', sans-serif"
                       }}>
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
                         Dividend — {formatAmount(withdrawableData.dividendTotal)}
                       </span>
                     )}
@@ -627,7 +627,7 @@ const fetchCompanyBankDetails = async () => {
                 </div>
                 <div className="kfpl-input-group">
                   <label className="kfpl-input-label">Proof of Deposit (Receipt/Screenshot) <span className="required">*</span></label>
-                  <div 
+                  <div
                     className="kfpl-proof-upload-box"
                     style={{
                       border: '2px dashed var(--color-border)',
@@ -645,18 +645,18 @@ const fetchCompanyBankDetails = async () => {
                     {form.proofFile ? (
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                         {form.proofFile.type && form.proofFile.type.startsWith('image/') ? (
-                          <img 
-                            src={form.proofFile.data} 
-                            alt="Proof Preview" 
-                            style={{ maxWidth: '120px', maxHeight: '100px', borderRadius: '4px', border: '1px solid var(--color-border)', objectFit: 'contain' }} 
+                          <img
+                            src={form.proofFile.data}
+                            alt="Proof Preview"
+                            style={{ maxWidth: '120px', maxHeight: '100px', borderRadius: '4px', border: '1px solid var(--color-border)', objectFit: 'contain' }}
                           />
                         ) : (
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', padding: '10px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', gap: '10px' }}>
                             <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke={form.proofFile.name && (form.proofFile.name.endsWith('.pdf') ? '#ef4444' : '#2563eb')} strokeWidth="2">
-                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                              <polyline points="14 2 14 8 20 8"/>
-                              <line x1="16" y1="13" x2="8" y2="13"/>
-                              <line x1="16" y1="17" x2="8" y2="17"/>
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                              <polyline points="14 2 14 8 20 8" />
+                              <line x1="16" y1="13" x2="8" y2="13" />
+                              <line x1="16" y1="17" x2="8" y2="17" />
                             </svg>
                             <div style={{ textAlign: 'left' }}>
                               <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--color-text)', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{form.proofFile.name}</div>
@@ -665,8 +665,8 @@ const fetchCompanyBankDetails = async () => {
                           </div>
                         )}
                         <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontWeight: '500' }}>File Attached</span>
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           className="kfpl-btn kfpl-btn--danger"
                           style={{ padding: '4px 8px', fontSize: '0.75rem', height: 'auto', minHeight: '0' }}
                           onClick={(e) => {
@@ -680,14 +680,14 @@ const fetchCompanyBankDetails = async () => {
                     ) : (
                       <div>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--color-text-muted)', marginBottom: '8px' }}>
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
                         </svg>
                         <div style={{ fontSize: '0.9rem', fontWeight: '500', color: 'var(--color-text)' }}>Click to upload proof receipt</div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '4px' }}>PNG, JPG, PDF, DOC, XLS, TXT (max 2MB)</div>
-                        <input 
-                          type="file" 
-                          accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt" 
-                          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }} 
+                        <input
+                          type="file"
+                          accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
+                          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
                           onChange={(e) => {
                             const file = e.target.files[0];
                             if (file) {
@@ -769,8 +769,8 @@ const fetchCompanyBankDetails = async () => {
                 flexShrink: 0
               }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-                  <line x1="1" y1="10" x2="23" y2="10"/>
+                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                  <line x1="1" y1="10" x2="23" y2="10" />
                 </svg>
               </div>
               <div>
@@ -827,7 +827,7 @@ const fetchCompanyBankDetails = async () => {
             <h3 className="kfpl-pay-coming-soon-title">Online Payment</h3>
             <p className="kfpl-pay-coming-soon-text">PSP integration coming soon. You'll be able to make payments directly online.</p>
             <span className="kfpl-pay-coming-soon-badge">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
               Coming Soon
             </span>
           </div>
@@ -839,7 +839,7 @@ const fetchCompanyBankDetails = async () => {
         <div style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface-elevated, #F8FAFC)', flexWrap: 'wrap', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(245, 168, 0, 0.12)', color: '#F5A800', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18" /><path d="M18 17V9" /><path d="M13 17V5" /><path d="M8 17v-3" /></svg>
             </div>
             <div>
               <h3 style={{ fontSize: '1.1rem', fontWeight: '800', margin: 0, color: 'var(--color-navy, #0f172a)' }}>

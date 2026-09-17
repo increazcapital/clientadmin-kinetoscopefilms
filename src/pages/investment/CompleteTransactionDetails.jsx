@@ -39,7 +39,7 @@ export default function CompleteTransactionDetails() {
           apiRequest('/api/client/dividends?limit=1000').catch(() => null)
         ]);
 
-        const rawTx = txRes?.data?.transactions || (Array.isArray(txRes) ? txRes : []);
+        const rawTx = (txRes?.data?.transactions || (Array.isArray(txRes) ? txRes : [])).filter(t => t.type !== 'withdrawal');
         const rawPayouts = Array.isArray(payoutsRes) ? payoutsRes : (payoutsRes?.data?.payouts || payoutsRes?.payouts || (Array.isArray(payoutsRes?.data) ? payoutsRes.data : []));
         const rawDividends = Array.isArray(dividendsRes) ? dividendsRes : (dividendsRes?.data?.allotments || dividendsRes?.allotments || (Array.isArray(dividendsRes?.data) ? dividendsRes.data : []));
 
@@ -83,16 +83,17 @@ export default function CompleteTransactionDetails() {
                   ? r.refId
                   : '—')));
 
+          const isWithdrawalRecord = r.isWithdrawal === true || String(r.category || '').toUpperCase() === 'WITHDRAWAL' || String(r.commissionType || '').toLowerCase().includes('withdrawal') || String(r.recipientType || '').toLowerCase().includes('withdrawal');
           return {
             id: r._id || r.id || `payout_${idx}`,
-            month: r.month || r.period || r.payoutMonth || 'ROI Payout',
-            type: 'ROI RETURN',
+            month: isWithdrawalRecord ? 'Capital Withdrawal' : (r.month || r.period || r.payoutMonth || 'ROI Payout'),
+            type: isWithdrawalRecord ? 'WITHDRAWAL' : 'ROI RETURN',
             amount: Number(r.amount || r.received || 0),
             status: (r.status || 'paid').toLowerCase(),
             paidAt: r.paidAt || r.date || r.processedDate,
             paymentMode: (r.paymentMode && r.paymentMode !== '—') ? r.paymentMode : '—',
             transactionRef: realRef,
-            category: 'roi'
+            category: isWithdrawalRecord ? 'withdrawal' : 'roi'
           };
         });
 
@@ -172,7 +173,7 @@ export default function CompleteTransactionDetails() {
       try {
         const authData = localStorage.getItem('kfpl_client_auth');
         if (authData) return JSON.parse(authData).client || JSON.parse(authData).user || {};
-      } catch (e) {}
+      } catch (e) { }
       return {};
     };
     const client = getLoggedInClient();
@@ -183,7 +184,7 @@ export default function CompleteTransactionDetails() {
         <td style="border: 1px solid #D0D8E4; padding: 10px; text-align: right; font-weight: 700; color: #F5A800;">₹${Number(r.amount).toLocaleString('en-IN')}</td>
         <td style="border: 1px solid #D0D8E4; padding: 10px;">${r.paymentMode || '—'}<br/><span style="font-family: monospace; font-size: 11px; color: #64748b;">${r.transactionRef || ''}</span></td>
         <td style="border: 1px solid #D0D8E4; padding: 10px; text-align: center;">
-          <span style="display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; ${['paid','approved'].includes(r.status) ? 'background: #FFF8E7; color: #B45309;' : 'background: #FEF3C7; color: #92400E;'}">${String(r.status).toUpperCase()}</span>
+          <span style="display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; ${['paid', 'approved'].includes(r.status) ? 'background: #FFF8E7; color: #B45309;' : 'background: #FEF3C7; color: #92400E;'}">${String(r.status).toUpperCase()}</span>
         </td>
         <td style="border: 1px solid #D0D8E4; padding: 10px; text-align: center;">${r.paidAt ? new Date(r.paidAt).toLocaleDateString('en-IN') : '—'}</td>
       </tr>
@@ -250,7 +251,7 @@ export default function CompleteTransactionDetails() {
       const haystack = [
         r.month, r.type, r.paymentMode, r.transactionRef, r.status, String(r.amount || ''), `₹${r.amount}`, dateStr
       ].filter(Boolean).join(' ').toLowerCase();
-      
+
       const matchesAll = tokens.every(token => haystack.includes(token));
       if (!matchesAll) return false;
     }
@@ -291,7 +292,7 @@ export default function CompleteTransactionDetails() {
       <div className="animate-rollout" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px', animationDelay: '100ms' }}>
         <div className="kfpl-card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569' }}>
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
           </div>
           <div>
             <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '2px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Records</div>
@@ -301,7 +302,7 @@ export default function CompleteTransactionDetails() {
 
         <div className="kfpl-card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#FFF8E7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#B45309' }}>
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>
           </div>
           <div>
             <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '2px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Net Capital Investment</div>
@@ -311,7 +312,7 @@ export default function CompleteTransactionDetails() {
 
         <div className="kfpl-card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#B45309' }}>
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="8" r="7" /><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" /></svg>
           </div>
           <div>
             <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '2px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total ROI Received</div>
@@ -344,7 +345,7 @@ export default function CompleteTransactionDetails() {
           {/* Search Bar */}
           <div style={{ position: 'relative', minWidth: '280px', maxWidth: '380px', width: '100%' }}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: 'var(--color-text-muted)' }}>
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input
               type="text"
@@ -412,7 +413,7 @@ export default function CompleteTransactionDetails() {
                 <tr>
                   <td colSpan="7" style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--color-text-muted)' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                      <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#94A3B8" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                      <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#94A3B8" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
                       <span style={{ fontWeight: 600, color: '#64748B' }}>No transaction records found</span>
                     </div>
                   </td>
@@ -433,7 +434,7 @@ export default function CompleteTransactionDetails() {
                       formattedDateStr = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
                       timeStr = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
                     }
-                  } catch (e) {}
+                  } catch (e) { }
                 }
 
                 return (
@@ -477,11 +478,11 @@ export default function CompleteTransactionDetails() {
                           flexShrink: 0
                         }}>
                           {isDeposit ? (
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19" /><polyline points="19 12 12 19 5 12" /></svg>
                           ) : isRoi ? (
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="8" r="6" /><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" /></svg>
                           ) : (
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" /></svg>
                           )}
                         </div>
                         <div>
@@ -563,10 +564,10 @@ export default function CompleteTransactionDetails() {
                           gap: '5px'
                         }}>
                           <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#64748B' }}>
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                            <line x1="16" y1="2" x2="16" y2="6"/>
-                            <line x1="8" y1="2" x2="8" y2="6"/>
-                            <line x1="3" y1="10" x2="21" y2="10"/>
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                            <line x1="16" y1="2" x2="16" y2="6" />
+                            <line x1="8" y1="2" x2="8" y2="6" />
+                            <line x1="3" y1="10" x2="21" y2="10" />
                           </svg>
                           {formattedDateStr}
                         </span>
@@ -655,8 +656,8 @@ export default function CompleteTransactionDetails() {
                 onMouseOut={e => { e.currentTarget.style.background = '#F1F5F9'; e.currentTarget.style.color = '#64748B'; }}
               >
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
             </div>
