@@ -321,6 +321,15 @@ export default function PaymentRequests() {
     }
 
     if (activeTab === 'withdrawal') {
+      const availableBalance = Math.max(0, withdrawableData.roiTotal + withdrawableData.dividendTotal - withdrawableData.approvedWithdrawals);
+      if (availableBalance <= 0) {
+        addToast('error', 'Zero Withdrawable Balance', 'You do not have any withdrawable balance yet. ROI or Dividend returns must be received before requesting a withdrawal.');
+        return;
+      }
+      if (Number(form.amount) > availableBalance) {
+        addToast('error', 'Amount Exceeds Balance', `Withdrawal amount cannot exceed your available balance of ${formatAmount(availableBalance)}`);
+        return;
+      }
       if (form.mode !== 'Cash') {
         if (!bankDetails.accountNumber || !bankDetails.ifscCode) {
           addToast('error', 'Bank Details Required', 'Please enter your Account Number and IFSC Code for withdrawal!');
@@ -531,12 +540,39 @@ export default function PaymentRequests() {
             );
           })()}
 
+          {activeTab === 'withdrawal' && Math.max(0, withdrawableData.roiTotal + withdrawableData.dividendTotal - withdrawableData.approvedWithdrawals) <= 0 && (
+            <div style={{
+              background: '#FFF8E7',
+              border: '1px solid #FFE7A3',
+              borderRadius: '10px',
+              padding: '14px 16px',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              color: '#B45309',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              lineHeight: '1.4'
+            }}>
+              <span style={{ fontSize: '1.2rem' }}>⚠️</span>
+              <span><strong>Zero Withdrawable Returns:</strong> You do not have any withdrawable balance yet (₹0). Withdrawal requests can only be submitted once monthly ROI returns or project dividends are credited to your account.</span>
+            </div>
+          )}
+
           <form className="kfpl-form" onSubmit={handleSubmit}>
             <div className="kfpl-input-group">
               <label className="kfpl-input-label">Amount (₹) <span className="required">*</span></label>
               <div className="kfpl-ps-modal-input-wrap">
                 <span className="kfpl-ps-modal-input-prefix">₹</span>
-                <input className="kfpl-input kfpl-ps-modal-input" type="number" placeholder="Enter amount" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} />
+                <input
+                  className="kfpl-input kfpl-ps-modal-input"
+                  type="number"
+                  placeholder="Enter amount"
+                  value={form.amount}
+                  onChange={e => setForm({ ...form, amount: e.target.value })}
+                  disabled={activeTab === 'withdrawal' && Math.max(0, withdrawableData.roiTotal + withdrawableData.dividendTotal - withdrawableData.approvedWithdrawals) <= 0}
+                />
               </div>
             </div>
             <div className="kfpl-input-group">
@@ -745,7 +781,12 @@ export default function PaymentRequests() {
               <label className="kfpl-input-label">Note</label>
               <textarea className="kfpl-textarea" placeholder="Any additional notes..." value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} rows={3}></textarea>
             </div>
-            <button type="submit" className="kfpl-pay-submit-btn" disabled={!form.amount || submitting}>
+            <button
+              type="submit"
+              className="kfpl-pay-submit-btn"
+              disabled={!form.amount || submitting || (activeTab === 'withdrawal' && Math.max(0, withdrawableData.roiTotal + withdrawableData.dividendTotal - withdrawableData.approvedWithdrawals) <= 0)}
+              style={activeTab === 'withdrawal' && Math.max(0, withdrawableData.roiTotal + withdrawableData.dividendTotal - withdrawableData.approvedWithdrawals) <= 0 ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+            >
               <SendIcon />
               {submitting ? 'Submitting...' : `Submit ${activeTab === 'deposit' ? 'Deposit' : 'Withdrawal'} Request`}
             </button>
