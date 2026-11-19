@@ -345,8 +345,15 @@ export default function DashboardHome() {
             });
             manualWithdrawn = Array.from(mMonthMap.values()).reduce((sum, amt) => sum + amt, 0);
           }
+          let txWithdrawals = 0;
+          if (txRes) {
+            const rawTx = Array.isArray(txRes) ? txRes : (txRes.data?.transactions || txRes.transactions || (Array.isArray(txRes.data) ? txRes.data : []));
+            txWithdrawals = rawTx
+              .filter(t => String(t.type || '').toLowerCase() === 'withdrawal' && ['approved', 'completed', 'paid'].includes(String(t.status || '').toLowerCase()))
+              .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+          }
           const backendWithdrawn = Number(root.totalWithdrawn !== undefined ? root.totalWithdrawn : (root.stats?.totalWithdrawn !== undefined ? root.stats.totalWithdrawn : 0));
-          const approvedWithdrawals = backendWithdrawn > 0 ? backendWithdrawn : manualWithdrawn;
+          const approvedWithdrawals = txWithdrawals > 0 ? txWithdrawals : (backendWithdrawn > 0 ? backendWithdrawn : manualWithdrawn);
 
           const backendRoiReceivedVal = Number(root.roiReceived || root.stats?.roiReceived || 0);
           const effectiveRoiPaid = roiPaidTotal > 0 ? roiPaidTotal : backendRoiReceivedVal;

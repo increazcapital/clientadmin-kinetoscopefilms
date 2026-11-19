@@ -613,9 +613,10 @@ export default function InvestmentOverview() {
         let approvedDepositsTotal = 0;
         let capitalWithdrawalsTotal = 0;
         let dividendWithdrawalsTotal = 0;
+        let txList = [];
         if (txRes) {
           const rootTx = txRes.data || txRes;
-          const txList = Array.isArray(rootTx.transactions)
+          txList = Array.isArray(rootTx.transactions)
             ? rootTx.transactions
             : (Array.isArray(rootTx) ? rootTx : []);
           approvedDepositsTotal = txList
@@ -637,7 +638,11 @@ export default function InvestmentOverview() {
             .reduce((sum, t) => sum + Number(t.amount || 0), 0);
         }
 
-        // Total Withdrawals strictly from manual payout records (rootDash.totalWithdrawn or manual Payout entries)
+        // Total Withdrawals from transactions or manual payout records
+        const txWithdrawalsTotal = (txList || [])
+          .filter(t => String(t.type || '').toLowerCase() === 'withdrawal' && ['approved', 'completed', 'paid'].includes(String(t.status || '').toLowerCase()))
+          .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+
         const backendWithdrawn = Number(rootDash.totalWithdrawn !== undefined ? rootDash.totalWithdrawn : (rootDash.stats?.totalWithdrawn !== undefined ? rootDash.stats.totalWithdrawn : 0));
 
         let manualWithdrawn = 0;
@@ -656,7 +661,7 @@ export default function InvestmentOverview() {
           });
           manualWithdrawn = Array.from(mMonthMap.values()).reduce((sum, amt) => sum + amt, 0);
         }
-        const approvedWithdrawalsTotal = backendWithdrawn > 0 ? backendWithdrawn : manualWithdrawn;
+        const approvedWithdrawalsTotal = txWithdrawalsTotal > 0 ? txWithdrawalsTotal : (backendWithdrawn > 0 ? backendWithdrawn : manualWithdrawn);
 
         const netDividendsAvailable = Math.max(0, freshTotalDividends - dividendWithdrawalsTotal);
         setTotalDividends(netDividendsAvailable);
@@ -709,10 +714,12 @@ export default function InvestmentOverview() {
     const handleUpdate = () => {
       loadDashboardData();
     };
+    window.addEventListener('storage', handleUpdate);
     window.addEventListener('yieldiq_data_updated', handleUpdate);
     window.addEventListener('kfpl_approval_event', handleUpdate);
 
     return () => {
+      window.removeEventListener('storage', handleUpdate);
       window.removeEventListener('yieldiq_data_updated', handleUpdate);
       window.removeEventListener('kfpl_approval_event', handleUpdate);
     };

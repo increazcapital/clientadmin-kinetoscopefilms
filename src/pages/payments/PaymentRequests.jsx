@@ -951,7 +951,7 @@ export default function PaymentRequests() {
 
                   const badgeBg = isApproved ? '#FFF8E7' : isPending ? '#FEF3C7' : '#FEE2E2';
                   const badgeColor = isApproved ? '#B45309' : isPending ? '#92400E' : '#991B1B';
-                  const statusLabel = isApproved ? '✓ APPROVED' : isPending ? '⏳ PENDING' : '✕ REJECTED';
+                  const statusLabel = isApproved ? (isDeposit ? '✓ APPROVED' : '✓ WITHDRAWAL') : isPending ? '⏳ PENDING' : '✕ REJECTED';
 
                   const dateFormatted = req.date
                     ? new Date(req.date).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
