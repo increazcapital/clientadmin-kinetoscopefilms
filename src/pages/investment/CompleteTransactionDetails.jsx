@@ -291,11 +291,11 @@ export default function CompleteTransactionDetails() {
   // Total Gross ROI Generated (across all auto-generated monthly ROI returns)
   const totalRoiGenerated = records.filter(r => r.category === 'roi').reduce((sum, r) => sum + (r.amount || 0), 0);
 
-  // Approved ROI Withdrawals (reduces the wallet balance dynamically)
-  const totalRoiWithdrawn = records.filter(r => r.category === 'withdrawal' && r.withdrawalType !== 'capital' && ['approved', 'completed', 'paid'].includes(r.status)).reduce((sum, r) => sum + (r.amount || 0), 0);
+  // Approved ROI Withdrawals (Amount successfully processed & received by client in bank)
+  const totalRoiWithdrawn = records.filter(r => r.category === 'withdrawal' && r.withdrawalType !== 'capital' && ['approved', 'completed', 'paid'].includes(String(r.status || '').toLowerCase())).reduce((sum, r) => sum + (r.amount || 0), 0);
 
-  // Dynamic Total ROI Received in Wallet (Generated minus Withdrawn)
-  const totalRoiReceived = Math.max(0, totalRoiGenerated - totalRoiWithdrawn);
+  // Dynamic Total ROI Received in Bank (reflects live approved ROI withdrawals from Super Admin)
+  const totalRoiReceived = totalRoiWithdrawn;
 
   const depositCount = records.filter(r => r.category === 'deposit').length;
   const withdrawalCount = records.filter(r => r.category === 'withdrawal').length;

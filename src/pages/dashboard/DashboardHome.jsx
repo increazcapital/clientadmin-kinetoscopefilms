@@ -364,6 +364,7 @@ export default function DashboardHome() {
             roiRate: finalRoiRate ?? root.roiRate ?? root.roiAverage ?? root.stats?.roiRate ?? 0,
             perkTier: rawClient.tier || root.stats?.perkTier || 'Silver',
             nextROIDate: root.nextRoiDate || root.stats?.nextROIDate || '—',
+            roiGenerated: effectiveRoiPaid,
             roiReceived: Math.max(0, effectiveRoiPaid - approvedWithdrawals),
             totalWithdrawn: approvedWithdrawals,
           };
@@ -1381,9 +1382,9 @@ export default function DashboardHome() {
         />
 
         <KpiCard
-          title="ROI Received"
-          value={formatCurrency(stats.roiReceived)}
-          trend="Available balance from ROI"
+          title="Total ROI Generated"
+          value={formatCurrency(stats.roiGenerated || (stats.roiReceived + stats.totalWithdrawn))}
+          trend="Lifetime ROI generated"
           trendDirection="up"
           icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>}
           iconColor="success"

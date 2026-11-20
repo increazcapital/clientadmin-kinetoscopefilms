@@ -933,8 +933,8 @@ export default function InvestmentOverview() {
       borderColor: 'var(--color-gold)'
     },
     {
-      label: 'ROI Received',
-      value: formatAmount(receivedROI),
+      label: 'Total ROI Generated',
+      value: formatAmount(effectiveGrossROI),
       trend: `${paidMonths} payouts completed`,
       trendDirection: 'up',
       icon: (
