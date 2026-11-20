@@ -181,7 +181,8 @@ export default function PaymentRequests() {
         list = data.history;
       }
 
-      const mapped = list.map((req, idx) => ({
+      const validList = list.filter(r => String(r.status || '').toLowerCase() !== 'rejected');
+      const mapped = validList.map((req, idx) => ({
         id: req.id || req._id || idx,
         type: req.type ? (req.type.charAt(0).toUpperCase() + req.type.slice(1)) : 'Deposit',
         amount: Number(req.amount || 0),
@@ -223,7 +224,7 @@ export default function PaymentRequests() {
       const stored = localStorage.getItem(cacheKey);
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (parsed.requestsList) setRequestsList(parsed.requestsList);
+        if (parsed.requestsList) setRequestsList(parsed.requestsList.filter(r => String(r.status || '').toLowerCase() !== 'rejected'));
         if (parsed.stats) setStats(parsed.stats);
         return;
       }
@@ -252,7 +253,7 @@ export default function PaymentRequests() {
       const cacheData = localStorage.getItem(cacheKey);
       if (cacheData) {
         const parsed = JSON.parse(cacheData);
-        if (parsed.requestsList) setRequestsList(parsed.requestsList);
+        if (parsed.requestsList) setRequestsList(parsed.requestsList.filter(r => String(r.status || '').toLowerCase() !== 'rejected'));
         if (parsed.stats) setStats(parsed.stats);
         setLoading(false);
       }
