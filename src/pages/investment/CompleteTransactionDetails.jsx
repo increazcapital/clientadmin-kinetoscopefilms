@@ -145,9 +145,19 @@ export default function CompleteTransactionDetails() {
         });
 
         const combined = [...mappedTx, ...mappedPayouts, ...mappedDividends].sort((a, b) => {
-          const dateA = new Date(a.paidAt || 0).getTime();
-          const dateB = new Date(b.paidAt || 0).getTime();
-          return dateB - dateA;
+          const isAWithdrawal = a.category === 'withdrawal' || a.type === 'WITHDRAWAL';
+          const isBWithdrawal = b.category === 'withdrawal' || b.type === 'WITHDRAWAL';
+
+          const dateA = new Date(a.paidAt || 0);
+          const dateB = new Date(b.paidAt || 0);
+
+          // For the same month, always place withdrawal entries on top of ROI returns
+          const sameMonth = (dateA.getFullYear() === dateB.getFullYear() && dateA.getMonth() === dateB.getMonth());
+          if (sameMonth && isAWithdrawal !== isBWithdrawal) {
+            return isAWithdrawal ? -1 : 1;
+          }
+
+          return dateB.getTime() - dateA.getTime();
         });
 
         setRecords(combined);
